@@ -1,7 +1,8 @@
 # Agent Notes
 
-- This repository migrates `SPHINCS-ALPHA-NIST` to an NGCC submission package.
-- Do not modify `SPHINCS-ALPHA-NIST/`; treat it as read-only source material.
+- This repository migrates `.SPHINCS-ALPHA-NIST` to an NGCC submission package.
+- Do not modify `.SPHINCS-ALPHA-NIST/`; treat it as read-only source material.
+- Unless necessary, do not read `.SPHINCS-ALPHA-NIST/`; use migrated files under `Implementations/`, `docs/`, `main.tex`, and `paper/` by default.
 - `docs/` contains NGCC submission requirements, evaluation criteria, and ICCS API templates.
 - `main.tex` and `paper/` are the current English submission document.
 - The NGCC code package is under `Implementations/`; first-stage Kylin SIG port is present.

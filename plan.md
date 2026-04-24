@@ -6,7 +6,7 @@ This project is intended to migrate `SPHINCS-ALPHA-NIST`, a stateless hash-based
 
 Important repository areas:
 
-- `SPHINCS-ALPHA-NIST/`: original NIST submission documentation and code. It must remain read-only.
+- `.SPHINCS-ALPHA-NIST/`: original NIST submission documentation and code. It must remain read-only and does not need to be read unless necessary.
 - `docs/`: NGCC requirements, evaluation criteria, feedback documents, and the ICCS API templates under `docs/API_PKC/`.
 - `main.tex` and `paper/`: current English submission document and supporting data/scripts.
 - The NGCC implementation package is under `Implementations/`, with reference and optimized first-stage Kylin SIG instances for `Kylin-128`, `Kylin-256`, and `Kylin-512`.
