@@ -16,6 +16,7 @@ extern DRNG_ctx drng_algorithm;
 
 static int valid_message_length(unsigned long long m_len_bytes)
 {
+    /* 2^63 bits equals 2^60 bytes, matching the NGCC submission bound. */
     return m_len_bytes <= (1ULL << 60);
 }
 

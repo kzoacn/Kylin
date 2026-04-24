@@ -396,3 +396,26 @@ These items are intentionally outside the first implementation stage:
 - signed submission forms and IP declarations;
 - Chinese version of the full document;
 - optional embedded/hardware implementations and benchmarks.
+
+## Progress Log
+
+### 2026-04-24 - Task 1: Submission Narrative Refresh
+
+- Updated `main.tex` title/author placeholders to use the Kylin submission name.
+- Rewrote `paper/tex/abstract.tex` from a research-paper abstract into a submission-package abstract that reflects the current NGCC deliverables.
+- Updated `paper/tex/submission_overview.tex` so the basic-information table, message-length statement, correctness statement, and external-deliverable status match the repository's current Kylin package state.
+- Removed a stale statement in `paper/tex/sphincsp.tex` that still claimed the repository lacked NGCC implementations and test vectors.
+
+### 2026-04-24 - Task 2: Submission Evidence and Scope Statements
+
+- Added explicit first-stage scope statements for message length, correctness, side-channel scope, single-key vs. multi-key claims, and repeated-key usage in `paper/tex/submission_overview.tex`, `paper/tex/sphincsp.tex`, and `paper/tex/submission_checklist.tex`.
+- Added repository-local package benchmark and memory tables to `paper/tex/sphincsp.tex`, backed by generated CSV inputs `paper/data/package_bench.csv` and `paper/data/package_memory.csv`.
+- Added a shared benchmark driver at `Implementations/tools/bench_sig.c` and an automated metrics collector at `Implementations/tools/collect_metrics.py`, then generated `Implementations/benchmarks/summary.md`.
+- Documented the NGCC message-length bound directly in all six `SIG_AlgorithmInstance.c` wrappers.
+
+### 2026-04-24 - Task 3: Build Automation and Artifact Cleanup
+
+- Added per-instance `bench` and `stack_usage` Makefile targets, and extended `clean` so build/KAT/metrics artifacts are removable in one pass.
+- Added a repository-root `Makefile` with `params`, `build`, `test`, `kat`, `metrics`, `clean`, and `verify` targets for package-level automation.
+- Updated `Implementations/README` to describe the new top-level workflow and generated metrics outputs.
+- Added a root `.gitignore` covering implementation binaries, KAT output directories, stack-usage directories, and LaTeX temporary files.

@@ -11,7 +11,18 @@ currently uses the same portable source code with an `-O3 -march=native` build
 profile for mainstream 64-bit PC processors; deeper code-level optimization is
 tracked as later work.
 
-Build all instances from the repository root:
+The packaged NGCC wrappers accept messages up to `2^60` bytes, i.e. `2^63`
+bits, matching the submission bound recorded in the draft.
+
+Run the full repository-local verification flow from the repository root:
+
+    make verify
+
+This refreshes parameter output, rebuilds all six instances, runs the
+self-tests, regenerates the reference KAT files, and updates the package-level
+benchmark and memory summaries.
+
+Build all instances only:
 
     for d in Implementations/Reference_Implementation/Kylin-* \
              Implementations/Optimized_Implementation/Kylin-*; do
@@ -25,3 +36,13 @@ Generate reference KAT vectors:
     done
 
 Generated KAT files are stored in `Test_Vectors/`.
+
+Refresh the package-level benchmark and memory summaries only:
+
+    make metrics
+
+This updates:
+
+- `paper/data/package_bench.csv`
+- `paper/data/package_memory.csv`
+- `Implementations/benchmarks/summary.md`

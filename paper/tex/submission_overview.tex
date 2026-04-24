@@ -1,24 +1,24 @@
 \section{Submission Overview}
 \label{sec:submission-overview}
 
-This revised draft is organized for the NGCC public-key algorithm call. It preserves the original technical specification of \SPHINCSA\ while making the submission-oriented items explicit. Whenever the current repository does not yet contain finalized evidence or deliverables, we mark the gap with \todo{...}.
+This revised draft is organized as the first-stage NGCC submission package for \emph{Kylin}, the submission name used in this repository for the \SPHINCSA-based construction. It preserves the original technical specification of \SPHINCSA\ while making the submission-oriented items explicit. Whenever the current repository does not yet contain finalized evidence or deliverables, we mark the gap with \todo{...}.
 
 \subsection{Algorithm Basic Information}
 
 \begin{table}[htbp]
     \centering
-    \caption{Basic information for the current \SPHINCSA\ draft.}
+    \caption{Basic information for the current Kylin submission package.}
     \label{tab:basic-info}
     \begin{tabular}{p{0.30\linewidth}p{0.62\linewidth}}
     \toprule
     Item & Current draft status \\ \midrule
-    Algorithm name & \SPHINCSA\ (SPHINCS-alpha) \\
+    Algorithm name & Kylin \\
     Algorithm function & Digital signature \\
     Algorithm family & Stateless hash-based signature \\
     Core algorithms & Key generation, signature generation, signature verification \\
-    Baseline construction & \SPHINCSP\ with \WOTSCS\ replacing \WOTSP, together with retuned parameter sets \\
-    Hash instantiations in this draft & \SPHINCSA-SHAKE and \SPHINCSA-SHA2 \\
-    Parameter sets currently included & Legacy draft families \texttt{sphincs-a-128s}, \texttt{sphincs-a-128f}, \texttt{sphincs-a-192s}, \texttt{sphincs-a-192f}, \texttt{sphincs-a-256s}, \texttt{sphincs-a-256f}, plus the recommended NGCC families \texttt{sphincs-a-ngcc-128}, \texttt{sphincs-a-ngcc-256}, and \texttt{sphincs-a-ngcc-512}; see \cref{tab:parameters,tab:ngcc-parameters} \\
+    Baseline construction & Kylin is the NGCC submission name for the \SPHINCSA\ construction, itself derived from \SPHINCSP\ with \WOTSCS\ replacing \WOTSP\ and with retuned parameter sets \\
+    Hash/XOF interface in the packaged code & ICCS auxiliary functions, with domain-separated wrappers built from \texttt{pseudoXOF}; the legacy draft discussion still records the SHAKE- and SHA2-based research instantiations \\
+    Parameter sets currently included & Submitted NGCC instances \texttt{Kylin-128}, \texttt{Kylin-256}, and \texttt{Kylin-512}; the legacy \texttt{sphincs-a-*} families remain in the draft as historical baselines; see \cref{tab:parameters,tab:ngcc-parameters} \\
     Submitters & \todo{List the names, affiliations, postal addresses, phone numbers, email addresses, and signatures of all submitters.} \\
     Primary contact & \todo{Identify the submission contact and provide the signed contact information required by the call.} \\
     \bottomrule
@@ -32,8 +32,8 @@ This revised draft is organized for the NGCC public-key algorithm call. It prese
     \item The required design rationale, security analysis, performance evaluation, and feature statement are provided in \cref{sec:wots-optimization,sec:design-rationale,sec:security-claims,sec:performance,sec:feature-statement}.
     \item The legacy parameter tables inherited from the original \SPHINCSA\ draft are still useful technical baselines, but this revised submission draft now additionally includes NGCC-oriented families covering the required 128/256/512-bit classical levels with corresponding 80/128/256-bit generic quantum levels; see \cref{tab:ngcc-parameters}. The selection is reproducible from \texttt{paper/code/search\_ngcc\_params.py}.
     \item The recommended NGCC parameter families are tuned with $q=2^{64}$ in the concrete-security formulas and all use hypertree height $h=70$, so the submission text can now state support for at least $2^{64}$ signatures under one key pair in the intended single-key usage model.
-    \item The call also asks for support for messages up to $2^{63}$ bits. The current specification hashes the message through $\hashmsg$, but the API-level message-length claim is not yet stated explicitly. \todo{Add an implementation-level statement that the submission interface accepts messages of up to $2^{63}$ bits, or document any tighter supported bound.}
-    \item Separate submission artifacts required by the call, including signed forms, a packaged ISO C reference implementation using the NGCC API, a packaged optimized implementation, and generated test vectors, are tracked in Appendix~\ref{apx:submission-checklist}.
+    \item The NGCC SIG wrapper in the packaged code accepts message lengths up to $2^{60}$ bytes, i.e.\ $2^{63}$ bits, which matches the bound stated in the call.
+    \item Separate submission artifacts required by the call, including signed forms and ownership/IP statements, are tracked in Appendix~\ref{apx:submission-checklist}. The packaged ISO C reference implementation, packaged optimized implementation, and generated test vectors are now present in the repository.
 \end{itemize}
 
 \subsection{Legacy Draft Families vs. Recommended NGCC Families}
@@ -94,8 +94,8 @@ The selected families were chosen for the following reasons:
 
 \SPHINCSA\ is a stateless hash-based signature scheme. Under honest execution, the signing and verification algorithms are deterministic once the per-signature randomness is fixed, and the design does not introduce a decryption- or decapsulation-style failure event. In that sense, there is no intrinsic non-negligible correctness failure probability parameter analogous to code-based or lattice-based decapsulation failure.
 
-The residual risk is instead tied to the standard assumptions on the underlying hash-function families and to implementation correctness. \todo{Add a short submission-style correctness statement that explicitly bounds any residual failure event in the notation required by the call.}
+Accordingly, for every supported instance, every key pair output by the packaged key-generation algorithm, and every message of length at most $2^{63}$ bits, verification under the matching public key accepts every signature produced by the matching signing algorithm except in the event of implementation faults or a failure of the underlying cryptographic assumptions. The current package therefore treats correctness as a deterministic algorithmic property of the implementation, with no separate decryption-style failure term to report.
 
 \subsection{Status of External Deliverables}
 
-The current repository already contains a detailed LaTeX specification, pseudocode listings, benchmark data, and parameter-evaluation scripts. A repository-local NGCC packaging skeleton has also now been prepared for the implementation and test-vector directories. However, the call still requires several external materials in a stricter finalized form. A concise checklist of missing deliverables is provided in Appendix~\ref{apx:submission-checklist} so that the remaining work can be tracked directly inside the draft.
+The current repository already contains a detailed LaTeX specification, pseudocode listings, benchmark data, parameter-evaluation scripts, the NGCC implementation package, and generated test vectors. However, the call still requires several external materials in a stricter finalized form, especially signed forms, ownership/IP declarations, and further submission-facing performance evidence. A concise checklist of the remaining deliverables is provided in Appendix~\ref{apx:submission-checklist} so that the remaining work can be tracked directly inside the draft.

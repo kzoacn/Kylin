@@ -1,0 +1,10 @@
+Implementations/**/KAT_SIG
+Implementations/**/test_sig
+Implementations/**/bench_sig
+Implementations/**/output/
+Implementations/**/.stack-usage/
+_minted-main/
+main.aux
+main.log
+main.out
+main.toc

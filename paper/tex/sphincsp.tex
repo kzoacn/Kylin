@@ -972,10 +972,10 @@ Now we discuss the security of the two instantiations of hash functions, namely 
 \paragraph{Other Security Properties and Limitations.}
 
 \begin{itemize}
-    \item \textbf{Side-channel considerations.} The constant-sum encoding of \WOTSCS\ gives a fixed number of hash-chain steps, which improves timing regularity relative to variable-length checksum-based encodings. This is a useful implementation property, but it is not by itself a full side-channel defense. \todo{Add a dedicated statement on constant-time coding practice, memory-access discipline, and any masking/hardening measures in the final implementation package.}
+    \item \textbf{Side-channel considerations.} The constant-sum encoding of \WOTSCS\ gives a fixed number of hash-chain steps, which improves timing regularity relative to variable-length checksum-based encodings. This is a useful implementation property, but it is not by itself a full side-channel defense. The current reference and optimized implementations should therefore be understood as first-stage functional and benchmarking code: no dedicated masking layer, cache-hardening layer, power-analysis countermeasure, EM countermeasure, or fault-attack countermeasure is claimed at this stage.
     \item \textbf{Forward security.} \SPHINCSA\ is stateless, which avoids state-rollback problems, but it is not a forward-secure signature scheme in the standard sense. Compromise of the long-term signing key compromises future signatures. No forward-security claim is made in this draft.
-    \item \textbf{Multi-key security.} The current draft follows the standard single-key security analysis inherited from \SPHINCSP. \todo{Add a submission-oriented discussion of multi-key or multi-user security bounds if the final submission package intends to claim them explicitly.}
-    \item \textbf{Repeated-key usage.} The recommended NGCC families use hypertree height $h=70$ and are tuned with $q=2^{64}$ in the generic security formulas, so this revised draft is intended to support at least $2^{64}$ signatures under one long-term key pair in the standard single-key setting. \todo{If the final package wants a separate statement for broader multi-user or $q\le 2^{80}$ evaluation conventions, add that statement explicitly.}
+    \item \textbf{Multi-key security.} The current draft follows the standard single-key security analysis inherited from \SPHINCSP. This first-stage submission package does not currently claim a separate quantified multi-user reduction beyond that single-key analysis.
+    \item \textbf{Repeated-key usage.} The recommended NGCC families use hypertree height $h=70$ and are tuned with $q=2^{64}$ in the generic security formulas, so this revised draft is intended to support at least $2^{64}$ signatures under one long-term key pair in the standard single-key setting. A broader multi-user or $q \le 2^{80}$ interpretation would require an additional explicit statement and is not separately claimed in this first-stage package.
 \end{itemize}
 
 \paragraph{Security of \SPHINCSA-SHAKE.}
@@ -1003,18 +1003,46 @@ The particular function SHA2-256 used in \SPHINCSA-SHA2 has a â€œchaining valueâ
 \section{Performance Evaluation}
 \label{sec:performance}
 
-This section provides the performance analysis and benchmark data required by the call. The current repository contains software measurements for a mainstream 64-bit PC platform and for an AVX2-optimized software path.
+This section provides the performance analysis and benchmark data required by the call. The current repository now contains two layers of evidence: historical software measurements retained from the original \SPHINCSA\ draft, and repository-local measurements for the packaged Kylin NGCC instances.
 
 \paragraph{Benchmark platform.}
-We conduct our benchmarks on an Ubuntu 20.04 machine with an AMD Ryzen 5 3600 CPU and 16 GB RAM. The code is compiled with \textsf{gcc-9.3.0 -O3 -march=native -fomit-frame-pointer -flto}. We also provide optimized implementations for platforms supporting the AVX2 instruction set.
+The historical tables below are retained from the original draft and describe the previously reported benchmarking environment for the research code base. In addition, the packaged Kylin instances now have repository-local benchmark and memory summaries generated automatically by the current build system; those summaries are intended for submission-package regression tracking on the current host rather than for cross-paper comparison.
 
-For the defined parameter sets, the resulting cycle counts, the key and signature sizes (in bytes) are listed in \cref{tab:bench spx-a}.
-Performance results are listed in \cref{tab:bench spx-a}, \cref{tab:bench spx} and \cref{tab:bench comp}. In
-terms of memory consumption, we remark that the reference implementation tends towards
-low stack usage. \todo{Add explicit peak stack/heap measurements in the final submission package.}
+\paragraph{Repository-local package metrics.}
+The automated package measurements in \cref{tab:kylin-package-bench,tab:kylin-package-memory} are produced from the current implementation tree by \texttt{make metrics}. The benchmark table reports host-local wall-clock milliseconds from the automated \texttt{bench\_sig} driver on a 32-byte message. The memory table reports GCC \texttt{-fstack-usage} maximum single-frame stack usage together with the \texttt{bench\_sig} binary's \texttt{.text}, \texttt{.data}, and \texttt{.bss} section sizes. These figures provide package-local evidence for the current submission assembly and regression tracking; they do not replace later cross-platform benchmarking.
+
+\begin{table}[!ht]
+    \centering
+    \caption{Repository-local benchmark summary for the packaged Kylin NGCC instances. Times are host-local wall-clock milliseconds from the automated package benchmark driver. Key and signature sizes are in bytes.}
+    \label{tab:kylin-package-bench}
+    \scriptsize
+    \begin{tabular}{l c c c c c c c}
+    \toprule
+    Instance & Impl. & KeyGen (ms) & Sign (ms) & Verify (ms) & Pk & Sk & Sig \\ \midrule
+    \csvreader[head to column names]{paper/data/package_bench.csv}{}%
+    { \name & \impl & \keygenms & \signms & \verifyms & \pkbytes & \skbytes & \sigbytes \\ }
+    \vspace{-1em} \\ \bottomrule
+    \end{tabular}
+\end{table}
+
+\begin{table}[!ht]
+    \centering
+    \caption{Repository-local memory indicators for the packaged Kylin NGCC instances. Max-frame values come from GCC \texttt{-fstack-usage} reports and therefore describe the largest compiler-reported single stack frame, not a full dynamic call-chain bound.}
+    \label{tab:kylin-package-memory}
+    \scriptsize
+    \begin{tabular}{l c r r r r}
+    \toprule
+    Instance & Impl. & Max frame & .text & .data & .bss \\ \midrule
+    \csvreader[head to column names]{paper/data/package_memory.csv}{}%
+    { \name & \impl & \maxstack & \textbytes & \databytes & \bssbytes \\ }
+    \vspace{-1em} \\ \bottomrule
+    \end{tabular}
+\end{table}
+
+For the defined historical parameter sets, the resulting cycle counts, the key and signature sizes (in bytes) are listed in \cref{tab:bench spx-a}. Historical performance results are listed in \cref{tab:bench spx-a}, \cref{tab:bench spx} and \cref{tab:bench comp}.
 
 \paragraph{Transmission and storage overhead.}
-The public-key, secret-key, and signature sizes for every measured parameter set are included directly in \cref{tab:bench spx-a,tab:bench spx}. These values also serve as the primary transmission and storage overhead figures for the current draft.
+The public-key, secret-key, and signature sizes for every measured parameter set are included directly in \cref{tab:kylin-package-bench,tab:bench spx-a,tab:bench spx}. These values also serve as the primary transmission and storage overhead figures for the current draft.
 
 \paragraph{Additional platforms.}
 \todo{Add benchmark data for 32-bit embedded software platforms and hardware implementations if such artifacts are prepared for later submission rounds.}
@@ -1107,5 +1135,5 @@ The repository already contains benchmark data for both reference and AVX2-optim
     \item Signature sizes remain significantly larger than those of many non-hash-based post-quantum signatures.
     \item Some parameter choices trade faster signing for slower verification.
     \item Replacing \WOTSP\ with \WOTSCS\ removes compatibility with XMSS-style one-time-signature reuse assumptions and existing byte-level formats.
-    \item The current repository is still missing several submission-packaging artifacts, including NGCC-format implementations, test vectors, and signed forms.
+    \item The current repository now contains NGCC-format implementations and generated test vectors, but finalized signed forms, ownership/IP statements, and further submission-facing benchmarking evidence are still outstanding.
 \end{itemize}

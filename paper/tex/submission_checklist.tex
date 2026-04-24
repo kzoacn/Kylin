@@ -7,11 +7,11 @@ This appendix records the items that are still missing or still need to be refor
 
 \begin{itemize}
     \item A submission-style security-claim table for the selected NGCC 128/256/512-bit families has now been added in \cref{tab:ngcc-parameters}. \todo{If desired, add a supplementary note explaining how the single-key $q=2^{64}$ tuning used for parameter selection relates to the evaluation document's broader ``at most $2^{80}$ queries'' convention.}
-    \item The recommended families now use $h=70$ and are tuned with $q=2^{64}$, which supports the call's requirement of at least $2^{64}$ signatures under one key pair in the intended single-key model. \todo{State explicitly the supported message-length bound and mirror the final signing-capacity wording in the finalized submission forms.}
-    \item \todo{Add a short, explicit correctness statement in the exact notation and wording preferred for the submission package.}
-    \item \todo{Expand the discussion of side-channel resistance, multi-key security, and repeated-key usage with either concrete evidence or a clearly scoped limitation statement.}
+    \item The recommended families now use $h=70$ and are tuned with $q=2^{64}$, which supports the call's requirement of at least $2^{64}$ signatures under one key pair in the intended single-key model. The packaged NGCC SIG wrapper explicitly accepts messages up to $2^{60}$ bytes, i.e.\ $2^{63}$ bits.
+    \item A submission-style correctness statement for the packaged instances now appears in \cref{sec:submission-overview}.
+    \item The security section now states the current scope of the side-channel, multi-key, and repeated-key claims explicitly: the first-stage software package makes no dedicated side-channel-hardening claim, uses single-key analysis by default, and targets $q=2^{64}$ repeated-key usage for one long-term key pair.
+    \item Repository-local benchmark and memory summaries for all six packaged implementations are now generated automatically and recorded in \texttt{paper/data/package\_bench.csv} and \texttt{paper/data/package\_memory.csv}.
     \item \todo{Add optional benchmark data for 32-bit embedded platforms and hardware platforms if these results become available.}
-    \item \todo{Add quantitative memory-consumption measurements instead of the current qualitative remark on low stack usage.}
 \end{itemize}
 
 \subsection{Required Forms and Statements}
@@ -30,7 +30,7 @@ This appendix records the items that are still missing or still need to be refor
     \item First-stage optimized 64-bit PC implementations are now present for all three instances; they currently share the portable code path with an optimized build profile. \todo{Replace or supplement this with deeper architecture-specific optimization before final submission, if desired.}
     \item The implementations use the NGCC SIG API provided in \texttt{API\_PKC.zip}.
     \item A repository-local \texttt{README} for the implementation package has been added.
-    \item \todo{Add final benchmark tables and memory-consumption measurements for the completed implementation package.}
+    \item Automated package-level benchmark and memory-summary generation is now part of the repository workflow and feeds the tables in \cref{tab:kylin-package-bench,tab:kylin-package-memory}.
 \end{itemize}
 
 \subsection{Test Vectors}
