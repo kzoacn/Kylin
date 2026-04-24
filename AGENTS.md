@@ -1,24 +1,22 @@
 # Agent Notes
 
-- This repository migrates `.SPHINCS-ALPHA-NIST` to an NGCC submission package.
-- Do not modify `.SPHINCS-ALPHA-NIST/`; treat it as read-only source material.
-- Unless necessary, do not read `.SPHINCS-ALPHA-NIST/`; use migrated files under `Implementations/`, `docs/`, `main.tex`, and `paper/` by default.
-- `docs/` contains NGCC submission requirements, evaluation criteria, and ICCS API templates.
-- `main.tex` and `paper/` are the current English submission document.
-- The NGCC code package is under `Implementations/`; first-stage Kylin SIG port is present.
-- The first implementation target is a digital signature submission named Kylin.
-- Implement only three NGCC instances for the first stage: `Kylin-128`, `Kylin-256`, and `Kylin-512`.
+- This repository targets a complete NGCC digital-signature submission package for **Kylin**.
+- `.SPHINCS-ALPHA-NIST/` is a historical archive. Keep it read-only, and do not read it unless necessary.
+- `docs/` contains NGCC requirements, evaluation criteria, and ICCS API templates.
+- `main.tex` and `paper/` are the current English submission document source.
+- The NGCC code package is under `Implementations/`.
+- Active submission profiles are six variants: `Kylin-128-fast`, `Kylin-128-small`, `Kylin-256-fast`, `Kylin-256-small`, `Kylin-512-fast`, and `Kylin-512-small`.
+- `Kylin-512` usually runs slowly; for quick smoke tests it may be skipped temporarily, but final-result validation must run `Kylin-512` in practice.
 - Use NGCC SIG API files and names: `SIG_AlgorithmInstance.h`, `SIG_AlgorithmInstance.c`, and `KAT_SIG.c`.
 - Copy NGCC helper/template files from `docs/API_PKC/...`; do not modify `KAT_SIG.c`, `auxfunc.*`, or `drng.*` after copying.
 - Required NGCC functions are `sig_get_pk_len_bytes`, `sig_get_sk_len_bytes`, `sig_get_sn_len_bytes`, `sig_keygen`, `sig_sign`, and `sig_verify`.
-- NGCC requires automated builds, generated KAT files, ISO C reference implementation, and an optimized 64-bit PC implementation.
+- NGCC requires automated builds, generated KAT files, an ISO C reference implementation, and an optimized 64-bit PC implementation.
 - Hash and XOF calls in the NGCC package must use ICCS auxiliary functions: `sm3hash`, `pseudohash`, and especially `pseudoXOF`.
 - Randomness in KAT mode must come from NGCC `drng_algorithm` via `get_random_number`.
-- Current baseline parameters are from `paper/data/para_ngcc.csv`.
-- `Kylin-128`: `n=16,k=31,len=23,pk=32,sk=64,sig=12256`.
-- `Kylin-256`: `n=32,k=42,len=45,pk=64,sk=128,sig=36832`.
-- `Kylin-512`: `n=64,k=65,len=87,pk=128,sk=256,sig=122624`.
+- Current baseline parameters are from `paper/data/para_ngcc.csv`; optimization work must derive `{128,256,512} x {fast,small}` profile parameters.
+- `fast` profiles should prioritize faster signing within reasonable key/signature overhead.
+- `small` profiles should prioritize smaller signatures within reasonable performance overhead.
 - Original WOTSCS `uint256_t` encoding has been generalized in the Kylin port for `n=16/32/64`.
 - `paper/code/search_ngcc_params.py` reproduces the current NGCC parameter table.
-- Later tasks: improve parameters, finish Kylin naming in documentation, optimize code, and write a Chinese document.
+- Priority workstreams: parameter refinement, code optimization, documentation completion (including Chinese document), and final NGCC submission packaging.
 - After each medium-sized task, record the result in `plan.md`, then run `git add`, `git commit`, and `git push`.

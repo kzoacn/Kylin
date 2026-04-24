@@ -28,7 +28,7 @@ Based on the security analysis of the original work, we estimate the security le
 To facilitate a fair comparison, we implement \SPHINCSA\ by adapting the code of \SPHINCSP\ and compare their performance on a desktop computer. As shown in \cref{tab:comp tiny}, under the ``small'' series parameters (optimized towards small signature size) our scheme reduces signature size and running time by 8-12\% and 2-16\% respectively at all security levels while under the ``fast'' series (optimized towards fast signing operations) our scheme exhibits better performance in general. 
 
 We refer to more detailed comparisons for the full spectrum of parameter choices in \cref{sec:performance}.
-As summarized in \cref{tab:bench comp}, our scheme offers an overall performance improvement for most parameter settings, in terms of signing time and signature size. On the downside, we experience an up to 253\% increase in verification time. Nevertheless, we argue that for specific scenarios where verification time is critical, we can re-tune the parameters towards fast verification. 
+As summarized in \cref{tab:kylin-package-bench}, the packaged Kylin instances provide the current repository-local performance profile for key generation, signing, and verification. For specific scenarios where verification time is critical, the parameters can be re-tuned towards faster verification.
 %since the verification only amounts to 1-9\% of the signing time we argue that this sacrifice is worthwhile considering efficiency gain in signing time and signature size.
 
 \paragraph{Other Changes Made.}

@@ -223,7 +223,7 @@ The two properties guarantee  that every chain contains exactly one element $c_{
 Constant Sum \WOTSP~has two advantages over \WOTSP.
 \begin{itemize}
     \item Stable computing time.  The number of hash function calls is fixed in our construction, in contrast to possibly variable numbers for the signing and verification algorithm of \WOTSP. While no timing attacks are identified against the implementations of our construction and \WOTSP, stable computing time is always preferable (especially for signing algorithms whose computation involves a private key). 
-    \item Reduced signature size and number of hash calls. For instance, the \SPHINCSP-256s parameter set suggests $w=16$ and $l=67$. In our construction, for $w=16$ we require $l=66$, which reduces 1.5\% in both running time (in terms of the expected number of hash function calls) and size. We refer to  \cref{tab:ots} for more details.
+    \item Reduced signature size and number of hash calls. For instance, a baseline 256-bit-classical parameter choice suggests $w=16$ and $l=67$. In our construction, for $w=16$ we require $l=66$, which reduces 1.5\% in both running time (in terms of the expected number of hash function calls) and size. We refer to \cref{tab:ots} for more details.
 \end{itemize}
 
 \begin{table}[t]
