@@ -18,7 +18,7 @@
 void merkle_sign(uint8_t *sig, unsigned char *root,
                  const spx_ctx *ctx,
                  uint32_t wots_addr[8], uint32_t tree_addr[8],
-                 uint32_t idx_leaf)
+                 uint32_t idx_leaf, uint32_t tree_height)
 {
     unsigned char *auth_path = sig + SPX_WOTS_BYTES;
     struct leaf_info_x1 info = { 0 };
@@ -37,7 +37,7 @@ void merkle_sign(uint8_t *sig, unsigned char *root,
 
     treehashx1(root, auth_path, ctx,
                 idx_leaf, 0,
-                SPX_TREE_HEIGHT,
+                tree_height,
                 wots_gen_leafx1,
                 tree_addr, &info);
 }
@@ -45,10 +45,11 @@ void merkle_sign(uint8_t *sig, unsigned char *root,
 /* Compute root node of the top-most subtree. */
 void merkle_gen_root(unsigned char *root, const spx_ctx *ctx)
 {
+    uint32_t top_tree_height = spx_tree_height(SPX_D - 1);
     /* We do not need the auth path in key generation, but it simplifies the
        code to have just one treehash routine that computes both root and path
        in one function. */
-    unsigned char auth_path[SPX_TREE_HEIGHT * SPX_N + SPX_WOTS_BYTES];
+    unsigned char auth_path[SPX_MAX_TREE_HEIGHT * SPX_N + SPX_WOTS_BYTES];
     uint32_t top_tree_addr[8] = {0};
     uint32_t wots_addr[8] = {0};
 
@@ -57,5 +58,6 @@ void merkle_gen_root(unsigned char *root, const spx_ctx *ctx)
 
     merkle_sign(auth_path, root, ctx,
                 wots_addr, top_tree_addr,
-                (uint32_t)~0 /* ~0 means "don't bother generating an auth path */ );
+                (uint32_t)~0 /* ~0 means "don't bother generating an auth path */ ,
+                top_tree_height);
 }

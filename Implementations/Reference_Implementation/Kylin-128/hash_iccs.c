@@ -93,12 +93,6 @@ void hash_message(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
                   const unsigned char *m, unsigned long long mlen,
                   const spx_ctx *ctx)
 {
-#define SPX_TREE_BITS (SPX_TREE_HEIGHT * (SPX_D - 1))
-#define SPX_TREE_BYTES ((SPX_TREE_BITS + 7) / 8)
-#define SPX_LEAF_BITS SPX_TREE_HEIGHT
-#define SPX_LEAF_BYTES ((SPX_LEAF_BITS + 7) / 8)
-#define SPX_DGST_BYTES (SPX_FORS_MSG_BYTES + SPX_TREE_BYTES + SPX_LEAF_BYTES)
-
     static const unsigned char tag[] = "Kylin-H-MSG-v1";
     unsigned char buf[SPX_DGST_BYTES];
     unsigned char *bufp = buf;
@@ -120,9 +114,17 @@ void hash_message(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
 #endif
 
     *tree = bytes_to_ull(bufp, SPX_TREE_BYTES);
-    *tree &= (~(uint64_t)0) >> (64 - SPX_TREE_BITS);
+    if (SPX_TREE_BITS == 0) {
+        *tree = 0;
+    } else if (SPX_TREE_BITS < 64) {
+        *tree &= (~(uint64_t)0) >> (64 - SPX_TREE_BITS);
+    }
     bufp += SPX_TREE_BYTES;
 
     *leaf_idx = (uint32_t)bytes_to_ull(bufp, SPX_LEAF_BYTES);
-    *leaf_idx &= (~(uint32_t)0) >> (32 - SPX_LEAF_BITS);
+    if (SPX_LEAF_BITS == 0) {
+        *leaf_idx = 0;
+    } else if (SPX_LEAF_BITS < 32) {
+        *leaf_idx &= (~(uint32_t)0) >> (32 - SPX_LEAF_BITS);
+    }
 }

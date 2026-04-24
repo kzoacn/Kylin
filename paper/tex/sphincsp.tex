@@ -439,13 +439,13 @@ The method \texttt{xmss\_pkFromSig} takes an $n$-byte message $M$, an XMSS signa
 
 \subsection{HT: The Hypertree}
 
-The \SPHINCSA\ hypertree HT is a variant of \XMSSMT. It is essentially a certification tree of XMSS instances. A HT is a tree of several layers of XMSS trees. The trees on top and intermediate layers are used to sign the public keys, i.e., the root nodes, of the XMSS trees on the respective next layer below. Trees on the lowest layer are used to sign the actual messages, which are FORS public keys in \SPHINCSA. All XMSS trees in HT have equal height.
+The \SPHINCSA\ hypertree HT is a variant of \XMSSMT. It is essentially a certification tree of XMSS instances. A HT is a tree of several layers of XMSS trees. The trees on top and intermediate layers are used to sign the public keys, i.e., the root nodes, of the XMSS trees on the respective next layer below. Trees on the lowest layer are used to sign the actual messages, which are FORS public keys in \SPHINCSA.
 
-Consider a HT of total height $h$ that has $d$ layers of XMSS trees of height $h'=h/d$. Then layer $d-1$ contains one XMSS tree, layer $d-2$ contains $2^{h'}$ XMSS trees, and so on. Finally, layer $0$ contains $2^{h-h'}$ XMSS trees.
+Consider a HT of total height $h$ that has $d$ layers of XMSS trees with per-layer heights $(h_0,\ldots,h_{d-1})$ from bottom to top, where $\sum_{i=0}^{d-1} h_i = h$. Then layer $d-1$ contains one XMSS tree. In general, layer $i$ contains $2^{\sum_{j=i+1}^{d-1} h_j}$ XMSS trees. Finally, layer $0$ contains $2^{h-h_0}$ XMSS trees.
 
 \subsubsection{HT Parameters}
 \label{sec:htpara}
-In addition to all XMSS parameters, a HT requires the hypertree height $h$ and the number of tree layers $d$, specified as an integer value that divides $h$ without remainder. The same tree height $h'=h/d$ and the same Winternitz parameter $w$ are used for all tree layers.
+In addition to all XMSS parameters, a HT requires the hypertree height $h$, the number of tree layers $d$, and per-layer XMSS heights $(h_0,\ldots,h_{d-1})$ with positive integers satisfying $\sum_{i=0}^{d-1} h_i = h$. The same Winternitz parameter $w$ is used for all tree layers.
 
 
 \subsubsection{HT Key Generation (Function \texttt{ht\_PKgen})}
@@ -461,7 +461,7 @@ The HT public key is the public key (root node) of the single XMSS tree on the t
 \end{algorithm}
 \subsubsection{HT Signature}
 
-A HT signature $\sight$ is a byte string of length $(h+d*\len)*n$. It consists of $d$ XMSS signatures (of $(h/d+\len)*n$ bytes each).
+A HT signature $\sight$ is a byte string of length $(h+d*\len)*n$. It consists of $d$ XMSS signatures, where layer $i$ contributes one XMSS signature of $(h_i+\len)*n$ bytes.
 
 The data format for a signature is given in \cref{fig:spx11}.
 
@@ -473,7 +473,7 @@ The data format for a signature is given in \cref{fig:spx11}.
         \wordbox[lrt]{1}{...} \\
         \skippedwords \\
         \wordbox[lrb]{1}{...} \\
-        \wordbox{1}{$\mathbf{AUTH}[h-1]$}
+        \wordbox{1}{$\mathbf{AUTH}[h_i-1]$}
     \end{bytefield}
     %\includegraphics[width=.4\linewidth]{paper/spx-fig/Figure11.pdf}
     \caption{HT Signature.} \label{fig:spx11}
@@ -481,9 +481,9 @@ The data format for a signature is given in \cref{fig:spx11}.
 
 \subsubsection{HT Signature Generation (Function \texttt{ht\_sign})}
 
-To compute a HT signature $\sight$ of a message $M$ using, \texttt{ht\_sign} (\cref{alg:htsign}) described below uses \texttt{xmss\_sign} as defined in \cref{sec:xmsssign}. The algorithm \texttt{ht\_sign} takes as input a message $M$, a private seed \sk.\seed, a public seed $\pk.\seed$, and an index \texttt{idx}. The index identifies the leaf of the hypertree to be used to sign the message. The HT signature then consists of a stack of XMSS signatures using the XMSS trees on the path from the leaf with index idx to the top tree. Note that idx is passed as two separate arguments, split into an index to address the specific tree and the leaf index within that tree. This allows for a somewhat higher hypertree, as one can use a 64-bit integer for \texttt{tree\_idx} to support parameters that conform to $h<64+h/d$. This matches the parameters in this specification If other parameter sets are used that allow greater $h$, the data type of \texttt{tree\_idx} MUST be adapted accordingly.
+To compute a HT signature $\sight$ of a message $M$ using, \texttt{ht\_sign} (\cref{alg:htsign}) described below uses \texttt{xmss\_sign} as defined in \cref{sec:xmsssign}. The algorithm \texttt{ht\_sign} takes as input a message $M$, a private seed \sk.\seed, a public seed $\pk.\seed$, and an index \texttt{idx}. The index identifies the leaf of the hypertree to be used to sign the message. The HT signature then consists of a stack of XMSS signatures using the XMSS trees on the path from the leaf with index idx to the top tree. Note that idx is passed as two separate arguments, split into an index to address the specific tree and the leaf index within that tree. This allows for a somewhat higher hypertree, as one can use a 64-bit integer for \texttt{tree\_idx} to support parameters that conform to $h<64+h_0$. This matches the parameters in this specification If other parameter sets are used that allow greater $h$, the data type of \texttt{tree\_idx} MUST be adapted accordingly.
 
-Algorithm \texttt{ht\_sign} uses \texttt{xmss\_pkFromSig} to compute the root node of an XMSS instance after that instance was used for signing. An alternative is to use \texttt{xmss\_PKgen}. However, \texttt{xmss\_PKgen} rebuilds the whole tree while \texttt{xmss\_pkFromSig} only does one call to \texttt{wots\_pkFromSig} and $(h'-1)$ calls to $\hashH$. The algorithm \texttt{ht\_sign} as described below is just one way to generate a HT signature. Other methods MAY be used as long as they generate the same output.
+Algorithm \texttt{ht\_sign} uses \texttt{xmss\_pkFromSig} to compute the root node of an XMSS instance after that instance was used for signing. An alternative is to use \texttt{xmss\_PKgen}. However, \texttt{xmss\_PKgen} rebuilds the whole tree while \texttt{xmss\_pkFromSig} only does one call to \texttt{wots\_pkFromSig} and $(h_i-1)$ calls to $\hashH$ on layer $i$. The algorithm \texttt{ht\_sign} as described below is just one way to generate a HT signature. Other methods MAY be used as long as they generate the same output.
 
 \begin{algorithm}
     \inputminted[breaklines,linenos,tabsize=2,mathescape,escapeinside=||]{C}{paper/code/ht_sign.cs}
@@ -640,7 +640,7 @@ All the restrictions stated in the previous sections apply. Recall that we use $
 \begin{itemize}
     \item $m$: the message digest length in bytes. It is computed as
     $$
-    m=\lfloor(k\log t+7)/8\rfloor+\lfloor(h-h/d+7)/8\rfloor+\lfloor(h/d+7)/8\rfloor.
+    m=\lfloor(k\log t+7)/8\rfloor+\lfloor(h-h_0+7)/8\rfloor+\lfloor(h_0+7)/8\rfloor.
     $$
     While only $h+k\log t$ bits would be needed, using the longer $m$ as defined above simplifies implementations significantly.
     
@@ -705,7 +705,7 @@ The data format for a signature is given in \cref{fig:spx15}.
 
 \subsection{\SPHINCSA\ Signature Generation (Function \texttt{spa\_sign})}
 
-Generating a \SPHINCSA\ signature consists of four steps. First, a random value $\randstr$ is pseudorandomly generated. Next, this is used to compute a $m$ byte message digest which is split into a $\lfloor(k\log t+7)/8\rfloor$-byte partial message digest \texttt{tmp\_md}, a $\lfloor(h-h/d+7)/8\rfloor$-byte tree index \texttt{tmp\_idx\_tree}, and a $\lfloor(h/d+7)/8\rfloor$-byte leaf index \texttt{tmp\_idx\_leaf}. Next, the actual values $\md$, \texttt{idx\_tree}, and \texttt{idx\_leaf} are computed by extracting the necessary number of bits. The partial message digest md is then signed with the \texttt{idx\_leaf}-th FORS key pair of the \texttt{idx\_tree}-th XMSS tree on the lowest HT layer. The public key of the FORS key pair is then signed using HT.The index is never actually used as a whole, but immediately split into a tree index and a leaf index, for ease of implementation. 
+Generating a \SPHINCSA\ signature consists of four steps. First, a random value $\randstr$ is pseudorandomly generated. Next, this is used to compute a $m$ byte message digest which is split into a $\lfloor(k\log t+7)/8\rfloor$-byte partial message digest \texttt{tmp\_md}, a $\lfloor(h-h_0+7)/8\rfloor$-byte tree index \texttt{tmp\_idx\_tree}, and a $\lfloor(h_0+7)/8\rfloor$-byte leaf index \texttt{tmp\_idx\_leaf}. Next, the actual values $\md$, \texttt{idx\_tree}, and \texttt{idx\_leaf} are computed by extracting the necessary number of bits. The partial message digest md is then signed with the \texttt{idx\_leaf}-th FORS key pair of the \texttt{idx\_tree}-th XMSS tree on the lowest HT layer. The public key of the FORS key pair is then signed using HT.The index is never actually used as a whole, but immediately split into a tree index and a leaf index, for ease of implementation.
 
 When computing $\tt{R}$, the PRF takes a $n$-byte string opt which is initialized with $\pk.\seed$ but can be overwritten with randomness if the global variable \texttt{RANDOMIZE} is set. This option is given as otherwise \SPHINCSA\ signatures would be always deterministic.  
 
@@ -756,7 +756,7 @@ In this section, we first define the requirements on parameters and discuss exis
 
 Recall that we use $a=\log t$. Moreover, from these values the values $m$ and len are computed as
 \begin{itemize}
-    \item $ m $: the message digest length in bytes. It is computed as $$m=\lfloor(k\log t+7)/8\rfloor+\lfloor(h-h/d+7)/8\rfloor+\lfloor(h/d+7)/8\rfloor.$$
+    \item $ m $: the message digest length in bytes. It is computed as $$m=\lfloor(k\log t+7)/8\rfloor+\lfloor(h-h_0+7)/8\rfloor+\lfloor(h_0+7)/8\rfloor.$$
     \item $\len$: the number of $n$-byte string elements in a \WOTSCS\ private key, public key, and signature.
     $$
     \len = \min \left\{ \ell : \left| D_{\ell, \lfloor \frac{\ell \cdot (w-1)}{2} \rfloor} \right| \geq 2^n \right\} \enspace,
@@ -770,11 +770,11 @@ The Winternitz parameter $w$ determines the number and length of the hash chains
 
 The height of the hypertree $h$ determines the number of FORS instances. Hence, it determines the probability that a FORS key pair is used several times, given the number of signatures made with a \SPHINCSA\ key pair. Hence, the height has a direct impact on security: A taller hypertree gives more security. On the other hand, a taller tree leads to larger signatures.
 
-The number of layers $d$ is a pure performance trade-off parameter and does not influence security. It determines the number of layers of XMSS trees in the hypertree. Hence, $d$ must divide $h$ without remainder. The parameter $d$ thereby defines the height of the XMSS trees used. The greater $d$, the smaller the subtrees, the faster signing. However, $d$ also controls the number of layers and thereby the number of \WOTSCS\ signatures within a HT and thereby a \SPHINCSA\ signature.
+The number of layers $d$ is a pure performance trade-off parameter and does not influence security. It determines the number of layers of XMSS trees in the hypertree. The per-layer heights $(h_0,\ldots,h_{d-1})$ define the XMSS heights and must satisfy $\sum_{i=0}^{d-1} h_i = h$. Increasing $d$ usually allows smaller subtrees and faster signing. However, $d$ also controls the number of layers and thereby the number of \WOTSCS\ signatures within a HT and thereby a \SPHINCSA\ signature.
 
 The parameters $k$ and $t$ determine the performance and security of FORS. The number of leaves of a tree in FORS $t$ must be a power of two while $k$ can be chosen freely. A smaller $t$ generally leads to smaller and faster signatures. However, for a given security level a smaller $t$ requires a greater $k$ which increases signature size and slows down signing. Hence, it is important to balance these two parameters. This is best done using the formulas below.
 
-The message digest length $m$ is the output length of $\hashmsg$ in bytes. It is $\lfloor(k\log t+7)/8\rfloor+ \lfloor(h-h/d+7)/8\rfloor+\lfloor(h/d+7)/8\rfloor$ bytes.
+The message digest length $m$ is the output length of $\hashmsg$ in bytes. It is $\lfloor(k\log t+7)/8\rfloor+ \lfloor(h-h_0+7)/8\rfloor+\lfloor(h_0+7)/8\rfloor$ bytes.
 
 The number len of chains in a \WOTSCS\ key pair determines the \WOTSCS\ signature size.
 
@@ -784,13 +784,13 @@ In the following we provide formulas to compute speed, size and security for a g
  
 
 \paragraph{Key Generation.} 
-Generating the \SPHINCSA\ private key and $\pk.\seed$ requires three calls to a secure random number generator. Next we have to generate the top tree. For the leaves we need to do $2^{h/d}$ \WOTSCS key generations ($\len$ calls to PRF for generating the $\sk$ and $w \len$ calls to $\hashF$ for the $\pk$) and we have to compress the \WOTSCS\ public key (one call to $\Th_{\len}$). Computing the root of the top tree requires $(2^{h/d}-1)$ calls to $\hashH$.
+Generating the \SPHINCSA\ private key and $\pk.\seed$ requires three calls to a secure random number generator. Next we have to generate the top tree (layer $d-1$). For the leaves we need to do $2^{h_{d-1}}$ \WOTSCS key generations ($\len$ calls to PRF for generating the $\sk$ and $w \len$ calls to $\hashF$ for the $\pk$) and we have to compress the \WOTSCS\ public key (one call to $\Th_{\len}$). Computing the root of the top tree requires $(2^{h_{d-1}}-1)$ calls to $\hashH$.
 
 \paragraph{Signing.}
-For randomization and message compression we need one call to $\PRFmsg$, and one to $\hashmsg$. The FORS signature requires $kt$ calls to $\PRF$ and $\hashF$. Further, we have to compute the root of $k$ binary trees of height $\log t$ which adds $k(t-1)$ calls to $\hashH$. Finally, we need one call to $\Th_{k}$. Next, we compute one HT signature which consists of $d$ trees similar to the key generation. Hence, we have to do $d(2^{h/d})$ times len calls to $\PRF$ and $w \len$ calls to $\hashF$ as well as $d(2^{h/d})$ calls to $\Th_{\len}$. For computing the root of each tree we get additionally $d(2^{h/d}-1)$ calls to $\hashH$.
+For randomization and message compression we need one call to $\PRFmsg$, and one to $\hashmsg$. The FORS signature requires $kt$ calls to $\PRF$ and $\hashF$. Further, we have to compute the root of $k$ binary trees of height $\log t$ which adds $k(t-1)$ calls to $\hashH$. Finally, we need one call to $\Th_{k}$. Next, we compute one HT signature which consists of $d$ trees similar to the key generation. Hence, we have to do $\sum_{i=0}^{d-1} 2^{h_i}$ times len calls to $\PRF$ and $w \len$ calls to $\hashF$ as well as $\sum_{i=0}^{d-1} 2^{h_i}$ calls to $\Th_{\len}$. For computing the root of each tree we get additionally $\sum_{i=0}^{d-1} (2^{h_i}-1)$ calls to $\hashH$.
 
 \paragraph{Verification.}
-First we need to compute the message hash using $\hashmsg$. We need to do one FORS verification which requires $k$ calls to $\hashF$ (to compute the leaf nodes from the signature elements), $k\log t$ calls to $\hashH$ (to compute the root nodes using the leaf nodes and the authentication paths), and one call to $\Th_{k}$ for hashing the roots. Next, we have to verify $d$ XMSS signatures which takes $< w \len$ calls to $\hashF$ and one call to $\Th_{\len}$ each for \WOTSCS\ signature verification\footnotemark. It also needs $dh/d$ calls to $\hashH$ for the $d$ root computations.
+First we need to compute the message hash using $\hashmsg$. We need to do one FORS verification which requires $k$ calls to $\hashF$ (to compute the leaf nodes from the signature elements), $k\log t$ calls to $\hashH$ (to compute the root nodes using the leaf nodes and the authentication paths), and one call to $\Th_{k}$ for hashing the roots. Next, we have to verify $d$ XMSS signatures which takes $< w \len$ calls to $\hashF$ and one call to $\Th_{\len}$ each for \WOTSCS\ signature verification\footnotemark. It also needs $\sum_{i=0}^{d-1} h_i = h$ calls to $\hashH$ for the $d$ root computations.
 
 \footnotetext{It should be noted that the $w \len$ bound for calls to $\hashF$ is a worst-case bound. This is a bound on the cost for \WOTSCS signature verification. Given that the messages are hash values which can assumed to be close to uniformly distributed, this value will be closer to the average-case bound $(w/2)$. len in actual measurements.}
 

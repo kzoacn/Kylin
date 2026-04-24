@@ -12,11 +12,11 @@ ADRS = toByte(0, 32);
   // compute message digest and index
   digest = H_msg(R, PK.seed, PK.root, M);
   tmp_md = first floor((ka +7)/ 8) bytes of digest;
-  tmp_idx_tree = next floor((h - h/d +7)/ 8) bytes of digest;
-  tmp_idx_leaf = next floor((h/d +7)/ 8) bytes of digest;
+  tmp_idx_tree = next floor((h - h_0 +7)/ 8) bytes of digest;
+  tmp_idx_leaf = next floor((h_0 +7)/ 8) bytes of digest;
   md = first ka bits of tmp_md;
-  idx_tree = first h - h/d bits of tmp_idx_tree;
-  idx_leaf = first h/d bits of tmp_idx_leaf;
+  idx_tree = first h - h_0 bits of tmp_idx_tree;
+  idx_leaf = first h_0 bits of tmp_idx_leaf;
   // FORS sign
   ADRS.setLayerAddress(0);
   ADRS.setTreeAddress(idx_tree);

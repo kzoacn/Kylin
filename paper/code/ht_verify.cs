@@ -2,6 +2,7 @@
 # Output: Boolean
 ht_verify(M, SIG_HT, PK.seed, idx_tree, idx_leaf, PK_HT){ 
   // init
+  // per-layer XMSS heights are h_0, h_1, ..., h_{d-1} with sum h
   ADRS = toByte(0, 32);
   // verify
   SIG_tmp = SIG_HT.getXMSSSignature(0);
@@ -9,8 +10,8 @@ ht_verify(M, SIG_HT, PK.seed, idx_tree, idx_leaf, PK_HT){
   ADRS.setTreeAddress(idx_tree);
   node = xmss_pkFromSig(idx_leaf, SIG_tmp, M, PK.seed, ADRS);
   for ( j = 1; j < d; j++ ) {
-    idx_leaf = (h / d) least significant bits of idx_tree;
-    idx_tree = (h - (j + 1) * h / d) most significant bits of idx_tree;
+    idx_leaf = h_j least significant bits of idx_tree;
+    idx_tree = idx_tree >> h_j;
     SIG_tmp = SIG_HT.getXMSSSignature(j);
     ADRS.setLayerAddress(j);
     ADRS.setTreeAddress(idx_tree);

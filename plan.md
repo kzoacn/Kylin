@@ -116,3 +116,10 @@
 - 参数优化目标由三组基线扩展为六组提交配置：`{128,256,512} x {fast,small}`。
 - 明确 `fast` 目标为“在合理范围内优先提升签名速度”，`small` 目标为“在合理范围内优先缩小签名尺寸”。
 - 更新了 Phase A 任务与验收标准，以 six-profile 导出与一致性落地为核心。
+
+### 2026-04-25 - Hypertree Per-Layer Height Refactor (All-7 Compatible)
+
+- 将参考实现与优化实现的 `Kylin-{128,256,512}` 统一改造为“分层高度向量”模型：`(h_0,\dots,h_{d-1})`，并保持当前配置为 10 层全 `7`（总高仍为 `70`）。
+- 代码侧已完成以下改造：参数定义、`hash_message` 的 `tree/leaf` 位拆分、`ht` 每层签名/验签索引推进、`merkle_sign` 层高参数化、地址字段约束同步。
+- 文档侧已同步修改 `HT: The Hypertree`、`spa_sign/spa_verify` 与 `ht_sign/ht_verify` 伪代码、消息摘要长度公式与复杂度公式，去除统一 `h/d` 叙述。
+- 验证结果：六个实现目录全部 `make clean all test` 通过；三组参考实现 `make kat` 通过，`Test_Vectors/` 无变更，确认“全 7”下输出行为保持不变。

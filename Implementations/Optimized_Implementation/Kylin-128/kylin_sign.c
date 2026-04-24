@@ -11,6 +11,25 @@
 #include "merkle.h"
 #include "kylin_sign.h"
 
+static uint32_t get_low_bits(uint64_t value, uint32_t bits)
+{
+    if (bits == 0) {
+        return 0;
+    }
+    if (bits >= 32) {
+        return (uint32_t)value;
+    }
+    return (uint32_t)(value & ((1ULL << bits) - 1ULL));
+}
+
+static uint64_t shift_right_bits(uint64_t value, uint32_t bits)
+{
+    if (bits >= 64) {
+        return 0;
+    }
+    return value >> bits;
+}
+
 int kylin_seed_keypair(unsigned char *pk, unsigned char *sk,
                        const unsigned char *seed)
 {
@@ -43,6 +62,7 @@ int kylin_sign_signature(uint8_t *sig, unsigned long long *siglen,
     uint32_t wots_addr[8] = {0};
     uint32_t tree_addr[8] = {0};
     unsigned int i;
+    uint32_t tree_height;
 
     memcpy(ctx.sk_seed, sk, SPX_N);
     memcpy(ctx.pub_seed, pk, SPX_N);
@@ -62,17 +82,20 @@ int kylin_sign_signature(uint8_t *sig, unsigned long long *siglen,
     sig += SPX_FORS_BYTES;
 
     for (i = 0; i < SPX_D; i++) {
+        tree_height = spx_tree_height(i);
         set_layer_addr(tree_addr, i);
         set_tree_addr(tree_addr, tree);
 
         copy_subtree_addr(wots_addr, tree_addr);
         set_keypair_addr(wots_addr, idx_leaf);
 
-        merkle_sign(sig, root, &ctx, wots_addr, tree_addr, idx_leaf);
-        sig += SPX_WOTS_BYTES + SPX_TREE_HEIGHT * SPX_N;
+        merkle_sign(sig, root, &ctx, wots_addr, tree_addr, idx_leaf, tree_height);
+        sig += SPX_WOTS_BYTES + tree_height * SPX_N;
 
-        idx_leaf = (uint32_t)(tree & ((1u << SPX_TREE_HEIGHT) - 1u));
-        tree >>= SPX_TREE_HEIGHT;
+        if (i + 1 < SPX_D) {
+            idx_leaf = get_low_bits(tree, tree_height);
+            tree = shift_right_bits(tree, tree_height);
+        }
     }
 
     *siglen = SPX_BYTES;
@@ -95,6 +118,7 @@ int kylin_sign_verify(const uint8_t *sig, unsigned long long siglen,
     uint32_t tree_addr[8] = {0};
     uint32_t wots_pk_addr[8] = {0};
     unsigned int i;
+    uint32_t tree_height;
 
     if (siglen != SPX_BYTES) {
         return -1;
@@ -117,6 +141,7 @@ int kylin_sign_verify(const uint8_t *sig, unsigned long long siglen,
     sig += SPX_FORS_BYTES;
 
     for (i = 0; i < SPX_D; i++) {
+        tree_height = spx_tree_height(i);
         set_layer_addr(tree_addr, i);
         set_tree_addr(tree_addr, tree);
 
@@ -130,12 +155,14 @@ int kylin_sign_verify(const uint8_t *sig, unsigned long long siglen,
 
         thash(leaf, wots_pk, SPX_WOTS_LEN, &ctx, wots_pk_addr);
 
-        compute_root(root, leaf, idx_leaf, 0, sig, SPX_TREE_HEIGHT,
+        compute_root(root, leaf, idx_leaf, 0, sig, tree_height,
                      &ctx, tree_addr);
-        sig += SPX_TREE_HEIGHT * SPX_N;
+        sig += tree_height * SPX_N;
 
-        idx_leaf = (uint32_t)(tree & ((1u << SPX_TREE_HEIGHT) - 1u));
-        tree >>= SPX_TREE_HEIGHT;
+        if (i + 1 < SPX_D) {
+            idx_leaf = get_low_bits(tree, tree_height);
+            tree = shift_right_bits(tree, tree_height);
+        }
     }
 
     if (memcmp(root, pub_root, SPX_N) != 0) {
