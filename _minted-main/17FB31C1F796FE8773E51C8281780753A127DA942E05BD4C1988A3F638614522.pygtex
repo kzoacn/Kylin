@@ -1,0 +1,26 @@
+\begin{Verbatim}[commandchars=\\\{\},codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8\relax}]
+\PYG{c+cp}{\PYGZsh{}}\PYG{c+cp}{ Input: index idx, XMSS signature SIG\PYGZus{}XMSS = (sig || AUTH), n\PYGZhy{}byte message M, public seed PK.seed, address ADRS}
+\PYG{c+cp}{\PYGZsh{}}\PYG{c+cp}{ Output: n\PYGZhy{}byte root value node[0]}
+\PYG{n}{xmss\PYGZus{}pkFromSig}\PYG{p}{(}\PYG{n}{idx}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{SIG\PYGZus{}XMSS}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{M}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{PK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{ADRS}\PYG{p}{)}\PYG{p}{\PYGZob{}}\PYG{+w}{ }\PYG{c+c1}{// compute WOTS+ pk from WOTS+ sig}
+\PYG{n}{ADRS}\PYG{p}{.}\PYG{n}{setType}\PYG{p}{(}\PYG{n}{WOTS\PYGZus{}HASH}\PYG{p}{)}\PYG{p}{;}
+\PYG{n}{ADRS}\PYG{p}{.}\PYG{n}{setKeyPairAddress}\PYG{p}{(}\PYG{n}{idx}\PYG{p}{)}\PYG{p}{;}
+\PYG{n}{sig}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{SIG\PYGZus{}XMSS}\PYG{p}{.}\PYG{n}{getWOTSSig}\PYG{p}{(}\PYG{p}{)}\PYG{p}{;}
+\PYG{n}{AUTH}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{SIG\PYGZus{}XMSS}\PYG{p}{.}\PYG{n}{getXMSSAUTH}\PYG{p}{(}\PYG{p}{)}\PYG{p}{;}
+\PYG{n}{node}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{wots\PYGZus{}pkFromSig}\PYG{p}{(}\PYG{n}{sig}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{M}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{PK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{ADRS}\PYG{p}{)}\PYG{p}{;}
+\PYG{c+c1}{// compute root from WOTS+ pk and AUTH}
+\PYG{n}{ADRS}\PYG{p}{.}\PYG{n}{setType}\PYG{p}{(}\PYG{n}{TREE}\PYG{p}{)}\PYG{p}{;}
+\PYG{n}{ADRS}\PYG{p}{.}\PYG{n}{setTreeIndex}\PYG{p}{(}\PYG{n}{idx}\PYG{p}{)}\PYG{p}{;}
+\PYG{k}{for}\PYG{+w}{ }\PYG{p}{(}\PYG{+w}{ }\PYG{n}{k}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{l+m+mi}{0}\PYG{p}{;}\PYG{+w}{ }\PYG{n}{k}\PYG{+w}{ }\PYG{o}{\PYGZlt{}}\PYG{+w}{ }\PYG{esc}{\texttt{h'}}\PYG{p}{;}\PYG{+w}{ }\PYG{n}{k}\PYG{o}{+}\PYG{o}{+}\PYG{+w}{ }\PYG{p}{)}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{  }\PYG{n}{ADRS}\PYG{p}{.}\PYG{n}{setTreeHeight}\PYG{p}{(}\PYG{n}{k}\PYG{o}{+}\PYG{l+m+mi}{1}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{  }\PYG{k}{if}\PYG{+w}{ }\PYG{p}{(}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{floor}\PYG{p}{(}\PYG{n}{idx}\PYG{+w}{ }\PYG{o}{/}\PYG{+w}{ }\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{o}{\PYGZca{}}\PYG{n}{k}\PYG{p}{)}\PYG{p}{)}\PYG{+w}{ }\PYG{o}{\PYGZpc{}}\PYG{+w}{ }\PYG{l+m+mi}{2}\PYG{p}{)}\PYG{+w}{ }\PYG{o}{=}\PYG{o}{=}\PYG{+w}{ }\PYG{l+m+mi}{0}\PYG{+w}{ }\PYG{p}{)}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{      }\PYG{n}{ADRS}\PYG{p}{.}\PYG{n}{setTreeIndex}\PYG{p}{(}\PYG{n}{ADRS}\PYG{p}{.}\PYG{n}{getTreeIndex}\PYG{p}{(}\PYG{p}{)}\PYG{+w}{ }\PYG{o}{/}\PYG{+w}{ }\PYG{l+m+mi}{2}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{      }\PYG{n}{node}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{H}\PYG{p}{(}\PYG{n}{PK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{ADRS}\PYG{p}{,}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{node}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]}\PYG{+w}{ }\PYG{+w}{ }\PYG{n}{AUTH}\PYG{p}{[}\PYG{n}{k}\PYG{p}{]}\PYG{p}{)}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{    }\PYG{p}{\PYGZcb{}}\PYG{+w}{ }\PYG{k}{else}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{      }\PYG{n}{ADRS}\PYG{p}{.}\PYG{n}{setTreeIndex}\PYG{p}{(}\PYG{p}{(}\PYG{n}{ADRS}\PYG{p}{.}\PYG{n}{getTreeIndex}\PYG{p}{(}\PYG{p}{)}\PYG{+w}{ }\PYG{o}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+m+mi}{1}\PYG{p}{)}\PYG{+w}{ }\PYG{o}{/}\PYG{+w}{ }\PYG{l+m+mi}{2}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{      }\PYG{n}{node}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{H}\PYG{p}{(}\PYG{n}{PK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{ADRS}\PYG{p}{,}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{AUTH}\PYG{p}{[}\PYG{n}{k}\PYG{p}{]}\PYG{+w}{ }\PYG{+w}{ }\PYG{n}{node}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]}\PYG{p}{)}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{    }\PYG{p}{\PYGZcb{}}
+\PYG{+w}{    }\PYG{n}{node}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{node}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]}\PYG{p}{;}
+\PYG{+w}{  }\PYG{p}{\PYGZcb{}}
+\PYG{+w}{  }\PYG{k}{return}\PYG{+w}{ }\PYG{n}{node}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+\end{Verbatim}

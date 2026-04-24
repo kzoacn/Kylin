@@ -1,0 +1,36 @@
+\begin{Verbatim}[commandchars=\\\{\},codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8\relax}]
+\PYG{c+cp}{\PYGZsh{}}\PYG{c+cp}{ Input: Message M, private key SK = (SK.seed, SK.prf, PK.seed, PK.root)}
+\PYG{c+cp}{\PYGZsh{}}\PYG{c+cp}{ Output: $\SPHINCSA$ signature SIG}
+\PYG{n}{spa\PYGZus{}sign}\PYG{p}{(}\PYG{n}{M}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{SK}\PYG{p}{)}\PYG{p}{\PYGZob{}}\PYG{+w}{ }\PYG{c+c1}{// init}
+\PYG{n}{ADRS}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{toByte}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,}\PYG{+w}{ }\PYG{l+m+mi}{32}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{  }\PYG{c+c1}{// generate randomizer}
+\PYG{+w}{  }\PYG{n}{opt}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{PK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{;}
+\PYG{+w}{  }\PYG{k}{if}\PYG{p}{(}\PYG{n}{RANDOMIZE}\PYG{p}{)}\PYG{p}{\PYGZob{}}
+\PYG{+w}{    }\PYG{n}{opt}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{rand}\PYG{p}{(}\PYG{n}{n}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{  }\PYG{p}{\PYGZcb{}}
+\PYG{+w}{  }\PYG{n}{R}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{PRF\PYGZus{}msg}\PYG{p}{(}\PYG{n}{SK}\PYG{p}{.}\PYG{n}{prf}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{opt}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{M}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{  }\PYG{n}{SIG}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{SIG}\PYG{+w}{ }\PYG{+w}{ }\PYG{n}{R}\PYG{p}{;}
+\PYG{+w}{  }\PYG{c+c1}{// compute message digest and index}
+\PYG{+w}{  }\PYG{n}{digest}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{H\PYGZus{}msg}\PYG{p}{(}\PYG{n}{R}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{PK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{PK}\PYG{p}{.}\PYG{n}{root}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{M}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{  }\PYG{n}{tmp\PYGZus{}md}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{first}\PYG{+w}{ }\PYG{n}{floor}\PYG{p}{(}\PYG{p}{(}\PYG{n}{ka}\PYG{+w}{ }\PYG{o}{+}\PYG{l+m+mi}{7}\PYG{p}{)}\PYG{o}{/}\PYG{+w}{ }\PYG{l+m+mi}{8}\PYG{p}{)}\PYG{+w}{ }\PYG{n}{bytes}\PYG{+w}{ }\PYG{n}{of}\PYG{+w}{ }\PYG{n}{digest}\PYG{p}{;}
+\PYG{+w}{  }\PYG{n}{tmp\PYGZus{}idx\PYGZus{}tree}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{next}\PYG{+w}{ }\PYG{n}{floor}\PYG{p}{(}\PYG{p}{(}\PYG{n}{h}\PYG{+w}{ }\PYG{o}{\PYGZhy{}}\PYG{+w}{ }\PYG{n}{h}\PYG{o}{/}\PYG{n}{d}\PYG{+w}{ }\PYG{o}{+}\PYG{l+m+mi}{7}\PYG{p}{)}\PYG{o}{/}\PYG{+w}{ }\PYG{l+m+mi}{8}\PYG{p}{)}\PYG{+w}{ }\PYG{n}{bytes}\PYG{+w}{ }\PYG{n}{of}\PYG{+w}{ }\PYG{n}{digest}\PYG{p}{;}
+\PYG{+w}{  }\PYG{n}{tmp\PYGZus{}idx\PYGZus{}leaf}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{next}\PYG{+w}{ }\PYG{n}{floor}\PYG{p}{(}\PYG{p}{(}\PYG{n}{h}\PYG{o}{/}\PYG{n}{d}\PYG{+w}{ }\PYG{o}{+}\PYG{l+m+mi}{7}\PYG{p}{)}\PYG{o}{/}\PYG{+w}{ }\PYG{l+m+mi}{8}\PYG{p}{)}\PYG{+w}{ }\PYG{n}{bytes}\PYG{+w}{ }\PYG{n}{of}\PYG{+w}{ }\PYG{n}{digest}\PYG{p}{;}
+\PYG{+w}{  }\PYG{n}{md}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{first}\PYG{+w}{ }\PYG{n}{ka}\PYG{+w}{ }\PYG{n}{bits}\PYG{+w}{ }\PYG{n}{of}\PYG{+w}{ }\PYG{n}{tmp\PYGZus{}md}\PYG{p}{;}
+\PYG{+w}{  }\PYG{n}{idx\PYGZus{}tree}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{first}\PYG{+w}{ }\PYG{n}{h}\PYG{+w}{ }\PYG{o}{\PYGZhy{}}\PYG{+w}{ }\PYG{n}{h}\PYG{o}{/}\PYG{n}{d}\PYG{+w}{ }\PYG{n}{bits}\PYG{+w}{ }\PYG{n}{of}\PYG{+w}{ }\PYG{n}{tmp\PYGZus{}idx\PYGZus{}tree}\PYG{p}{;}
+\PYG{+w}{  }\PYG{n}{idx\PYGZus{}leaf}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{first}\PYG{+w}{ }\PYG{n}{h}\PYG{o}{/}\PYG{n}{d}\PYG{+w}{ }\PYG{n}{bits}\PYG{+w}{ }\PYG{n}{of}\PYG{+w}{ }\PYG{n}{tmp\PYGZus{}idx\PYGZus{}leaf}\PYG{p}{;}
+\PYG{+w}{  }\PYG{c+c1}{// FORS sign}
+\PYG{+w}{  }\PYG{n}{ADRS}\PYG{p}{.}\PYG{n}{setLayerAddress}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{  }\PYG{n}{ADRS}\PYG{p}{.}\PYG{n}{setTreeAddress}\PYG{p}{(}\PYG{n}{idx\PYGZus{}tree}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{  }\PYG{n}{ADRS}\PYG{p}{.}\PYG{n}{setType}\PYG{p}{(}\PYG{n}{FORS\PYGZus{}TREE}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{  }\PYG{n}{ADRS}\PYG{p}{.}\PYG{n}{setKeyPairAddress}\PYG{p}{(}\PYG{n}{idx\PYGZus{}leaf}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{  }\PYG{n}{SIG\PYGZus{}FORS}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{fors\PYGZus{}sign}\PYG{p}{(}\PYG{n}{md}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{SK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{PK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{ADRS}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{  }\PYG{n}{SIG}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{SIG}\PYG{+w}{ }\PYG{+w}{ }\PYG{n}{SIG\PYGZus{}FORS}\PYG{p}{;}
+\PYG{+w}{  }\PYG{c+c1}{// get FORS public key}
+\PYG{+w}{  }\PYG{n}{PK\PYGZus{}FORS}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{fors\PYGZus{}pkFromSig}\PYG{p}{(}\PYG{n}{SIG\PYGZus{}FORS}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{md}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{PK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{ADRS}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{  }\PYG{c+c1}{// sign FORS public key with HT}
+\PYG{+w}{  }\PYG{n}{ADRS}\PYG{p}{.}\PYG{n}{setType}\PYG{p}{(}\PYG{n}{TREE}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{  }\PYG{n}{SIG\PYGZus{}HT}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{ht\PYGZus{}sign}\PYG{p}{(}\PYG{n}{PK\PYGZus{}FORS}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{SK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{PK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{idx\PYGZus{}tree}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{idx\PYGZus{}leaf}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{  }\PYG{n}{SIG}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{SIG}\PYG{+w}{ }\PYG{+w}{ }\PYG{n}{SIG\PYGZus{}HT}\PYG{p}{;}
+\PYG{+w}{  }\PYG{k}{return}\PYG{+w}{ }\PYG{n}{SIG}\PYG{p}{;}\PYG{+w}{ }
+\PYG{p}{\PYGZcb{}}
+\end{Verbatim}

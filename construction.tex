@@ -1,0 +1,253 @@
+\section{\SPHINCSA\ vs. \SPHINCSP} \label{sec:balanced wotsp}\label{sec:wots-optimization}
+
+In this section we highlight our improvement upon the original \SPHINCSP\ scheme, namely, the one-time signature component.
+Our optimized scheme, \WOTSCS, allows a larger message space / signature size ratio as compared to the original \WOTSP\ scheme, allowing a smaller one-time signature size. As a result, the parameters of the hash-based signature scheme can thus be re-tuned to reduce the signature size without exacerbating the computation time.
+
+We explain the details of our optimization as well as some technical proofs in this section.
+
+\subsection{The \WOTSP~Encoding}
+
+The reason that the \WOTSP (as well as other Winternitz-type OTS) scheme introduces the checksum is that in absence of the checksum the adversary can efficiently forge signatures given a single pair of valid message signature. That is, given $(\sigma,m)$ he forges any $m'$ satisfying $\forall i(m_i\leq m'_i)$ by computing $\hashF^{m'_i}(sk_i)$ $=\hashF^{m'_i-m_i}\big( \hashF^{m_i}(sk_i)\big)$.
+
+\ignore{
+The adversary has advantages in the \WOTSP (as well as other Winternitz type one time signature scheme) if there is no checksum. It can easily obtain $\hashF^{m'_i}(sk_i)$ forall $m'_i$ such that $ m_i\leq m'_i$ from a valid pair of signature and message $(\sigma,m)$. That means the adversary can forge any $m'$ such that $\forall i,m_i\leq m'_i$.
+}
+The checksum addresses the issue: an increase in any $m_i$ leads to a decrease in at least one $C_i$ (recall $C=\sum_{i=1}^{l_1}(w-1-m_i)$). Therefore, the adversary cannot forge any $(m',C')$ satisfying both $\forall i(m_i\leq m'_i)$ and $\forall i(C_i\leq C'_i)$ at the same time.
+
+
+
+
+
+
+\subsection{Size-Optimal Encoding}
+
+More formally, the problem of constructing one-time signature reduces to that of building an efficient encoding scheme $\mathsf{Enc}:\mathcal{M}\rightarrow \mathcal{C}\subseteq[w]^{l}$ for some incomparable codeword set $\mathcal{C}$ (see \cref{incomparable}). In case of \WOTSP, the encoding function $\mathsf{Enc}$ simply appends the checksum to the original message. Note that \WOTSP~ fixes the size of the message to $l_1$ (i.e., $\mathcal{M}=[w]^{l_l}$) and then constructs as small codewords as possible (minimizing $l-l_1$). 
+
+
+
+
+
+\begin{definition}[(In)comparability]\label{incomparable} For  $a,b\in[w]^l$, we denote by $a \leq b$ if for every $ i \in [l]$ we have $a_{i+1}\leq b_{i+1}$.  If $a\leq b$ or $b\leq a$ we say that $a$ and $b$ comparable, or otherwise $a$ and $b$ are incomparable.
+A set $S\subseteq\{a:a\in[w]^l\}$ is said to be incomparable (or called an ``antichain'' in order theory terminology) if any two elements of $S$ are incomparable. 
+\end{definition}
+
+We take a slightly different approach to encoding the messages. That is, we first fix the size of the codewords to $l$, $\mathcal{C}\subseteq[w]^{l}$, and strive to accommodate as large message space $\mathcal{M}$ as possible. Given that {\sf Enc} is an injection it is essentially to maximize the size of $\mathcal{C}\subseteq[w]^{l}$. A natural approach is to encode the codewords such that 
+all elements of every codeword sum to the same value, and therefore the checksum is not explicitly needed.
+Bos and Chaum~\cite{C:BosCha92} studied this approach for the special case of $w=2$.  Vaudenay~\cite{vaudenay1993one} generalized it to arbitrary $w$, but he did not provide an encoding algorithm. Perin et al.\ provided a similar encoding algorithm in~\cite{perin2021improved}, but they did not present a size-optimal proof.
+%As stated in Theorem~\ref{Eisantichain}, this gives rise to the desired set of codewords.
+%following the works of Kaji et al.~\cite{kaji2018hash},
+ 
+ 
+\begin{theorem}
+    \label{Eisantichain}
+    For any $m\in[l(w-1)+1]$, 
+   $\mathcal{C}_m\eqdef\{v\in [w]^l : \sum_{i=1}^l v_i = m \}$ is incomparable.
+\end{theorem}
+\begin{proof}
+Suppose towards contradiction that $\mathcal{C}_m$ (for some fixed $m\in[l(w-1)+1]$) is not incomparable, then there exist distinct $a,b\in \mathcal{C}_m$ s.t. $a\leq b$. There must be an index $j$ such that $a_j<b_j$ (otherwise $a= b$). However, due to equal sum  $\sum_i a_i=\sum_i b_i$  we have $\sum_{1\leq i\leq l \wedge i\neq j} (a_i-b_i)>0$, and there must exist some $1\leq k\leq l$ such that $a_k>b_k$, which is a contradiction to $a\leq b$. \qed
+\end{proof}
+
+Every $\mathcal{C}_m$ gives an encoding scheme but with different size. For $m=0$ or $m=l(w-1)$, $\mathcal{C}_m$
+consists of only a single codeword. We argue that the size of $\mathcal{C}_m$ reaches its maximal in the middle, i.e., when $m=\lfloor\frac{l(w-1)}{2}\rfloor$. One easily  verifies that this holds in the binary case (i.e., $w=2$) where $|\mathcal{C}_m|=\binom{l}{m}$. Perin et al.~\cite{perin2021improved} proved that $|\mathcal{C}_{m}|$ reaches its maximum 
+when $m=\lfloor\frac{l(w-1)}{2}\rfloor$. We prove a stronger optimality result in Theorem~\ref{sec:con} that the size of $\mathcal{C}_{m}$, when $m=\lfloor\frac{l(w-1)}{2}\rfloor$, is not only the largest in all $\mathcal{C}_m$ for $m\in[l(w-1)+1]$ but the largest among all valid sets of codewords.
+
+\begin{theorem}[Size-optimal encoding]\label{sec:con}
+For every incomparable $\mathcal{C^*}\in P([w]^l)$, it holds that 
+\[
+ |\mathcal{C^*}| \leq |\mathcal{C}_{\lfloor\frac{l(w-1)}{2}\rfloor}|\enspace.
+\]
+\end{theorem}
+We defer its proof to Theorem~\ref{maximum-antichain}, which rephrases
+Theorem~\ref{sec:con}  in the language of order theory. Prior to that, we discuss how to compute  $|\mathcal{C}_m|$ by recursion, and give an explicit construction of 
+encoding messages into $\mathcal{C}_{m}$ for $m=\lfloor\frac{l(w-1)}{2}\rfloor$. Hereafter, we denote such $\mathcal{C}_{m}$ with maximal size by $\mathcal{C}$ for brevity. 
+
+
+\ignore{
+\begin{construction}[Maximum codeset]\label{sec:con} We let
+$$\mathcal{C}\eqdef\{v\in [w]^l : \sum_{i=1}^l v_i = \left\lfloor \frac{l(w-1)}{2} \right\rfloor \} \enspace.$$
+\end{construction}
+\subsubsection{Construction.}
+\label{sec:con}
+Our construction for $E$ is
+
+$$E=\{v\in [w]^l : \sum_i v_i = \left\lfloor \frac{l(w-1)}{2} \right\rfloor \}$$
+}
+
+%\begin{theorem}
+%    \label{Eisantichain}
+%    $E$ defined as per Construction~\ref{sec:con} is incomparable.
+%\end{theorem}
+
+
+
+\paragraph{Counting the size.} Now we need to figure out the size of $\mathcal{C}$. As a special case, $|\mathcal{C}|=\binom{l}{\lfloor l/2 \rfloor}$ when $w=2$. Fix $w$, let
+$$ D_{n,m}= |\{v\in [w]^n : \sum_{i=1}^{n} v_i = m \}| \enspace , $$
+
+we have their initial values
+\begin{align*}
+D_{1,m} &= 1 , \mbox{ for }m\in \{0,1,\dots,w-1\} \\
+D_{n,m} &= 0 , \mbox{ for }2\leq n \in \mathbb{Z}, m \in \mathbb{Z^-} \enspace ,
+\end{align*}
+and recurrence relation
+\begin{equation} \label{equ:recurrence}
+    D_{n,m} = \sum_{i=0}^{w-1} D_{n-1,m-i} , 2 \leq n \in \mathbb{Z},m\in \{0,1,\dots,l(w-1)\} \enspace . 
+\end{equation}
+
+Note when $w=2$, this method is equivalent to recurrence relation of binomial coefficient, i.e., $\binom{n}{m}=\binom{n-1}{m-1}+\binom{n-1}{m}$.
+
+Let us explain the recurrence relation. To compute $D_{n,m}$,  consider the value of its last summand, which could be any value in $\{0,1,\dots,w-1\}$. If this value is set to $i$, the sum of the first $n-1$ elements must be $m-i$. Therefore, we notice that  the problem ``$n$ elements with sum to $m$'' into those ``$n-1$ elements with sum to $m-i$''. Thus we can simply count $D_{n,m}$ by accumulating $D_{n-1,m-i}$.
+Following this method, $D_{l,\lfloor l(w-1)/2 \rfloor}$ gives the size of $\mathcal{C}$.
+
+\paragraph{Related works.} $D_{n,m}$ is also the $m$-th coefficient of $(1+x+x^2+\dots+x^{w-1})^n$. Euler~\cite{euler1801evolutione} has studied $w=3,4,5$, known as trinomial, quadrinomial and quintinomial  coefficients respectively. The generalized form was  studied in the literature, e.g.,~\cite{andre1876memoire,warnaar1997andrews,belbachir2020congruence}. Actually, we can use an inclusion-exclusion argument to express it as a function of binomial coefficients~\cite{28861}
+$$ D_{n,m} = \sum_{s=0}^{\lfloor{m/w}\rfloor} (-1)^s \binom{n}{s} \binom{m+n-sw-1}{n-1} \enspace .$$
+
+\paragraph{Encoding algorithm.} Now we make the construction explicit by giving an efficient encoding algorithm, which maps a message $x\in [|\mathcal{C}|]$ into an element in $\mathcal{C}$.
+We give the pseudocode of the encoding algorithm in \cref{alg:encode}.
+\begin{algorithm}
+\SetKwProg{func}{Function}{}{end}
+\caption{Encode:$[|\mathcal{C}|]\rightarrow\mathcal{C}$.} \label{alg:encode}
+\func{{\rm Encode}(x)}{
+    Let $v$ be an array of size $l$\;
+    $m\gets\lfloor l(w-1)/2 \rfloor$\;
+    \For{$i\gets l$~\dots~$1$}{
+        \For{$j\gets 0$~\dots~$\min(w-1,m)$}{
+            \If{$x\geq D_{i-1,s-j}$}{
+                $x\gets x-D_{i-1,s-j}$\;
+            }\Else{
+                $v_{l-i}\gets j$\;
+                {\bf break}\;
+            }
+        }
+        $m\gets m-v_{l-i}$\;
+    }
+    \Return $v$\;
+}
+\end{algorithm}
+
+Let us explain the encoding algorithm. As previously stated, the problem can be divided into several subproblems by considering the value of the first element $v_{l-i}$. To encode a natural number $x\in [0,D_{i,m})$, we can simply determine $v_{l-i}=j$ by seeking which $j$ satisfies $x\in [\sum_{k<j}D_{i-1,m-k},\sum_{k\leq j}D_{i-1,m-k})$. Once the value of $v_{l-i}$ is determined, we proceed to the next terms until all elements are decided.
+
+In order to prove the optimality of the encoding,  we need some prerequisites about the order theory. The relationship between one-time signature and order theory has been investigated in \cite{C:BleMau94}.
+
+\paragraph{Preliminaries of Order Theory} 
+
+\begin{definition}[Poset]
+A poset ($\mathcal{S}$,$\leq$) consists of a set $\mathcal{S}$ together with an antisymmetric, transitive and reflexive binary relation `$\leq$', where are certain pairs $(x,y)\in\mathcal{S}$ are comparable ($x\leq y$ or $y\leq x$).
+\end{definition}
+Note that a poset does not require all pairs in $\mathcal{S}$ to be comparable, and thus it is also known as a partially ordered set. 
+
+\begin{definition}[(Anti)chain and decomposition]
+A chain (resp., antichain) refers to a subset of a poset, whose every pair of elements is comparable (resp., incomparable). A chain decomposition is a partition of a poset into disjoint chains.
+\end{definition}
+
+\ignore{
+A partially ordered set (poset) is defined as a set with an antisymmetric, transitive and reflexive order relation, denoted by $\leq$.  Two elements $x,y$ of a poset $S=(X,\leq)$ are comparable if and only if $x\leq y$ or $y\leq x$, otherwise they are incomparable. }
+
+\begin{theorem}[Dilworth's theorem~\cite{dilworth2009decomposition}]
+     For any finite poset $P$,  the size of $P$'s maximum antichain equals the size of a minimum chain decomposition of  $P$.
+\end{theorem}
+
+
+Let $P=([w]^l,\leq )$ be a finite poset. According to Dilworth's theorem, we can prove that $\mathcal{C}$ is the maximum antichain of $P$ by arguing that (1) $\mathcal{C}$ is an antichain and (2) we can find a chain decomposition whose size equals to $|\mathcal{C}|$. 
+
+
+\begin{theorem}\label{maximum-antichain}
+    $\mathcal{C}$ is the maximum antichain, i.e., $\mathcal{C}$ is size-optimal.
+\end{theorem}
+
+
+\begin{proof}
+    We have proved that $\mathcal{C}$ is an antichain in Theorem~\ref{Eisantichain}. It remains to construct the chain decomposition of size $|\mathcal{C}|$ as follows. Our proof can be viewed as a generalization of the proof of Sperner's theorem~\cite{sperner1928satz}, which considers the special case for $w=2$.  
+    
+    Consider poset $S_n=([w]^n,\leq)$, and we sometimes denote an element of $ S_n $ by $(a_1, ..., a_n)\in [w]^n$ or by $c_i\in [w]^n$. \ignore{We also apply the binary operator ``$\le$'' of $S_n$ on those representations.} We slightly abuse the notation $|(a_1, ..., a_n)| \eqdef a_1 + ... + a_n$.
+    
+    We construct the chain decomposition for $S_n$ by induction, where every chain $\{c_1,\ldots, c_{m}\}$ satisfies the following two properties:
+    \begin{itemize}
+        \item $|c_{i+1}| = |c_i| + 1, \forall i \in \{1,2,\dots,m-1\}$,
+        \item $|c_1| + |c_{m}| = n \cdot (w-1)$.
+    \end{itemize} 
+    
+    The case for $n=1$ is trivial, i.e., $D_{1, \lfloor{(w-1)/2}\rfloor} = 1$, which correspond to the  chain of $S_1=\{(0), (1), \ldots,  (w-1)\}$.  
+    
+Assume that we have a chain decomposition for $S_{n-1}$ satisfying the above two properties, we proceed to the construction of a chain decomposition for $S_{n}$. For each chain $c=\{c_{1}, c_{2}, \ldots, c_{m}\}$ (from the chain decomposition of $S_{n-1}$) satisfying the two properties, we build $k+1$ chains for  $S_{n}$ as follows, where $k = \min(w-1, m - 1)$. 
+That is, for every $j\in\{0,...,k\}$ the $j$-th chain  consists of:
+$$ (c_{1}, j) \le \ldots \le (c_{m - j}, j) \le (c_{m - j}, j+1) \le ... \le (c_{m - j}, w-1) \enspace .$$
+This yields the  $k+1$ chains 
+as shown in \cref{fig:induction} below:
+       
+\begin{figure}[ht]
+\centering
+    $$ 
+    \begin{matrix}
+    (c_{1},0) & \ldots & \ldots  & \ldots & (c_{m},0) & \ldots & (c_{m},w-1) &  \\ 
+   \vdots  & \ldots & \ldots & \iddots & \ldots & \ldots &  \vdots & \\
+     (c_{1},k) & \ldots &  (c_{m-k},k) & \ldots & \ldots & \ldots &  (c_{m-k},w-1)  &\\
+    \end{matrix}
+    $$
+\caption{A demonstration of how a chain from $S_{n-1}$ is expanded into $k+1$ chains for $S_n$, where every row is an expanded chain. Note that it is not a rectangular matrix (every row has two less elements than the previous).}
+\label{fig:induction}
+\end{figure}
+       
+       
+      
+It is easy to verify that $|(c_{1}, j)| + |(c_{m - j}, w-1)| = |(c_{1}, 0)|+j + |(c_{m}, 0)|- j+(w-1) = n(w-1)$, and every subsequent element increase the sum value of its predecessor by one. Namely, the two properties are preserved for all the constructed chains of $S_{n}$. 
+     
+It remains to argue that all the chains constructed (from the decomposed chains of  $S_{n-1}$) constitute a  partition of $[w]^n$. 
+That is, for every  $c_i \in S_{n-1}$, each of its augmented elements $(c_i,0),...,(c_i,w-1)$ appears in the constructed chains exactly once. Note that every $c_i$ belongs to (and can only belong to) one of the decomposed chains of  $S_{n-1}$, say $c=\{c_1,\ldots, c_m\}$. We discuss the following cases.
+     
+Case $m\leq w$: We have $k=m-1\leq w-1$. $[(c_i,0),\ldots, (c_i,k+1-i)]$
+appears as the first $(k+2-i)$ elements of the $i$-th column, and then $[(c_i,k+1-i),\ldots, (c_i,w-1)]^T$ as the last $(w+i-k-1)$ elements of the $(k+2-i)$-th row in \cref{fig:induction}. 
+    
+Case $m> w$: We have $k=w-1 < m-1$. If $1\leq i\leq m-w+1$, then $[(c_i,0),(c_i,w-1)]$ appears as the $i$-th column in \cref{fig:induction}. Otherwise, $m-w+1<i\leq m$. $[(c_i,0),\ldots, (c_i,m-i)]$ and $[(c_i,m-i),\ldots, (c_i,w-1)]^T$
+are  the first $m-i+1$ elements of the $i$-th column, and the last $(w+i-m)$ elements of the $(m-i+1)$-th row respectively.
+     
+Therefore, we have shown that for every $a \in [w]^{n-1}$, $(a, 0)$, $\ldots$,$(a,w-1)$ appears exactly once in the newly constructed chains, namely, the chains constitutes as a chain decomposition for $S_n$. Finally, it remains to count the number of chains in the decomposition. 
+The two properties guarantee  that every chain contains exactly one element $c_{\sf mid}$ with $|c_{\sf mid}|=\lfloor l(w-1)/2 \rfloor$ (i.e., $c_{\sf mid} \in \mathcal{C}$). Thus, the size of chain decomposition $|\mathcal{C}| = D_{l, \lfloor{l(w-1)/2}\rfloor}$. This completes the proof that $\mathcal{C}$ is the maximum antichain.
+ 
+\end{proof}
+
+\iffalse
+\begin{proof}
+    We have proved $E$ is an antichain in Theorem~\ref{Eisantichain}.
+    As a second part of the proof, we construct the chain decomposition of size $|E|$ as follows:
+    
+    We divide $S$ into $l(w-1)+1$ layer. Each layer $L_i$ consists of all elements which sum is $i$, i.e. $L_i=\{v : \sum_j v_j=i\}$. The size of $L_i$ is $D_{l,i}$.
+    We are looking for a ``next'' function, where ${\sf next}(v)$ is the next element in a chain of the chain decomposition. The $\nxt$ function of an endpoint $t$ is defined by $\nxt(t)=\varnothing$. From a start point $s$, a chain can be represented by ${\rm chain}(s)=\{s,\nxt(s),\nxt(\nxt(s)),\dots\}$ until $\varnothing$ is reached.  A chain decomposition can be obtained from the $\nxt$ function directly by $\{{\rm chain}(s) : s {\text{ is a start point}}\}$. To meet the requirements of chain decomposition, the outcome of the $\nxt$ function must be distinct except from $\varnothing$.
+    
+    For any $v\in L_i$, we can always assign value $\nxt(v)$ with distinct element $u\in L_{i+1}$ , for $i\in \{0,1,\dots,\lfloor l(w-1)/2 \rfloor -1\}$, because $|L_i|\leq |L_{i+1}|$ according to Theorem \ref{the:non-dec}. In the other side, we can assign values for $L_i$ such that $\{ \nxt(v) : v\in L_{i} \}=L_{i+1}$ , for $i\in \{\lfloor l(w-1)/2 \rfloor,\lfloor l(w-1)/2 \rfloor +1 ,\dots , l(w-1)\}$, because $|L_i|\geq |L_{i+1}|$ according to Theorem \ref{the:non-dec}.
+    
+    Now we count the number of chains, which is equivalent to the number of start points. Start point means no point point to it. $L_0$ contains one element, and is the first layer. It has one start point. $L_1$ is pointed by $L_0$. Thus it has $|L_1|-|L_0|$ start points. And so on, $L_i$ has $|L_i|-|L_{i-1}|$ start points for $i\leq \lfloor l(w-1)/2 \rfloor$. For $i>0\lfloor l(w-1)/2 \rfloor$, $L_i$ has no start point. Therefore, the total number of start point is $|L_0|+(|L_1|-|L_0|)+\dots+(L_{\lfloor l(w-1)/2 \rfloor}-L_{\lfloor l(w-1)/2 \rfloor-1})=|L_{\lfloor l(w-1)/2 \rfloor}|=|E|$. \qed
+\end{proof}
+\fi
+
+\subsection{Theoretical Performance}
+Constant Sum \WOTSP~has two advantages over \WOTSP.
+\begin{itemize}
+    \item Stable computing time.  The number of hash function calls is fixed in our construction, in contrast to possibly variable numbers for the signing and verification algorithm of \WOTSP. While no timing attacks are identified against the implementations of our construction and \WOTSP, stable computing time is always preferable (especially for signing algorithms whose computation involves a private key). 
+    \item Reduced signature size and number of hash calls. For instance, the \SPHINCSP-256s parameter set suggests $w=16$ and $l=67$. In our construction, for $w=16$ we require $l=66$, which reduces 1.5\% in both running time (in terms of the expected number of hash function calls) and size. We refer to  \cref{tab:ots} for more details.
+\end{itemize}
+
+\begin{table}[t]
+    \centering
+    \caption{Comparison of length $l$ between \WOTSP\ and \WOTSCS\ for different values of Winternitz parameters $w$ and security parameter $\secpara$.}
+    \label{tab:ots}
+    \begin{tabular}{c cc cc cc}%
+    \toprule
+      & \multicolumn{2}{c}{128bit} & \multicolumn{2}{c}{192bit}  &\multicolumn{2}{c}{256bit} \\ 
+     $w$  & \WOTSP & Ours & \WOTSP & Ours & \WOTSP & Ours \\ \midrule % specify
+     8  & 46 & 45 & 67 & 66 & 90 & 88 \\  
+     16  & 35& 34 & 51 & 50 & 67 & 66 \\  
+     24  & 31& 30 & 45& 44 & 59& 58\\  
+     32  & 28& 27 & 42& 40 & 55&  53\\  
+     40  & 27& 26 & 39& 38 & 52& 50\\  
+     48  & 25& 25 & 37& 36 & 48&  48\\  
+     \bottomrule
+    \end{tabular}
+\end{table}
+
+
+
+Although our encoding algorithm costs slightly more than the checksum method, it is less dominant compared to the number of hash function calls used in the signature scheme, which will be confirmed in the performance comparison to \SPHINCSP.
+
+
+ 
+ %Although it significantly increase the verification time, from \tabref{tab:comp tiny} we can see the verification time is still far less than the signing time.

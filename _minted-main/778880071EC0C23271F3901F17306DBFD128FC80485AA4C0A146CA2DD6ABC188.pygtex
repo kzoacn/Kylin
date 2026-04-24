@@ -1,0 +1,22 @@
+\begin{Verbatim}[commandchars=\\\{\},codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8\relax}]
+\PYG{c+cp}{\PYGZsh{}}\PYG{c+cp}{ Input: secret seed SK.seed, address ADRS, public seed PK.seed}
+\PYG{c+cp}{\PYGZsh{}}\PYG{c+cp}{ Output: CS\PYGZhy{}WOTS+ public key pk}
+\PYG{n}{wots\PYGZus{}PKgen}\PYG{p}{(}\PYG{n}{SK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{PK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{ADRS}\PYG{p}{)}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{  }\PYG{n}{wotspkADRS}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{ADRS}\PYG{p}{;}\PYG{+w}{ }\PYG{c+c1}{// copy address to create OTS public key address}
+\PYG{+w}{  }\PYG{n}{skADRS}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{ADRS}\PYG{p}{;}\PYG{+w}{ }\PYG{c+c1}{// copy address to create key generation address}
+\PYG{+w}{  }\PYG{n}{skADRS}\PYG{p}{.}\PYG{n}{setType}\PYG{p}{(}\PYG{n}{WOTS\PYGZus{}PRF}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{  }\PYG{n}{skADRS}\PYG{p}{.}\PYG{n}{setKeyPairAddress}\PYG{p}{(}\PYG{n}{ADRS}\PYG{p}{.}\PYG{n}{getKeyPairAddress}\PYG{p}{(}\PYG{p}{)}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{  }\PYG{k}{for}\PYG{+w}{ }\PYG{p}{(}\PYG{+w}{ }\PYG{n}{i}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{l+m+mi}{0}\PYG{p}{;}\PYG{+w}{ }\PYG{n}{i}\PYG{+w}{ }\PYG{o}{\PYGZlt{}}\PYG{+w}{ }\PYG{n}{len}\PYG{p}{;}\PYG{+w}{ }\PYG{n}{i}\PYG{o}{+}\PYG{o}{+}\PYG{+w}{ }\PYG{p}{)}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{  }\PYG{n}{skADRS}\PYG{p}{.}\PYG{n}{setChainAddress}\PYG{p}{(}\PYG{n}{i}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{    }\PYG{n}{skADRS}\PYG{p}{.}\PYG{n}{setHashAddress}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{    }\PYG{n}{sk}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{PRF}\PYG{p}{(}\PYG{n}{SK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{skADRS}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{    }\PYG{n}{ADRS}\PYG{p}{.}\PYG{n}{setChainAddress}\PYG{p}{(}\PYG{n}{i}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{    }\PYG{n}{ADRS}\PYG{p}{.}\PYG{n}{setHashAddress}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{    }\PYG{n}{tmp}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{chain}\PYG{p}{(}\PYG{n}{sk}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]}\PYG{p}{,}\PYG{+w}{ }\PYG{l+m+mi}{0}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{w}\PYG{+w}{ }\PYG{o}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+m+mi}{1}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{PK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{ADRS}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{  }\PYG{p}{\PYGZcb{}}
+\PYG{+w}{  }\PYG{n}{wotspkADRS}\PYG{p}{.}\PYG{n}{setType}\PYG{p}{(}\PYG{n}{WOTS\PYGZus{}PK}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{  }\PYG{n}{wotspkADRS}\PYG{p}{.}\PYG{n}{setKeyPairAddress}\PYG{p}{(}\PYG{n}{ADRS}\PYG{p}{.}\PYG{n}{getKeyPairAddress}\PYG{p}{(}\PYG{p}{)}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{  }\PYG{n}{pk}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{T\PYGZus{}len}\PYG{p}{(}\PYG{n}{PK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{wotspkADRS}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{tmp}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{  }\PYG{k}{return}\PYG{+w}{ }\PYG{n}{pk}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+\end{Verbatim}

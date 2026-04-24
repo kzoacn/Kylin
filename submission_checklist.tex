@@ -1,0 +1,43 @@
+\section{Submission Package Checklist and Outstanding TODOs}
+\label{apx:submission-checklist}
+
+This appendix records the items that are still missing or still need to be reformatted for a complete NGCC submission package.
+
+\subsection{Algorithm Text TODOs}
+
+\begin{itemize}
+    \item A submission-style security-claim table for the selected NGCC 128/256/512-bit families has now been added in \cref{tab:ngcc-parameters}. \todo{If desired, add a supplementary note explaining how the single-key $q=2^{64}$ tuning used for parameter selection relates to the evaluation document's broader ``at most $2^{80}$ queries'' convention.}
+    \item The recommended families now use $h=70$ and are tuned with $q=2^{64}$, which supports the call's requirement of at least $2^{64}$ signatures under one key pair in the intended single-key model. \todo{State explicitly the supported message-length bound and mirror the final signing-capacity wording in the finalized submission forms.}
+    \item \todo{Add a short, explicit correctness statement in the exact notation and wording preferred for the submission package.}
+    \item \todo{Expand the discussion of side-channel resistance, multi-key security, and repeated-key usage with either concrete evidence or a clearly scoped limitation statement.}
+    \item \todo{Add optional benchmark data for 32-bit embedded platforms and hardware platforms if these results become available.}
+    \item \todo{Add quantitative memory-consumption measurements instead of the current qualitative remark on low stack usage.}
+\end{itemize}
+
+\subsection{Required Forms and Statements}
+
+\begin{itemize}
+    \item \todo{Provide the signed algorithm basic-information form for all submitters and the designated contact person.}
+    \item \todo{Provide the signed submitter intellectual-property statement.}
+    \item \todo{Provide signed patent-owner / patent-applicant statements for all relevant rights, if any.}
+    \item \todo{Provide the signed ownership statement for the reference and optimized implementations.}
+\end{itemize}
+
+\subsection{Implementation Package}
+
+\begin{itemize}
+    \item \todo{Produce an ISO C reference implementation for every submitted algorithm instance.}
+    \item \todo{Produce an optimized implementation for mainstream 64-bit PC processors for every submitted algorithm instance.}
+    \item \todo{Adapt the implementations to the NGCC API provided in \texttt{API\_PKC.zip}.}
+    \item A repository-local packaging skeleton has now been prepared with per-instance reference and optimized directories plus placeholder build scripts. \todo{Replace the placeholder wrapper code with the real implementation.}
+    \item A repository-local \texttt{README} for the implementation package has now been prepared. \todo{Update it once the final file inventory is fixed.}
+    \item The current repository includes algorithm-oriented \texttt{.cs} listings and scripts, but these are not yet a submission-ready NGCC implementation package.
+\end{itemize}
+
+\subsection{Test Vectors}
+
+\begin{itemize}
+    \item \todo{Generate known-answer test vectors for every submitted instance using the NGCC auxiliary programs and data.}
+    \item Placeholder files with the required \texttt{KAT\_SIG\_[AlgorithmInstance].txt} names have now been prepared. \todo{Replace all placeholders with real generated vectors.}
+    \item \todo{Verify that the build scripts regenerate the published test vectors automatically from the completed reference implementation.}
+\end{itemize}

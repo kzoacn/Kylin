@@ -1,0 +1,83 @@
+\usepackage{xparse}
+\usepackage{bm}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%% Fonts and symbols
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand\funcfont{\textsf}
+\newcommand\variablefont{\texttt}
+
+
+%
+% New theorem types: (Already in CCS template)
+%
+\newtheorem{observation}{Observation}
+%\newtheorem{definition}{Definition}
+\newtheorem{claim}{Claim}
+\newtheorem{assumption}{Assumption}
+\newtheorem{fact}{Fact}
+\newtheorem{remark}{Remark}
+\ifnum\draft=0
+
+\else
+
+\newtheorem{definition}{Definition}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}{Lemma}[section]
+\newtheorem{corollary}{Corollary}[section]
+\newtheorem{proposition}{Proposition}
+\newtheorem{example}{Example}
+
+\fi
+
+\newcommand{\fixme}[1]{{\textcolor{red}{[FIXME: #1]}}}
+\newcommand{\todo}[1]{{\textcolor{red}{[TODO: #1]}}}
+
+\newcommand\ignore[1]{\iffalse#1\fi}
+
+
+\newcommand{\Hfuzzy}{{\mathrm{H}}^{\rm fuzz}}
+\newcommand{\Hminfuzzy}{{\mathrm{H}}^{{\rm{fuzz}}}_{t,\infty}}
+\newcommand{\Hpfuzzy}{{\mathrm{H}}^{{\rm{pfuzz}}}}
+\newcommand{\Hinf}{{\bf H}^{{\rm \min}}_{\infty}}
+\newcommand{\Hminpfuzzy}{{\bf H}^{{\rm pfuzz}}_{t,\infty}}
+\newcommand{\BW}{{\rm BW}}
+\newcommand{\RBW}{{\rm RBW}}
+
+\newcommand{\pk}{\ensuremath{\mathbf{PK}}\xspace}
+\newcommand{\sk}{\ensuremath{\mathbf{SK}}\xspace}
+
+
+\newcommand{\SPHINCSP}{\texorpdfstring{\ensuremath{\text{SPHINCS}^{+}}\xspace}{SPHINCS+}}
+\newcommand{\SPHINCSA}{\texorpdfstring{\ensuremath{\text{SPHINCS-}{\alpha}\xspace}}{SPHINCS-Alpha}}
+\newcommand{\WOTSP}{\texorpdfstring{\ensuremath{\text{WOTS}^{+}\xspace}}{WOTS+}}
+\newcommand{\WOTSCS}{\texorpdfstring{\ensuremath{\text{CS-WOTS}^{+}}\xspace}{CS-WOTS+}}
+\newcommand{\XMSS}{\texorpdfstring{\ensuremath{\text{XMSS}}\xspace}{XMSS}}
+\newcommand{\XMSSMT}{\texorpdfstring{\ensuremath{\text{XMSS}^\text{MT}}\xspace}{XMSSMT}}
+\newcommand{\secpara}{\ensuremath{\lambda}\xspace}
+\newcommand{\Th}{\ensuremath{\mathbf{T}}\xspace}
+\newcommand{\hashH}{\ensuremath{\mathbf{H}}\xspace}
+\newcommand{\hashF}{\ensuremath{\mathbf{F}}\xspace}
+\newcommand{\PRF}{\ensuremath{\mathbf{PRF}}\xspace}
+\newcommand{\PRFmsg}{\ensuremath{\mathbf{PRF_{msg}}}\xspace}
+\newcommand{\hashmsg}{\ensuremath{\mathbf{H_{msg}}}\xspace}
+\newcommand{\bool}{\ensuremath{\{0,1\}}\xspace}
+\newcommand{\byte}{\ensuremath{\mathbb{B}}\xspace}
+\newcommand{\ADRS}{\ensuremath{\mathtt{ADRS}}\xspace}
+\newcommand{\md}{\ensuremath{\mathtt{md}}\xspace}
+\newcommand{\seed}{\ensuremath{\mathtt{seed}}\xspace}
+\newcommand{\len}{\ensuremath{\mathtt{len}}\xspace}
+\newcommand{\prf}{\ensuremath{\mathtt{prf}}\xspace}
+\renewcommand{\root}{\ensuremath{\mathtt{root}}\xspace}
+\newcommand{\sig}{\ensuremath{\mathtt{SIG}}\xspace}
+\newcommand{\sight}{\ensuremath{\mathtt{SIG}_\mathtt{HT}}\xspace}
+\newcommand{\sigots}{\ensuremath{\mathtt{SIG}_\mathtt{OTS}}\xspace}
+\newcommand{\sigxmss}{\ensuremath{\mathtt{SIG}_\mathtt{XMSS}}\xspace}
+\newcommand{\sigfors}{\ensuremath{\mathtt{SIG}_\mathtt{FORS}}\xspace}
+\newcommand{\randstr}{\ensuremath{\mathtt{R}}\xspace}
+
+\newcommand{\thinf}{{\widetilde{\mathbf{H}}_{\infty}}}
+\newcommand{\hinf}{{{\mathbf{H}}_{\infty}}}
+\newcommand{\eqdef}{\stackrel{\rm def}{=}}
+\newcommand{\kaiyi}[1]{{\color{cyan} Kaiyi } {\color{blue} #1}}
+\newcommand{\cui}[1]{{\color{cyan} Cui } {\color{blue} #1}}

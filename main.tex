@@ -1,0 +1,137 @@
+\def\draft{1}
+ 
+\ifnum\draft=0
+
+% \newcommand{\compacttitlespacing}{0} %disable when we need room for authors
+\documentclass[sigconf,anonymous]{acmart}
+\settopmatter{printacmref=false}
+
+\else
+
+\documentclass[a4paper]{article}
+\usepackage[margin=1in]{geometry}
+
+\fi
+
+\usepackage[english]{babel} 
+\usepackage[T1]{fontenc}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\DeclareGraphicsExtensions{%
+    .png,.PNG,%
+    .pdf,.PDF,%
+    .jpg,.mps,.jpeg,.jbig2,.jb2,.JPG,.JPEG,.JBIG2,.JB2}
+\usepackage{textcomp,amssymb,latexsym}
+% \usepackage{amsfonts}
+\usepackage{fancyhdr}
+\usepackage{enumerate}
+\usepackage[ruled,vlined]{algorithm2e}
+\usepackage{algpseudocode}
+\usepackage{xparse} % argument parsing -- \edist
+\usepackage{xspace}
+\usepackage{multirow}
+\usepackage{csvsimple}
+\usepackage{balance} 
+\usepackage{diagbox}
+\usepackage{amsmath,amsthm}
+\usepackage{longtable}
+\usepackage{graphicx}
+\usepackage{mathdots}
+
+%%%% Type set code and data diagrams
+\usepackage{bytefield}
+\usepackage{minted}
+\usepackage{tabularx}
+%%%% Tikz variables, pgfplot
+\usepackage{
+  tikz,
+  pgfplots,
+  pgfplotstable
+}
+\usepgfplotslibrary{statistics}
+\usetikzlibrary{
+  shapes.geometric,
+  shapes.misc,
+  arrows,
+  external,
+  pgfplots.groupplots,
+  matrix,
+  positioning,
+  fit,
+  calc,
+  decorations.text
+}
+\pgfplotsset{compat=1.9}
+
+\usepackage{hyperref}
+\usepackage[capitalize]{cleveref}
+
+\newcommand*{\email}[1]{\href{mailto:#1}{\nolinkurl{#1}} }
+\usepackage{authblk}
+\usepackage{blindtext}
+
+\providecommand{\keywords}[1]
+{
+  \small	
+  \textbf{\textit{Keywords---}} #1
+}
+
+\input{defs}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newtheorem{construction}{Construction}[section]
+
+
+\newcommand{\authnote}[2]{\textcolor{red}{\textsf{#1 }\textcolor{blue}{ #2}}}
+\newcommand{\yu}[1]{{\authnote{Yu}{#1}}}
+%\newcommand{\kaiyi}[1]{{\authnote{Kaiyi}{#1}}}
+
+\begin{document}
+%\fontfamily{lmr}\selectfont
+\fancyhead{}
+\def\thetitle{SPHINCS-alpha \\ Submission to the NGCC Project}
+\title{\thetitle}
+\date{\today}
+\author{SPHINCS-alpha Team}
+
+\maketitle
+
+\input{abstract}
+
+\clearpage
+
+\tableofcontents
+
+\clearpage
+
+\input{submission_overview}
+
+% Section I
+\input{intro}    % basic introduction
+\input{preliminary}
+\input{revisit}
+\input{construction}
+\input{results}
+
+\input{sphincsp}
+
+
+
+\bibliographystyle{plain}
+
+\bibliography{bib/abbrev0,bib/crypto,bib/extra}
+
+% % --- Appendix ---%
+\appendix
+\input{submission_checklist}
+\input{sphincsp-appendix}
+
+\end{document}
+
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:

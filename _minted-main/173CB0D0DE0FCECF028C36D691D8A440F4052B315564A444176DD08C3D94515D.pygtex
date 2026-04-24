@@ -1,0 +1,16 @@
+\begin{Verbatim}[commandchars=\\\{\},codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8\relax}]
+\PYG{c+cp}{\PYGZsh{}}\PYG{c+cp}{ Input: Message M, CS\PYGZhy{}WOTS+ signature sig, address ADRS, public seed PK.seed}
+\PYG{c+cp}{\PYGZsh{}}\PYG{c+cp}{ Output: CS\PYGZhy{}WOTS+ public key pk\PYGZus{}sig derived from sig}
+\PYG{n}{wots\PYGZus{}pkFromSig}\PYG{p}{(}\PYG{n}{sig}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{M}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{PK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{ADRS}\PYG{p}{)}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{  }\PYG{n}{wotspkADRS}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{ADRS}\PYG{p}{;}
+\PYG{+w}{  }\PYG{n}{msg}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{wots\PYGZus{}encode}\PYG{p}{(}\PYG{n}{M}\PYG{p}{)}
+\PYG{+w}{  }\PYG{k}{for}\PYG{+w}{ }\PYG{p}{(}\PYG{+w}{ }\PYG{n}{i}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{l+m+mi}{0}\PYG{p}{;}\PYG{+w}{ }\PYG{n}{i}\PYG{+w}{ }\PYG{o}{\PYGZlt{}}\PYG{+w}{ }\PYG{n}{len}\PYG{p}{;}\PYG{+w}{ }\PYG{n}{i}\PYG{o}{+}\PYG{o}{+}\PYG{+w}{ }\PYG{p}{)}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{    }\PYG{n}{ADRS}\PYG{p}{.}\PYG{n}{setChainAddress}\PYG{p}{(}\PYG{n}{i}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{    }\PYG{n}{tmp}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{chain}\PYG{p}{(}\PYG{n}{sig}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{msg}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{w}\PYG{+w}{ }\PYG{o}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+m+mi}{1}\PYG{+w}{ }\PYG{o}{\PYGZhy{}}\PYG{+w}{ }\PYG{n}{msg}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{PK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{ADRS}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{  }\PYG{p}{\PYGZcb{}}
+\PYG{+w}{  }\PYG{n}{wotspkADRS}\PYG{p}{.}\PYG{n}{setType}\PYG{p}{(}\PYG{n}{WOTS\PYGZus{}PK}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{  }\PYG{n}{wotspkADRS}\PYG{p}{.}\PYG{n}{setKeyPairAddress}\PYG{p}{(}\PYG{n}{ADRS}\PYG{p}{.}\PYG{n}{getKeyPairAddress}\PYG{p}{(}\PYG{p}{)}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{  }\PYG{n}{pk\PYGZus{}sig}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{T\PYGZus{}len}\PYG{p}{(}\PYG{n}{PK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{wotspkADRS}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{tmp}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{  }\PYG{k}{return}\PYG{+w}{ }\PYG{n}{pk\PYGZus{}sig}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+\end{Verbatim}
