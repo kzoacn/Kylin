@@ -1,22 +1,21 @@
 #!/usr/bin/env python3
-"""Search and select NGCC-aligned SPHINCS-alpha parameter families.
+"""Search and select first-stage NGCC-aligned Kylin parameter families.
 
 The original draft shipped a Sage script tuned to the legacy 128/192/256-bit
 NIST-style families. This helper reproduces the same style of exact search in
-plain Python and then selects one *common* `(h, d, a, w)` shape across the
-three NGCC submission levels.
+plain Python. The first-stage implementation intentionally keeps the common
+shape `(h, d, a, w) = (70, 10, 14, 64)` while the parameter-selection method is
+still under discussion.
 
 Selection model:
 - tune the single-key security formulas with `q = 2^64` signatures, matching
   the explicit NGCC requirement that one key pair support at least `2^64`
   signed messages;
-- map the NGCC 128/80 family to an effective 160-bit classical floor using the
-  draft's current generic quantum formula `b_q = b_c / 2`;
-- keep a common hypertree/FORS/WOTS shape when possible to simplify the
-  specification and implementation;
-- among all common shapes, minimize the sum of the per-family balance scores,
-  where the balance score measures how far a candidate sits from the
-  size/speed minima on that family's Pareto frontier.
+- use `n = 16` for the NGCC 128/80 family as the current design decision;
+- keep a common hypertree/FORS/WOTS shape to simplify the specification and
+  implementation;
+- keep the Pareto/common-shape search helpers in this file for later parameter
+  discussion, but emit the fixed first-stage implementation shape by default.
 """
 
 from __future__ import annotations
@@ -37,6 +36,7 @@ W_CHOICES = (16, 32, 64)
 H_CHOICES = tuple(range(64, 97))
 A_CHOICES = tuple(range(8, 17))
 SPEED_FACTOR = 32
+PREFERRED_SHAPE = (70, 10, 14, 64)
 
 
 @dataclass(frozen=True)
@@ -80,9 +80,9 @@ class Candidate:
 
 
 FAMILIES = (
-    Family("sphincs-a-ngcc-128", 128, 80, 20, 160),
-    Family("sphincs-a-ngcc-256", 256, 128, 32, 256),
-    Family("sphincs-a-ngcc-512", 512, 256, 64, 512),
+    Family("Kylin-128", 128, 80, 16, 128),
+    Family("Kylin-256", 256, 128, 32, 256),
+    Family("Kylin-512", 512, 256, 64, 512),
 )
 
 
@@ -269,6 +269,16 @@ def choose_common_shape(frontiers: dict[str, list[Candidate]]) -> tuple[tuple[in
     return best_shape, best_candidates
 
 
+def choose_fixed_shape(candidates: dict[str, list[Candidate]], shape: tuple[int, int, int, int]) -> dict[str, Candidate]:
+    chosen: dict[str, Candidate] = {}
+    for family_name, family_candidates in candidates.items():
+        matches = [candidate for candidate in family_candidates if candidate.shape == shape]
+        if not matches:
+            raise RuntimeError(f"failed to find fixed shape {shape} for {family_name}")
+        chosen[family_name] = min(matches, key=lambda c: (c.sig_bytes, c.hash_calls))
+    return chosen
+
+
 def write_csv(candidates: dict[str, Candidate], path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     fieldnames = [
@@ -310,7 +320,7 @@ def write_csv(candidates: dict[str, Candidate], path: Path) -> None:
                     "len": candidate.length,
                     "subtree": candidate.subtree_height,
                     "classical": f"{candidate.classical_bitsec:.1f}",
-                    "quantum": f"{candidate.quantum_bitsec:.1f}",
+                    "quantum": f"{candidate.family.ngcc_quantum:.1f}",
                     "pk": candidate.pk_bytes,
                     "sk": candidate.sk_bytes,
                     "sig": candidate.sig_bytes,
@@ -329,20 +339,25 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    all_candidates: dict[str, list[Candidate]] = {}
     frontiers: dict[str, list[Candidate]] = {}
     for family in FAMILIES:
-        frontiers[family.name] = pareto_frontier(enumerate_candidates(family))
+        all_candidates[family.name] = enumerate_candidates(family)
+        frontiers[family.name] = pareto_frontier(all_candidates[family.name])
 
-    shape, chosen = choose_common_shape(frontiers)
+    shape = PREFERRED_SHAPE
+    chosen = choose_fixed_shape(all_candidates, shape)
 
-    print("Selected common shape (h, d, a, w):", shape)
+    print("Selected first-stage implementation shape (h, d, a, w):", shape)
     for family_name in sorted(chosen):
         candidate = chosen[family_name]
         print(
             f"{candidate.family.name}: "
             f"n={candidate.family.n}, h={candidate.h}, d={candidate.d}, "
             f"a={candidate.a}, k={candidate.k}, w={candidate.w}, len={candidate.length}, "
-            f"classical={candidate.classical_bitsec:.1f}, quantum={candidate.quantum_bitsec:.1f}, "
+            f"classical={candidate.classical_bitsec:.1f}, "
+            f"ngcc_quantum={candidate.family.ngcc_quantum}, "
+            f"formula_quantum={candidate.quantum_bitsec:.1f}, "
             f"pk={candidate.pk_bytes}, sk={candidate.sk_bytes}, sig={candidate.sig_bytes}, "
             f"hashcalls={candidate.hash_calls}"
         )

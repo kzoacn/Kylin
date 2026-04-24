@@ -9,7 +9,7 @@ Important repository areas:
 - `SPHINCS-ALPHA-NIST/`: original NIST submission documentation and code. It must remain read-only.
 - `docs/`: NGCC requirements, evaluation criteria, feedback documents, and the ICCS API templates under `docs/API_PKC/`.
 - `main.tex` and `paper/`: current English submission document and supporting data/scripts.
-- No NGCC implementation package directory currently exists.
+- The NGCC implementation package is under `Implementations/`, with reference and optimized first-stage Kylin SIG instances for `Kylin-128`, `Kylin-256`, and `Kylin-512`.
 
 The NGCC documents require, for a digital signature submission:
 
@@ -44,24 +44,39 @@ The first migration stage targets only three NGCC instances:
 
 The new project/algorithm name should be used now in code-level artifacts, not postponed. Directory names, `ALGORITHM_INSTANCE` macros, and KAT filenames should therefore use `Kylin-*`.
 
-The first-stage parameters come from `paper/data/para_ngcc.csv`. Parameter optimization is explicitly deferred to a later task.
+The first-stage parameters come from `paper/data/para_ngcc.csv`. Parameter optimization is explicitly deferred to a later task. The current table incorporates the `Kylin-128` decision to use `n=16` for the 128-bit classical / 80-bit quantum target.
 
-Current baseline parameter table:
+Current parameter table status:
 
 | Instance | NGCC classical/quantum | n | h | d | a | k | w | len | subtree | pk | sk | sig |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `Kylin-128` | 128/80 | 20 | 70 | 10 | 14 | 34 | 64 | 28 | 7 | 40 | 80 | 17220 |
+| `Kylin-128` | 128/80 | 16 | 70 | 10 | 14 | 31 | 64 | 23 | 7 | 32 | 64 | 12256 |
 | `Kylin-256` | 256/128 | 32 | 70 | 10 | 14 | 42 | 64 | 45 | 7 | 64 | 128 | 36832 |
 | `Kylin-512` | 512/256 | 64 | 70 | 10 | 14 | 65 | 64 | 87 | 7 | 128 | 256 | 122624 |
 
-The parameter script `paper/code/search_ngcc_params.py` currently reproduces:
+The parameter script `paper/code/search_ngcc_params.py` currently reproduces the implementation table:
 
 ```text
-Selected common shape (h, d, a, w): (70, 10, 14, 64)
-sphincs-a-ngcc-128: n=20, h=70, d=10, a=14, k=34, w=64, len=28, classical=160.0, quantum=80.0, pk=40, sk=80, sig=17220, hashcalls=3409152
-sphincs-a-ngcc-256: n=32, h=70, d=10, a=14, k=42, w=64, len=45, classical=256.0, quantum=128.0, pk=64, sk=128, sig=36832, hashcalls=5063936
-sphincs-a-ngcc-512: n=64, h=70, d=10, a=14, k=65, w=64, len=87, classical=512.0, quantum=256.0, pk=128, sk=256, sig=122624, hashcalls=9258240
+Selected first-stage implementation shape (h, d, a, w): (70, 10, 14, 64)
+Kylin-128: n=16, h=70, d=10, a=14, k=31, w=64, len=23, classical=128.0, ngcc_quantum=80, formula_quantum=64.0, pk=32, sk=64, sig=12256, hashcalls=2901248
+Kylin-256: n=32, h=70, d=10, a=14, k=42, w=64, len=45, classical=256.0, ngcc_quantum=128, formula_quantum=128.0, pk=64, sk=128, sig=36832, hashcalls=5063936
+Kylin-512: n=64, h=70, d=10, a=14, k=65, w=64, len=87, classical=512.0, ngcc_quantum=256, formula_quantum=256.0, pk=128, sk=256, sig=122624, hashcalls=9258240
 ```
+
+Note: the `Kylin-128` row records the NGCC 80-bit quantum target while the draft's simple `classical/2` formula gives 64 bits for `n=16`. The final security explanation for this row is part of the later parameter discussion.
+
+## Implementation Status
+
+Completed first-stage migration items:
+
+- Created `Implementations/Reference_Implementation/Kylin-128`, `Kylin-256`, and `Kylin-512`.
+- Created `Implementations/Optimized_Implementation/Kylin-128`, `Kylin-256`, and `Kylin-512`.
+- Added NGCC SIG wrappers `SIG_AlgorithmInstance.h/c` for all six instance directories.
+- Kept copied ICCS `KAT_SIG.c`, `auxfunc.*`, and `drng.*` unchanged.
+- Replaced SHAKE/SHA2 dependencies with ICCS `pseudoXOF` through `hash_iccs.c` and `thash_iccs.c`.
+- Replaced randomness with NGCC `drng_algorithm` / `get_random_number`.
+- Generalized WOTSCS encoding with a saturating multi-precision helper that supports `n=16`, `n=32`, and `n=64`.
+- Added Makefiles, self-tests, top-level implementation README, and generated reference KAT files in `Test_Vectors/`.
 
 ## Implementation Plan
 
@@ -142,7 +157,7 @@ For each instance, provide a local `params.h` or equivalent configuration with f
 - `SPX_WOTS_LEN`
 - derived byte lengths
 
-The three instances share:
+The first-stage implementation uses a common shape for all three instances:
 
 - `SPX_FULL_HEIGHT = 70`
 - `SPX_D = 10`
@@ -150,9 +165,11 @@ The three instances share:
 - `SPX_WOTS_W = 64`
 - subtree height `7`
 
+This common-shape assumption can be revisited during the later parameter-optimization task.
+
 The instance-specific values are:
 
-- `Kylin-128`: `SPX_N=20`, `SPX_FORS_TREES=34`, `SPX_WOTS_LEN=28`
+- `Kylin-128`: `SPX_N=16`, `SPX_FORS_TREES=31`, `SPX_WOTS_LEN=23`
 - `Kylin-256`: `SPX_N=32`, `SPX_FORS_TREES=42`, `SPX_WOTS_LEN=45`
 - `Kylin-512`: `SPX_N=64`, `SPX_FORS_TREES=65`, `SPX_WOTS_LEN=87`
 
@@ -247,7 +264,7 @@ Do not use `/dev/urandom` or the original `randombytes.c` in the NGCC package.
 
 ### 7. Generalize WOTSCS Encoding
 
-The original `wots.c` stores the message as `uint256_t`, so it cannot correctly support `Kylin-512` with `n=64`.
+The original `wots.c` stored the message as `uint256_t`, so it could not correctly support `Kylin-512` with `n=64`. The Kylin port replaces this with a fixed-width saturating multi-precision helper sized from `SPX_N`.
 
 Replace this with a generic fixed-width multi-precision helper whose limb count derives from `SPX_N`:
 
@@ -335,7 +352,7 @@ Run these checks after implementation:
 python3 paper/code/search_ngcc_params.py
 ```
 
-Expected: common shape `(70, 10, 14, 64)` and the three current parameter rows.
+Expected: implementation shape `(70, 10, 14, 64)` and the three current `Kylin-*` parameter rows, with `Kylin-128` using `n=16`.
 
 For each reference instance:
 

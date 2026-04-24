@@ -4,7 +4,7 @@
 - Do not modify `SPHINCS-ALPHA-NIST/`; treat it as read-only source material.
 - `docs/` contains NGCC submission requirements, evaluation criteria, and ICCS API templates.
 - `main.tex` and `paper/` are the current English submission document.
-- The NGCC code package has not yet been created.
+- The NGCC code package is under `Implementations/`; first-stage Kylin SIG port is present.
 - The first implementation target is a digital signature submission named Kylin.
 - Implement only three NGCC instances for the first stage: `Kylin-128`, `Kylin-256`, and `Kylin-512`.
 - Use NGCC SIG API files and names: `SIG_AlgorithmInstance.h`, `SIG_AlgorithmInstance.c`, and `KAT_SIG.c`.
@@ -13,12 +13,11 @@
 - NGCC requires automated builds, generated KAT files, ISO C reference implementation, and an optimized 64-bit PC implementation.
 - Hash and XOF calls in the NGCC package must use ICCS auxiliary functions: `sm3hash`, `pseudohash`, and especially `pseudoXOF`.
 - Randomness in KAT mode must come from NGCC `drng_algorithm` via `get_random_number`.
-- Current baseline parameters are from `paper/data/para_ngcc.csv`; final parameter optimization is a later task.
-- Current parameter shape is common across the three instances: `h=70,d=10,a=14,w=64`.
-- `Kylin-128`: `n=20,k=34,len=28,pk=40,sk=80,sig=17220`.
+- Current baseline parameters are from `paper/data/para_ngcc.csv`.
+- `Kylin-128`: `n=16,k=31,len=23,pk=32,sk=64,sig=12256`.
 - `Kylin-256`: `n=32,k=42,len=45,pk=64,sk=128,sig=36832`.
 - `Kylin-512`: `n=64,k=65,len=87,pk=128,sk=256,sig=122624`.
-- Important implementation issue: original WOTSCS encoding uses `uint256_t`, so it must be generalized before `Kylin-512` can work.
+- Original WOTSCS `uint256_t` encoding has been generalized in the Kylin port for `n=16/32/64`.
 - `paper/code/search_ngcc_params.py` reproduces the current NGCC parameter table.
 - Later tasks: improve parameters, finish Kylin naming in documentation, optimize code, and write a Chinese document.
 - After each medium-sized task, record the result in `plan.md`, then run `git add`, `git commit`, and `git push`.

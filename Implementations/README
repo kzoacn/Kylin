@@ -1,0 +1,27 @@
+Kylin NGCC Implementation Package
+
+This package contains first-stage NGCC digital-signature implementations for:
+
+- Kylin-128
+- Kylin-256
+- Kylin-512
+
+The reference implementation is portable C99. The optimized implementation
+currently uses the same portable source code with an `-O3 -march=native` build
+profile for mainstream 64-bit PC processors; deeper code-level optimization is
+tracked as later work.
+
+Build all instances from the repository root:
+
+    for d in Implementations/Reference_Implementation/Kylin-* \
+             Implementations/Optimized_Implementation/Kylin-*; do
+        (cd "$d" && make clean && make && make test)
+    done
+
+Generate reference KAT vectors:
+
+    for d in Implementations/Reference_Implementation/Kylin-*; do
+        (cd "$d" && make kat)
+    done
+
+Generated KAT files are stored in `Test_Vectors/`.

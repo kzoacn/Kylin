@@ -26,18 +26,17 @@ This appendix records the items that are still missing or still need to be refor
 \subsection{Implementation Package}
 
 \begin{itemize}
-    \item \todo{Produce an ISO C reference implementation for every submitted algorithm instance.}
-    \item \todo{Produce an optimized implementation for mainstream 64-bit PC processors for every submitted algorithm instance.}
-    \item \todo{Adapt the implementations to the NGCC API provided in \texttt{API\_PKC.zip}.}
-    \item A repository-local packaging skeleton has now been prepared with per-instance reference and optimized directories plus placeholder build scripts. \todo{Replace the placeholder wrapper code with the real implementation.}
-    \item A repository-local \texttt{README} for the implementation package has now been prepared. \todo{Update it once the final file inventory is fixed.}
-    \item The current repository includes algorithm-oriented \texttt{.cs} listings and scripts, but these are not yet a submission-ready NGCC implementation package.
+    \item First-stage ISO C reference implementations are now present for \texttt{Kylin-128}, \texttt{Kylin-256}, and \texttt{Kylin-512}.
+    \item First-stage optimized 64-bit PC implementations are now present for all three instances; they currently share the portable code path with an optimized build profile. \todo{Replace or supplement this with deeper architecture-specific optimization before final submission, if desired.}
+    \item The implementations use the NGCC SIG API provided in \texttt{API\_PKC.zip}.
+    \item A repository-local \texttt{README} for the implementation package has been added.
+    \item \todo{Add final benchmark tables and memory-consumption measurements for the completed implementation package.}
 \end{itemize}
 
 \subsection{Test Vectors}
 
 \begin{itemize}
-    \item \todo{Generate known-answer test vectors for every submitted instance using the NGCC auxiliary programs and data.}
-    \item Placeholder files with the required \texttt{KAT\_SIG\_[AlgorithmInstance].txt} names have now been prepared. \todo{Replace all placeholders with real generated vectors.}
-    \item \todo{Verify that the build scripts regenerate the published test vectors automatically from the completed reference implementation.}
+    \item Known-answer test vectors for all three submitted instances have been generated using the NGCC \texttt{KAT\_SIG.c} driver.
+    \item The generated files are \texttt{KAT\_SIG\_Kylin-128.txt}, \texttt{KAT\_SIG\_Kylin-256.txt}, and \texttt{KAT\_SIG\_Kylin-512.txt}.
+    \item The reference build scripts regenerate and copy the published test vectors with \texttt{make kat}.
 \end{itemize}
