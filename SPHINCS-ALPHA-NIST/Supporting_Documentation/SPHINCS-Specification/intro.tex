@@ -1,0 +1,39 @@
+\section{Introduction} \label{sec:intro}
+
+Hash-based signature is one of the most promising candidates for (and perhaps the most conservative approach to)  post-quantum digital signatures. An advantage of hash-based signatures is that its (classical as well as quantum) security strength is better understood (and easier to evaluate) than other candidates, by solely relying on the idealized hardness\footnote{The design philosophy of symmetric primitives (including hash functions) is that they should only admit generic attacks, otherwise the design is considered to be flawed.} of the cryptographic hash functions.  
+
+\paragraph{Stateful signatures.} Ralph Merkle proposed a hash-based signature \cite{C:Merkle89a} that builds upon Lamport's one-time signature (OTS) \cite{Lamport79}. The recent efforts towards improving stateful signatures lead to the eXtended Merkle Signature Scheme (XMSS)~\cite{hulsing2018xmss} and the Leighton-Micali Signature (LMS)~\cite{mcgrew2019leighton},  standardized by NIST~\cite{cooper2020recommendation} and IETF.
+
+\paragraph{Stateless signatures.} In a typical stateful signature, e.g., Merkle's signature scheme (MSS), the signer keeps track of which private key of the OTS has been used to avoid security issues from subsequent reuse. This is however not always possible in many practical scenarios. Goldreich proposed a stateless hash-based signature construction~\cite{C:Goldreich86a,Goldreich04} which removes the need for maintaining a local state but results in prohibitively large signatures. Recently,  this line of research gets renewed interest. By incorporating the hypertree structure, SPHINCS~\cite{EC:BHHLNP15} offered a practical instantiation of the Goldreich-style stateless hash-based signature.  SPHINCS serves as a basis for subsequent works driven by the NIST PQC standardization process, including Gravity-SPHINCS~\cite{RSA:AumEnd18}, SPHINCS-Simpira~\cite{EPRINT:GueMou17} and \SPHINCSP\ \cite{CCS:BHKNRS19}. Among these schemes, \SPHINCSP employs a new design framework based on few-time signature (FTS), and a new security analysis framework from ``tweakable hash function''. It is generally considered as the current state-of-the-art of stateless hash-based signatures and is to be standardized by NIST.
+
+\ignore{
+\paragraph{Performance.} Despite the desirable features such as conservative assumptions, well-understood security, and flexibility in choosing the underlying hash functions,  the performance of hash-based signatures, in terms of signing
+speed and signature size, is less competitive than 
+other (e.g., lattice-based) candidates, which makes it less favorable for adoption. The performance of a hash-based signature can benefit from 
+new structures~\cite{AC:BleMau96,bleichenbacher1996optimal,PQCRYPTO:BucDahHul11}, more
+efficient underlying components (e.g., one-time signature~\cite{IMA:DodSmaSta05,AFRICACRYPT:Hulsing13},  few-time signature~\cite{CCS:Perrig01,ACISP:ReyRey02}, lightweight hash function~\cite{ToSC:KLMR16}), and hardware accelerations~\cite{PKC:HulRijSch16,PQCRYPTO:Kolbl18,SAC:WJWDGSN19,TCHES:AmiCurZbi18,TCHES:BHRV21,sun2020efficient}.  The main focus of this paper is algorithmic optimization of stateless hash-based signatures. 
+}
+
+\input{figure/sha256-simple-comp}
+
+%\subsection{Our Contributions}
+\paragraph{Summary of our Work.}
+We propose \SPHINCSA, a stateless hash-based signature scheme, which improves upon the state-of-the-art stateless hash-based signature scheme \SPHINCSP, while preserving the core elements that made the original \SPHINCSP a standout project. 
+
+Our optimization mainly stems from the optimization of the one-time signature scheme, which we prove to have a size-optimal encoding scheme among all tree structured one-time signatures. Moreover, no DAG-based construction offers better size efficiency, making our proposal size-optimal among all known schemes to the best of our knowledge \cite{optimalwots}.
+
+Since our modification upon the \SPHINCSP scheme is limited to the encoding scheme of the underlying \WOTSP one-time signature, the security analysis of our new scheme remains largely the same as the original analysis.
+Based on the security analysis of the original work, we estimate the security level and carefully choose parameters in order to achieve optimized performance.
+
+To facilitate a fair comparison, we implement \SPHINCSA\ by adapting the code of \SPHINCSP\ and compare their performance on a desktop computer. As shown in \cref{tab:comp tiny}, under the ``small'' series parameters (optimized towards small signature size) our scheme reduces signature size and running time by 8-12\% and 2-16\% respectively at all security levels while under the ``fast'' series (optimized towards fast signing operations) our scheme exhibits better performance in general. 
+
+We refer to more detailed comparisons for the full spectrum of parameter choices in \cref{sec:performance}.
+As summarized in \cref{tab:bench comp}, our scheme offers an overall performance improvement for most parameter settings, in terms of signing time and signature size. On the downside, we experience an up to 253\% increase in verification time. Nevertheless, we argue that for specific scenarios where verification time is critical, we can re-tune the parameters towards fast verification. 
+%since the verification only amounts to 1-9\% of the signing time we argue that this sacrifice is worthwhile considering efficiency gain in signing time and signature size.
+
+\paragraph{Other Changes Made.}
+Following the decisions made by NIST~\cite{nistdecision}, we remove haraka and robust version from tweakable hash function.
+
+\paragraph{Acknowledgement.}
+
+We acknowledge the \SPHINCSP team for their great work on the original \SPHINCSP project.  A significant portion of our code and documentation derives from their commendable efforts.
