@@ -1,0 +1,16 @@
+\begin{Verbatim}[commandchars=\\\{\},codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8\relax}]
+\PYG{c+cp}{\PYGZsh{}}\PYG{c+cp}{ Input: n\PYGZhy{}byte message M, secret seed SK.seed, index idx, public seed PK.seed, address ADRS}
+\PYG{c+cp}{\PYGZsh{}}\PYG{c+cp}{ Output: XMSS signature SIG\PYGZus{}XMSS = (sig || AUTH)}
+\PYG{n}{xmss\PYGZus{}sign}\PYG{p}{(}\PYG{n}{M}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{SK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{idx}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{PK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{ADRS}\PYG{p}{)}\PYG{+w}{ }\PYG{p}{\PYGZob{}}\PYG{+w}{ }
+\PYG{+w}{  }\PYG{c+c1}{// build authentication path}
+\PYG{+w}{  }\PYG{k}{for}\PYG{+w}{ }\PYG{p}{(}\PYG{+w}{ }\PYG{n}{j}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{l+m+mi}{0}\PYG{p}{;}\PYG{+w}{ }\PYG{n}{j}\PYG{+w}{ }\PYG{o}{\PYGZlt{}}\PYG{+w}{ }\PYG{esc}{\texttt{h'}}\PYG{p}{;}\PYG{+w}{ }\PYG{n}{j}\PYG{o}{+}\PYG{o}{+}\PYG{+w}{ }\PYG{p}{)}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{    }\PYG{n}{k}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{floor}\PYG{p}{(}\PYG{n}{idx}\PYG{+w}{ }\PYG{o}{/}\PYG{+w}{ }\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{o}{\PYGZca{}}\PYG{n}{j}\PYG{p}{)}\PYG{p}{)}\PYG{+w}{ }\PYG{n}{XOR}\PYG{+w}{ }\PYG{l+m+mi}{1}\PYG{p}{;}
+\PYG{+w}{    }\PYG{n}{AUTH}\PYG{p}{[}\PYG{n}{j}\PYG{p}{]}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{treehash}\PYG{p}{(}\PYG{n}{SK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{k}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{l+m+mi}{2}\PYG{o}{\PYGZca{}}\PYG{n}{j}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{j}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{PK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{ADRS}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{  }\PYG{p}{\PYGZcb{}}
+\PYG{+w}{  }\PYG{n}{ADRS}\PYG{p}{.}\PYG{n}{setType}\PYG{p}{(}\PYG{n}{WOTS\PYGZus{}HASH}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{  }\PYG{n}{ADRS}\PYG{p}{.}\PYG{n}{setKeyPairAddress}\PYG{p}{(}\PYG{n}{idx}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{  }\PYG{n}{sig}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{wots\PYGZus{}sign}\PYG{p}{(}\PYG{n}{M}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{SK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{PK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{ADRS}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{  }\PYG{n}{SIG\PYGZus{}XMSS}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{sig}\PYG{+w}{ }\PYG{+w}{ }\PYG{n}{AUTH}\PYG{p}{;}
+\PYG{+w}{  }\PYG{k}{return}\PYG{+w}{ }\PYG{n}{SIG\PYGZus{}XMSS}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+\end{Verbatim}

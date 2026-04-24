@@ -1,0 +1,11 @@
+\begin{Verbatim}[commandchars=\\\{\},codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8\relax}]
+\PYG{c+cp}{\PYGZsh{}}\PYG{c+cp}{ Input: (none)}
+\PYG{c+cp}{\PYGZsh{}}\PYG{c+cp}{ Output: $\SPHINCSA$ key pair (SK,PK)}
+\PYG{n}{spa\PYGZus{}keygen}\PYG{p}{(}\PYG{+w}{ }\PYG{p}{)}\PYG{p}{\PYGZob{}}
+\PYG{+w}{  }\PYG{n}{SK}\PYG{p}{.}\PYG{n}{seed}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{sec\PYGZus{}rand}\PYG{p}{(}\PYG{n}{n}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{  }\PYG{n}{SK}\PYG{p}{.}\PYG{n}{prf}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{sec\PYGZus{}rand}\PYG{p}{(}\PYG{n}{n}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{  }\PYG{n}{PK}\PYG{p}{.}\PYG{n}{seed}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{sec\PYGZus{}rand}\PYG{p}{(}\PYG{n}{n}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{  }\PYG{n}{PK}\PYG{p}{.}\PYG{n}{root}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{ht\PYGZus{}PKgen}\PYG{p}{(}\PYG{n}{SK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{PK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{  }\PYG{k}{return}\PYG{+w}{ }\PYG{p}{(}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{SK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{SK}\PYG{p}{.}\PYG{n}{prf}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{PK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{PK}\PYG{p}{.}\PYG{n}{root}\PYG{p}{)}\PYG{p}{,}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{PK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{PK}\PYG{p}{.}\PYG{n}{root}\PYG{p}{)}\PYG{+w}{ }\PYG{p}{)}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+\end{Verbatim}

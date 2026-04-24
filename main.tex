@@ -3,7 +3,7 @@
 \ifnum\draft=0
 
 % \newcommand{\compacttitlespacing}{0} %disable when we need room for authors
-\documentclass[sigconf,anonymous]{acmart}
+\documentclass[sigconf,anonymous]{paper/build/acmart}
 \settopmatter{printacmref=false}
 
 \else
@@ -28,7 +28,6 @@
 \usepackage{fancyhdr}
 \usepackage{enumerate}
 \usepackage[ruled,vlined]{algorithm2e}
-\usepackage{algpseudocode}
 \usepackage{xparse} % argument parsing -- \edist
 \usepackage{xspace}
 \usepackage{multirow}
@@ -42,7 +41,7 @@
 
 %%%% Type set code and data diagrams
 \usepackage{bytefield}
-\usepackage{minted}
+\usepackage[outputdir=paper/build/out,cachedir=../minted-cache]{minted}
 \usepackage{tabularx}
 %%%% Tikz variables, pgfplot
 \usepackage{
@@ -78,7 +77,7 @@
   \textbf{\textit{Keywords---}} #1
 }
 
-\input{defs}
+\input{paper/tex/defs}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \newtheorem{construction}{Construction}[section]
@@ -98,7 +97,7 @@
 
 \maketitle
 
-\input{abstract}
+\input{paper/tex/abstract}
 
 \clearpage
 
@@ -106,27 +105,27 @@
 
 \clearpage
 
-\input{submission_overview}
+\input{paper/tex/submission_overview}
 
 % Section I
-\input{intro}    % basic introduction
-\input{preliminary}
-\input{revisit}
-\input{construction}
-\input{results}
+\input{paper/tex/intro}    % basic introduction
+\input{paper/tex/preliminary}
+\input{paper/tex/revisit}
+\input{paper/tex/construction}
+\input{paper/tex/results}
 
-\input{sphincsp}
+\input{paper/tex/sphincsp}
 
 
 
 \bibliographystyle{plain}
 
-\bibliography{bib/abbrev0,bib/crypto,bib/extra}
+\bibliography{paper/bib/abbrev0,paper/bib/crypto,paper/bib/extra}
 
 % % --- Appendix ---%
 \appendix
-\input{submission_checklist}
-\input{sphincsp-appendix}
+\input{paper/tex/submission_checklist}
+\input{paper/tex/sphincsp-appendix}
 
 \end{document}
 

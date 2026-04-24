@@ -1,0 +1,11 @@
+\begin{Verbatim}[commandchars=\\\{\},codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8\relax}]
+\PYG{c+cp}{\PYGZsh{}}\PYG{c+cp}{ Input: Private seed SK.seed, public seed PK.seed}
+\PYG{c+cp}{\PYGZsh{}}\PYG{c+cp}{ Output: HT public key PK\PYGZus{}HT}
+\PYG{n}{ht\PYGZus{}PKgen}\PYG{p}{(}\PYG{n}{SK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{PK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{)}\PYG{p}{\PYGZob{}}
+\PYG{+w}{     }\PYG{n}{ADRS}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{toByte}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,}\PYG{+w}{ }\PYG{l+m+mi}{32}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{     }\PYG{n}{ADRS}\PYG{p}{.}\PYG{n}{setLayerAddress}\PYG{p}{(}\PYG{n}{d}\PYG{l+m+mi}{\PYGZhy{}1}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{     }\PYG{n}{ADRS}\PYG{p}{.}\PYG{n}{setTreeAddress}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{     }\PYG{n}{root}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{xmss\PYGZus{}PKgen}\PYG{p}{(}\PYG{n}{SK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{PK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{ADRS}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{     }\PYG{k}{return}\PYG{+w}{ }\PYG{n}{root}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+\end{Verbatim}

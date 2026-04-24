@@ -1,0 +1,8 @@
+\begin{Verbatim}[commandchars=\\\{\},codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8\relax}]
+\PYG{c+cp}{\PYGZsh{}}\PYG{c+cp}{ Input: Secret seed SK.seed, public seed PK.seed, address ADRS}
+\PYG{c+cp}{\PYGZsh{}}\PYG{c+cp}{ Output: XMSS public key PK}
+\PYG{n}{xmss\PYGZus{}PKgen}\PYG{p}{(}\PYG{n}{SK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{PK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{ADRS}\PYG{p}{)}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{  }\PYG{n}{pk}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{treehash}\PYG{p}{(}\PYG{n}{SK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{l+m+mi}{0}\PYG{p}{,}\PYG{+w}{ }\PYG{esc}{\texttt{h'}}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{PK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{ADRS}\PYG{p}{)}
+\PYG{+w}{  }\PYG{k}{return}\PYG{+w}{ }\PYG{n}{pk}\PYG{p}{;}\PYG{+w}{ }
+\PYG{p}{\PYGZcb{}}
+\end{Verbatim}

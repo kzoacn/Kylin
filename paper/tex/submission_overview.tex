@@ -30,7 +30,7 @@ This revised draft is organized for the NGCC public-key algorithm call. It prese
 \begin{itemize}
     \item The required algorithm description is provided by the technical sections on notation, the one-time signature layer, the hypertree, FORS, the full \SPHINCSA\ construction, and the parameter/hash-function instantiations; see \cref{sec:notation,sec:ots,sec:hypertree,sec:fors,sec:spx-core,sec:instantiations}.
     \item The required design rationale, security analysis, performance evaluation, and feature statement are provided in \cref{sec:wots-optimization,sec:design-rationale,sec:security-claims,sec:performance,sec:feature-statement}.
-    \item The legacy parameter tables inherited from the original \SPHINCSA\ draft are still useful technical baselines, but this revised submission draft now additionally includes NGCC-oriented families covering the required 128/256/512-bit classical levels with corresponding 80/128/256-bit generic quantum levels; see \cref{tab:ngcc-parameters}. The selection is reproducible from \texttt{code/search\_ngcc\_params.py}.
+    \item The legacy parameter tables inherited from the original \SPHINCSA\ draft are still useful technical baselines, but this revised submission draft now additionally includes NGCC-oriented families covering the required 128/256/512-bit classical levels with corresponding 80/128/256-bit generic quantum levels; see \cref{tab:ngcc-parameters}. The selection is reproducible from \texttt{paper/code/search\_ngcc\_params.py}.
     \item The recommended NGCC parameter families are tuned with $q=2^{64}$ in the concrete-security formulas and all use hypertree height $h=70$, so the submission text can now state support for at least $2^{64}$ signatures under one key pair in the intended single-key usage model.
     \item The call also asks for support for messages up to $2^{63}$ bits. The current specification hashes the message through $\hashmsg$, but the API-level message-length claim is not yet stated explicitly. \todo{Add an implementation-level statement that the submission interface accepts messages of up to $2^{63}$ bits, or document any tighter supported bound.}
     \item Separate submission artifacts required by the call, including signed forms, a packaged ISO C reference implementation using the NGCC API, a packaged optimized implementation, and generated test vectors, are tracked in Appendix~\ref{apx:submission-checklist}.
@@ -66,13 +66,13 @@ For the actual NGCC submission package, this revised draft now recommends a new 
 
 \begin{table}[htbp]
     \centering
-    \caption{Recommended NGCC-aligned parameter families selected by \texttt{code/search\_ngcc\_params.py}. The classical and quantum columns instantiate the generic formulas of \cref{sec:security-claims} with $q=2^{64}$.}
+    \caption{Recommended NGCC-aligned parameter families selected by \texttt{paper/code/search\_ngcc\_params.py}. The classical and quantum columns instantiate the generic formulas of \cref{sec:security-claims} with $q=2^{64}$.}
     \label{tab:ngcc-parameters}
     \scriptsize
     \begin{tabular}{l c c c c c c c c c c c c c}
     \toprule
     Family & NGCC lvl & $n$ & $h$ & $d$ & $\log t$ & $k$ & $w$ & $l$ & bitsec & q-bitsec & pk & sk & sig \\ \midrule
-    \csvreader[head to column names]{data/para_ngcc.csv}{}%
+    \csvreader[head to column names]{paper/data/para_ngcc.csv}{}%
     { \name & \ngccclassical/\ngccquantum & \n & \h & \d & \a & \k & \w & \len & \classical & \quantum & \pk & \sk & \sig \\ }
     \vspace{-0.8em} \\ \bottomrule
     \end{tabular}

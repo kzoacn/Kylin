@@ -1,0 +1,26 @@
+\begin{Verbatim}[commandchars=\\\{\},codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8\relax}]
+\PYG{c+cp}{\PYGZsh{}}\PYG{c+cp}{ Input: Message M, private seed SK.seed, public seed PK.seed, tree index idx\PYGZus{}tree, leaf index idx\PYGZus{}leaf}
+\PYG{c+cp}{\PYGZsh{}}\PYG{c+cp}{ Output: HT signature SIG\PYGZus{}HT}
+\PYG{n}{ht\PYGZus{}sign}\PYG{p}{(}\PYG{n}{M}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{SK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{PK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{idx\PYGZus{}tree}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{idx\PYGZus{}leaf}\PYG{p}{)}\PYG{+w}{ }\PYG{p}{\PYGZob{}}\PYG{+w}{ }
+\PYG{+w}{  }\PYG{c+c1}{// init}
+\PYG{+w}{  }\PYG{n}{ADRS}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{toByte}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,}\PYG{+w}{ }\PYG{l+m+mi}{32}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{  }\PYG{c+c1}{// sign}
+\PYG{+w}{  }\PYG{n}{ADRS}\PYG{p}{.}\PYG{n}{setLayerAddress}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{  }\PYG{n}{ADRS}\PYG{p}{.}\PYG{n}{setTreeAddress}\PYG{p}{(}\PYG{n}{idx\PYGZus{}tree}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{  }\PYG{n}{SIG\PYGZus{}tmp}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{xmss\PYGZus{}sign}\PYG{p}{(}\PYG{n}{M}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{SK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{idx\PYGZus{}leaf}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{PK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{ADRS}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{  }\PYG{n}{SIG\PYGZus{}HT}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{SIG\PYGZus{}HT}\PYG{+w}{ }\PYG{+w}{ }\PYG{n}{SIG\PYGZus{}tmp}\PYG{p}{;}
+\PYG{+w}{  }\PYG{n}{root}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{xmss\PYGZus{}pkFromSig}\PYG{p}{(}\PYG{n}{idx\PYGZus{}leaf}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{SIG\PYGZus{}tmp}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{M}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{PK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{ADRS}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{  }\PYG{k}{for}\PYG{+w}{ }\PYG{p}{(}\PYG{+w}{ }\PYG{n}{j}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{l+m+mi}{1}\PYG{p}{;}\PYG{+w}{ }\PYG{n}{j}\PYG{+w}{ }\PYG{o}{\PYGZlt{}}\PYG{+w}{ }\PYG{n}{d}\PYG{p}{;}\PYG{+w}{ }\PYG{n}{j}\PYG{o}{+}\PYG{o}{+}\PYG{+w}{ }\PYG{p}{)}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{    }\PYG{n}{idx\PYGZus{}leaf}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{h}\PYG{+w}{ }\PYG{o}{/}\PYG{+w}{ }\PYG{n}{d}\PYG{p}{)}\PYG{+w}{ }\PYG{n}{least}\PYG{+w}{ }\PYG{n}{significant}\PYG{+w}{ }\PYG{n}{bits}\PYG{+w}{ }\PYG{n}{of}\PYG{+w}{ }\PYG{n}{idx\PYGZus{}tree}\PYG{p}{;}
+\PYG{+w}{    }\PYG{n}{idx\PYGZus{}tree}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{h}\PYG{+w}{ }\PYG{o}{\PYGZhy{}}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{j}\PYG{+w}{ }\PYG{o}{+}\PYG{+w}{ }\PYG{l+m+mi}{1}\PYG{p}{)}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{h}\PYG{+w}{ }\PYG{o}{/}\PYG{+w}{ }\PYG{n}{d}\PYG{p}{)}\PYG{p}{)}\PYG{+w}{ }\PYG{n}{most}\PYG{+w}{ }\PYG{n}{significant}\PYG{+w}{ }\PYG{n}{bits}\PYG{+w}{ }\PYG{n}{of}\PYG{+w}{ }\PYG{n}{idx\PYGZus{}tree}\PYG{p}{;}
+\PYG{+w}{    }\PYG{n}{ADRS}\PYG{p}{.}\PYG{n}{setLayerAddress}\PYG{p}{(}\PYG{n}{j}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{    }\PYG{n}{ADRS}\PYG{p}{.}\PYG{n}{setTreeAddress}\PYG{p}{(}\PYG{n}{idx\PYGZus{}tree}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{    }\PYG{n}{SIG\PYGZus{}tmp}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{xmss\PYGZus{}sign}\PYG{p}{(}\PYG{n}{root}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{SK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{idx\PYGZus{}leaf}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{PK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{ADRS}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{    }\PYG{n}{SIG\PYGZus{}HT}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{SIG\PYGZus{}HT}\PYG{+w}{ }\PYG{+w}{ }\PYG{n}{SIG\PYGZus{}tmp}\PYG{p}{;}
+\PYG{+w}{    }\PYG{k}{if}\PYG{+w}{ }\PYG{p}{(}\PYG{+w}{ }\PYG{n}{j}\PYG{+w}{ }\PYG{o}{\PYGZlt{}}\PYG{+w}{ }\PYG{n}{d}\PYG{+w}{ }\PYG{o}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+m+mi}{1}\PYG{+w}{ }\PYG{p}{)}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{      }\PYG{n}{root}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{xmss\PYGZus{}pkFromSig}\PYG{p}{(}\PYG{n}{idx\PYGZus{}leaf}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{SIG\PYGZus{}tmp}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{root}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{PK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{ADRS}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{    }\PYG{p}{\PYGZcb{}}
+\PYG{+w}{  }\PYG{p}{\PYGZcb{}}
+\PYG{+w}{  }\PYG{k}{return}\PYG{+w}{ }\PYG{n}{SIG\PYGZus{}HT}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+\end{Verbatim}

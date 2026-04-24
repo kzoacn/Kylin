@@ -1,0 +1,14 @@
+\begin{Verbatim}[commandchars=\\\{\},codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8\relax}]
+\PYG{c+cp}{\PYGZsh{}}\PYG{c+cp}{ Input: Secret seed SK.seed, public seed PK.seed, address ADRS}
+\PYG{c+cp}{\PYGZsh{}}\PYG{c+cp}{ Output: FORS public key PK}
+\PYG{n}{fors\PYGZus{}PKgen}\PYG{p}{(}\PYG{n}{SK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{PK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{ADRS}\PYG{p}{)}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{  }\PYG{n}{forspkADRS}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{ADRS}\PYG{p}{;}\PYG{+w}{ }\PYG{c+c1}{// copy address to create FTS public key address}
+\PYG{+w}{  }\PYG{k}{for}\PYG{p}{(}\PYG{n}{i}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{l+m+mi}{0}\PYG{p}{;}\PYG{+w}{ }\PYG{n}{i}\PYG{+w}{ }\PYG{o}{\PYGZlt{}}\PYG{+w}{ }\PYG{n}{k}\PYG{p}{;}\PYG{+w}{ }\PYG{n}{i}\PYG{o}{+}\PYG{o}{+}\PYG{p}{)}\PYG{p}{\PYGZob{}}
+\PYG{+w}{    }\PYG{n}{root}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{fors\PYGZus{}treehash}\PYG{p}{(}\PYG{n}{SK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{i}\PYG{o}{*}\PYG{n}{t}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{a}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{PK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{ADRS}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{  }\PYG{p}{\PYGZcb{}}
+\PYG{+w}{  }\PYG{n}{forspkADRS}\PYG{p}{.}\PYG{n}{setType}\PYG{p}{(}\PYG{n}{FORS\PYGZus{}ROOTS}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{  }\PYG{n}{forspkADRS}\PYG{p}{.}\PYG{n}{setKeyPairAddress}\PYG{p}{(}\PYG{n}{ADRS}\PYG{p}{.}\PYG{n}{getKeyPairAddress}\PYG{p}{(}\PYG{p}{)}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{  }\PYG{n}{pk}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{T\PYGZus{}k}\PYG{p}{(}\PYG{n}{PK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{forspkADRS}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{root}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{  }\PYG{k}{return}\PYG{+w}{ }\PYG{n}{pk}\PYG{p}{;}\PYG{+w}{ }
+\PYG{p}{\PYGZcb{}}
+\end{Verbatim}

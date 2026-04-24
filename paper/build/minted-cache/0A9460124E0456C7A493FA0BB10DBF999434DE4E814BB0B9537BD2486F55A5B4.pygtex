@@ -1,0 +1,20 @@
+\begin{Verbatim}[commandchars=\\\{\},codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8\relax}]
+\PYG{c+cp}{\PYGZsh{}}\PYG{c+cp}{ Input: Secret seed SK.seed, start index s, target node height z, public seed PK.seed, address ADRS}
+\PYG{c+cp}{\PYGZsh{}}\PYG{c+cp}{ Output: n\PYGZhy{}byte root node \PYGZhy{} top node on Stack}
+\PYG{n}{fors\PYGZus{}treehash}\PYG{p}{(}\PYG{n}{SK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{s}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{z}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{PK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{ADRS}\PYG{p}{)}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{  }\PYG{k}{if}\PYG{p}{(}\PYG{+w}{ }\PYG{n}{s}\PYG{+w}{ }\PYG{o}{\PYGZpc{}}\PYG{+w}{ }\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{+w}{ }\PYG{o}{\PYGZlt{}}\PYG{o}{\PYGZlt{}}\PYG{+w}{ }\PYG{n}{z}\PYG{p}{)}\PYG{+w}{ }\PYG{o}{!}\PYG{o}{=}\PYG{+w}{ }\PYG{l+m+mi}{0}\PYG{+w}{ }\PYG{p}{)}\PYG{+w}{ }\PYG{k}{return}\PYG{+w}{ }\PYG{l+m+mi}{\PYGZhy{}1}\PYG{p}{;}
+\PYG{+w}{  }\PYG{k}{for}\PYG{+w}{ }\PYG{p}{(}\PYG{+w}{ }\PYG{n}{i}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{l+m+mi}{0}\PYG{p}{;}\PYG{+w}{ }\PYG{n}{i}\PYG{+w}{ }\PYG{o}{\PYGZlt{}}\PYG{+w}{ }\PYG{l+m+mi}{2}\PYG{o}{\PYGZca{}}\PYG{n}{z}\PYG{p}{;}\PYG{+w}{ }\PYG{n}{i}\PYG{o}{+}\PYG{o}{+}\PYG{+w}{ }\PYG{p}{)}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{    }\PYG{n}{sk}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{fors\PYGZus{}SKgen}\PYG{p}{(}\PYG{n}{SK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{ADRS}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{s}\PYG{o}{+}\PYG{n}{i}\PYG{p}{)}
+\PYG{+w}{    }\PYG{n}{node}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{F}\PYG{p}{(}\PYG{n}{PK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{ADRS}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{sk}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{    }\PYG{n}{ADRS}\PYG{p}{.}\PYG{n}{setTreeHeight}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{    }\PYG{n}{ADRS}\PYG{p}{.}\PYG{n}{setTreeIndex}\PYG{p}{(}\PYG{n}{s}\PYG{+w}{ }\PYG{o}{+}\PYG{+w}{ }\PYG{n}{i}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{    }\PYG{k}{while}\PYG{+w}{ }\PYG{p}{(}\PYG{+w}{ }\PYG{n}{Top}\PYG{+w}{ }\PYG{n}{node}\PYG{+w}{ }\PYG{n}{on}\PYG{+w}{ }\PYG{n}{Stack}\PYG{+w}{ }\PYG{n}{has}\PYG{+w}{ }\PYG{n}{same}\PYG{+w}{ }\PYG{n}{height}\PYG{+w}{ }\PYG{n}{as}\PYG{+w}{ }\PYG{n}{node}\PYG{+w}{ }\PYG{p}{)}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{      }\PYG{n}{ADRS}\PYG{p}{.}\PYG{n}{setTreeIndex}\PYG{p}{(}\PYG{p}{(}\PYG{n}{ADRS}\PYG{p}{.}\PYG{n}{getTreeIndex}\PYG{p}{(}\PYG{p}{)}\PYG{+w}{ }\PYG{o}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+m+mi}{1}\PYG{p}{)}\PYG{+w}{ }\PYG{o}{/}\PYG{+w}{ }\PYG{l+m+mi}{2}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{      }\PYG{n}{node}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{H}\PYG{p}{(}\PYG{n}{PK}\PYG{p}{.}\PYG{n}{seed}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{ADRS}\PYG{p}{,}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{Stack}\PYG{p}{.}\PYG{n}{pop}\PYG{p}{(}\PYG{p}{)}\PYG{+w}{ }\PYG{+w}{ }\PYG{n}{node}\PYG{p}{)}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{      }\PYG{n}{ADRS}\PYG{p}{.}\PYG{n}{setTreeHeight}\PYG{p}{(}\PYG{n}{ADRS}\PYG{p}{.}\PYG{n}{getTreeHeight}\PYG{p}{(}\PYG{p}{)}\PYG{+w}{ }\PYG{o}{+}\PYG{+w}{ }\PYG{l+m+mi}{1}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{    }\PYG{p}{\PYGZcb{}}
+\PYG{+w}{    }\PYG{n}{Stack}\PYG{p}{.}\PYG{n}{push}\PYG{p}{(}\PYG{n}{node}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{  }\PYG{p}{\PYGZcb{}}
+\PYG{+w}{  }\PYG{k}{return}\PYG{+w}{ }\PYG{n}{Stack}\PYG{p}{.}\PYG{n}{pop}\PYG{p}{(}\PYG{p}{)}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+\end{Verbatim}
