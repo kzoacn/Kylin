@@ -2,7 +2,7 @@
 # Output: XMSS signature SIG_XMSS = (sig || AUTH)
 xmss_sign(M, SK.seed, idx, PK.seed, ADRS) { 
   // build authentication path
-  for ( j = 0; j < |\texttt{h'}|; j++ ) {
+  for ( j = 0; j < |\texttt{h\_XMSS}|; j++ ) {
     k = floor(idx / (2^j)) XOR 1;
     AUTH[j] = treehash(SK.seed, k * 2^j, j, PK.seed, ADRS);
   }

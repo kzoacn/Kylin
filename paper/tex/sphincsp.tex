@@ -338,7 +338,7 @@ In this section, we explain how the \SPHINCSA\ hypertree is built. We first expl
 
 \subsection{(Fixed Input-Length) XMSS} \label{sec:xmss}
 
-XMSS is a method for signing a potentially large but fixed number of messages. It is based on the Merkle signature scheme. It authenticates $2^{h'}$ $\WOTSCS$ public keys using a binary tree of height $h'$. Hence, an XMSS key pair for height $h'$ can be used to sign 2 different messages. Each node in the binary tree is an $n$-byte value which is the tweakable hash of the concatenation of its two child nodes. The leaves are the \WOTSCS\ public keys. The XMSS public key is the root node of the tree. In \SPHINCSA, the XMSS secret key is the single secret seed that is used to generate all \WOTSCS\ secret keys.
+XMSS is a method for signing a potentially large but fixed number of messages. It is based on the Merkle signature scheme. It authenticates $2^{h_{\mathrm{XMSS}}}$ $\WOTSCS$ public keys using a binary tree of height $h_{\mathrm{XMSS}}$. Hence, an XMSS key pair for height $h_{\mathrm{XMSS}}$ can be used to sign 2 different messages. Each node in the binary tree is an $n$-byte value which is the tweakable hash of the concatenation of its two child nodes. The leaves are the \WOTSCS\ public keys. The XMSS public key is the root node of the tree. In \SPHINCSA, the XMSS secret key is the single secret seed that is used to generate all \WOTSCS\ secret keys.
 
 An XMSS signature in the context of \SPHINCSA\ consists of the \WOTSCS\ signature on the message and the so-called authentication path. The latter is a vector of tree nodes that allow a verifier to compute a value for the root of the tree starting from a \WOTSCS\ signature. A verifier computes the root value and verifies its correctness. A standalone XMSS signature also contains the index of the used \WOTSCS\ key pair. In the context of \SPHINCSA\ this is not necessary as the \SPHINCSA\ signature allows to compute the index for each XMSS signature contained.
 
@@ -347,14 +347,14 @@ An XMSS signature in the context of \SPHINCSA\ consists of the \WOTSCS\ signatur
 XMSS has the following parameters:
 
 \begin{itemize}
-    \item $h'$ : the height ($\text{number of levels} - 1$) of the tree.
+    \item $h_{\mathrm{XMSS}}$ : the height ($\text{number of levels} - 1$) of the tree.
 
     \item $n$: the length in bytes of messages as well as of each node.
 
     \item $w$ : the Winternitz parameter as defined for \WOTSCS\ in the previous Section.
 \end{itemize}
 
-There are $2^{h'}$ leaves in the tree. XMSS signatures are denoted by \sigxmss  (\texttt{SIG\_XMSS} in pseudocode). \WOTSCS\ signatures are denoted by \sig.
+There are $2^{h_{\mathrm{XMSS}}}$ leaves in the tree. XMSS signatures are denoted by \sigxmss  (\texttt{SIG\_XMSS} in pseudocode). \WOTSCS\ signatures are denoted by \sig.
 
 XMSS parameters are implicitly included in algorithm inputs as needed.
 
@@ -384,14 +384,14 @@ The XMSS public key is computed as described in \texttt{xmss\_PKgen} (\cref{alg:
 
 \subsubsection{XMSS Signature}
 
-An XMSS signature is a $((\len+h')*n)$-byte string consisting of
+An XMSS signature is a $((\len+h_{\mathrm{XMSS}})*n)$-byte string consisting of
 \begin{itemize}
     \item a \WOTSCS\ signature \sigots taking $\len\cdot n$ bytes,
 
-    \item the authentication path \texttt{AUTH} for the leaf associated with the used \WOTSCS\ key pair taking $h'\cdot n$ bytes.
+    \item the authentication path \texttt{AUTH} for the leaf associated with the used \WOTSCS\ key pair taking $h_{\mathrm{XMSS}}\cdot n$ bytes.
 \end{itemize}
 
-The authentication path is an array of $h'$ $n$-byte strings. It contains the siblings of the nodes in on the path from the used leaf to the root. It does not contain the nodes on the path itself. These nodes in \texttt{AUTH} are needed by a verifier to compute a root node for the tree from a \WOTSCS\ public key. A node $N$ is addressed by its position in the tree. $N(x, y)$ denotes the $y$-th node on level $x$ with $y=0$ being the leftmost node on a level. The leaves are on level $0$, the root is on level $h'$. An authentication path contains exactly one node on every layer $0\leq x\leq(h'-1)$ . For the $i$-th $\WOTSCS$ key pair, counting from zero, the $j$-th authentication path node is
+The authentication path is an array of $h_{\mathrm{XMSS}}$ $n$-byte strings. It contains the siblings of the nodes in on the path from the used leaf to the root. It does not contain the nodes on the path itself. These nodes in \texttt{AUTH} are needed by a verifier to compute a root node for the tree from a \WOTSCS\ public key. A node $N$ is addressed by its position in the tree. $N(x, y)$ denotes the $y$-th node on level $x$ with $y=0$ being the leftmost node on a level. The leaves are on level $0$, the root is on level $h_{\mathrm{XMSS}}$. An authentication path contains exactly one node on every layer $0\leq x\leq(h_{\mathrm{XMSS}}-1)$ . For the $i$-th $\WOTSCS$ key pair, counting from zero, the $j$-th authentication path node is
 \[ \mathtt{AUTH}[j]=N\left(j, \lfloor\frac{i}{2^{j}}\rfloor\oplus 1\right) \enspace.\]
 
 The computation of the authentication path is discussed in \cref{sec:xmsssign}. The data format for a signature is given in \cref{fig:spx10}.
@@ -404,7 +404,7 @@ The computation of the authentication path is discussed in \cref{sec:xmsssign}. 
         \wordbox[lrt]{1}{...} \\
         \skippedwords \\
         \wordbox[lrb]{1}{...} \\
-        \wordbox{1}{$\mathbf{AUTH}[h-1]$}
+        \wordbox{1}{$\mathbf{AUTH}[h_{\mathrm{XMSS}}-1]$}
     \end{bytefield} 
     \caption{XMSS Signature} \label{fig:spx10}
 \end{figure}

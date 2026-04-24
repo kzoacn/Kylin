@@ -9,7 +9,7 @@ node[0] = wots_pkFromSig(sig, M, PK.seed, ADRS);
 // compute root from WOTS+ pk and AUTH
 ADRS.setType(TREE);
 ADRS.setTreeIndex(idx);
-for ( k = 0; k < |\texttt{h'}|; k++ ) {
+for ( k = 0; k < |\texttt{h\_XMSS}|; k++ ) {
   ADRS.setTreeHeight(k+1);
   if ( (floor(idx / (2^k)) % 2) == 0 ) {
       ADRS.setTreeIndex(ADRS.getTreeIndex() / 2);
