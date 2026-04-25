@@ -5,7 +5,15 @@
 - `docs/` contains NGCC requirements, evaluation criteria, and ICCS API templates.
 - `main.tex` and `paper/` are the current English submission document source.
 - The NGCC code package is under `Implementations/`.
-- Active submission profiles are six variants: `Kylin-128-fast`, `Kylin-128-small`, `Kylin-256-fast`, `Kylin-256-small`, `Kylin-512-fast`, and `Kylin-512-small`.
+- Active submission profiles are fixed as six variants: `Kylin-128`, `Kylin-256`, `Kylin-512`, `Kylin-128-q24`, `Kylin-256-q24`, and `Kylin-512-q24`.
+- Frozen parameter source of truth is `paper/data/para_kylin_final_6profiles.csv`.
+- Frozen parameter set (do not retune unless explicitly requested):
+  - `Kylin-128`: `q=2^64, n=16, h=65, d=9, h_vec=[7,7,7,7,7,7,7,8,8], a=13, k=11, w=73, len=22`
+  - `Kylin-256`: `q=2^64, n=32, h=68, d=10, h_vec=[6,6,7,7,7,7,7,7,7,7], a=13, k=22, w=54, len=46`
+  - `Kylin-512`: `q=2^64, n=64, h=70, d=4, h_vec=[17,17,18,18], a=20, k=27, w=64, len=87`
+  - `Kylin-128-q24`: `q=2^24, n=16, h=22, d=1, h_vec=[22], a=24, k=6, w=4, len=67`
+  - `Kylin-256-q24`: `q=2^24, n=32, h=21, d=1, h_vec=[21], a=25, k=12, w=4, len=131`
+  - `Kylin-512-q24`: `q=2^24, n=64, h=57, d=3, h_vec=[19,19,19], a=20, k=24, w=64, len=87`
 - `Kylin-512` usually runs slowly; for quick smoke tests it may be skipped temporarily, but final-result validation must run `Kylin-512` in practice.
 - Use NGCC SIG API files and names: `SIG_AlgorithmInstance.h`, `SIG_AlgorithmInstance.c`, and `KAT_SIG.c`.
 - Copy NGCC helper/template files from `docs/API_PKC/...`; do not modify `KAT_SIG.c`, `auxfunc.*`, or `drng.*` after copying.
@@ -13,9 +21,7 @@
 - NGCC requires automated builds, generated KAT files, an ISO C reference implementation, and an optimized 64-bit PC implementation.
 - Hash and XOF calls in the NGCC package must use ICCS auxiliary functions: `sm3hash`, `pseudohash`, and especially `pseudoXOF`.
 - Randomness in KAT mode must come from NGCC `drng_algorithm` via `get_random_number`.
-- Current baseline parameters are from `paper/data/para_ngcc.csv`; optimization work must derive `{128,256,512} x {fast,small}` profile parameters.
-- `fast` profiles should prioritize faster signing within reasonable key/signature overhead.
-- `small` profiles should prioritize smaller signatures within reasonable performance overhead.
+- Baseline references remain in `paper/data/para_ngcc.csv`, but parameter selection/optimization is completed and fixed in `paper/data/para_kylin_final_6profiles.csv`.
 - Original WOTSCS `uint256_t` encoding has been generalized in the Kylin port for `n=16/32/64`.
 - `paper/code/search_ngcc_params.py` reproduces the current NGCC parameter table.
 - Priority workstreams: parameter refinement, code optimization, documentation completion (including Chinese document), and final NGCC submission packaging.

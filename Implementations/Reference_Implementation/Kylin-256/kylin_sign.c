@@ -93,8 +93,9 @@ int kylin_sign_signature(uint8_t *sig, unsigned long long *siglen,
         sig += SPX_WOTS_BYTES + tree_height * SPX_N;
 
         if (i + 1 < SPX_D) {
-            idx_leaf = get_low_bits(tree, tree_height);
-            tree = shift_right_bits(tree, tree_height);
+            uint32_t next_tree_height = spx_tree_height(i + 1);
+            idx_leaf = get_low_bits(tree, next_tree_height);
+            tree = shift_right_bits(tree, next_tree_height);
         }
     }
 
@@ -160,8 +161,9 @@ int kylin_sign_verify(const uint8_t *sig, unsigned long long siglen,
         sig += tree_height * SPX_N;
 
         if (i + 1 < SPX_D) {
-            idx_leaf = get_low_bits(tree, tree_height);
-            tree = shift_right_bits(tree, tree_height);
+            uint32_t next_tree_height = spx_tree_height(i + 1);
+            idx_leaf = get_low_bits(tree, next_tree_height);
+            tree = shift_right_bits(tree, next_tree_height);
         }
     }
 

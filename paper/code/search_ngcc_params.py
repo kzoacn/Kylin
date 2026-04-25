@@ -1,42 +1,65 @@
 #!/usr/bin/env python3
-"""Search and select first-stage NGCC-aligned Kylin parameter families.
+"""Search and select NGCC-aligned Kylin parameter families with per-layer HT heights.
 
-The original draft shipped a Sage script tuned to the legacy 128/192/256-bit
-NIST-style families. This helper reproduces the same style of exact search in
-plain Python. The first-stage implementation intentionally keeps the common
-shape `(h, d, a, w) = (70, 10, 14, 64)` while the parameter-selection method is
-still under discussion.
+This script evaluates SPHINCSA/Kylin parameter candidates under the current
+single-key NGCC interpretation (default q = 2^64 signatures per key pair).
+The query budget q can be overridden from CLI.
 
-Selection model:
-- tune the single-key security formulas with `q = 2^64` signatures, matching
-  the explicit NGCC requirement that one key pair support at least `2^64`
-  signed messages;
-- use `n = 16` for the NGCC 128/80 family as the current design decision;
-- keep a common hypertree/FORS/WOTS shape to simplify the specification and
-  implementation;
-- keep the Pareto/common-shape search helpers in this file for later parameter
-  discussion, but emit the fixed first-stage implementation shape by default.
+Compared to the legacy h/d model, this version supports explicit hypertree
+layer-height vectors h_vec = (h_0, ..., h_{d-1}) with:
+  - sum(h_i) = h
+  - h_0 used for message-digest leaf-index bits
+  - signing-time hash-call proxy using sum_i 2^{h_i}
+
+By default (q = 2^64 and no explicit --shape), the script emits the frozen
+packaged NGCC rows. Search helpers are retained for broader exploration.
 """
 
 from __future__ import annotations
 
 import argparse
 import csv
-import math
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
+from typing import Sequence
 
 import mpmath as mp
 
 mp.mp.dps = 80
 
-Q_SIGS = 2**64
-W_CHOICES = (16, 32, 64)
-H_CHOICES = tuple(range(64, 97))
-A_CHOICES = tuple(range(8, 17))
-SPEED_FACTOR = 32
+DEFAULT_Q_SIGS = 2**64
+Q_SIGS = DEFAULT_Q_SIGS
+W_CHOICES = tuple(range(8, 88))
+H_CHOICES = tuple(range(60, 71))
+A_CHOICES = tuple(range(8, 31))
+
+# Legacy fallback shape used only when --shape is not provided and q != 2^64.
 PREFERRED_SHAPE = (70, 10, 14, 64)
+
+# Implementation-facing constraints for generated h-vectors.
+# - h - h0 <= 64 keeps tree index extraction in 64-bit path.
+# - h_i <= 32 (relaxed from 16) for broader parameter exploration.
+MAX_LAYER_HEIGHT = 32
+
+
+def set_query_budget(q_sigs: int) -> None:
+    global Q_SIGS
+    if q_sigs <= 0:
+        raise ValueError("q must be a positive integer")
+    if q_sigs == Q_SIGS:
+        return
+    Q_SIGS = q_sigs
+    # These caches depend on q through q-hit probabilities/security checks.
+    qhit_distribution.cache_clear()
+    classical_bit_security.cache_clear()
+    minimal_k.cache_clear()
+
+
+def format_q(q_sigs: int) -> str:
+    if q_sigs > 0 and (q_sigs & (q_sigs - 1)) == 0:
+        return f"2^{q_sigs.bit_length() - 1}"
+    return str(q_sigs)
 
 
 @dataclass(frozen=True)
@@ -49,10 +72,32 @@ class Family:
 
 
 @dataclass(frozen=True)
+class BaselineParameter:
+    name: str
+    q_sigs: int
+    n: int
+    h: int
+    d: int
+    h_prime: int | None
+    log_t: int | None
+    a: int | None
+    k: int
+    w: int | None
+    l: int | None
+    lgw: int | None
+    m: int | None
+    bitsec: float | None
+    sec_level: str | None
+    category: str | None
+    bytes_value: int | None
+
+
+@dataclass(frozen=True)
 class Candidate:
     family: Family
     h: int
     d: int
+    h_vec: tuple[int, ...]
     a: int
     k: int
     w: int
@@ -71,18 +116,150 @@ class Candidate:
         return 4 * self.family.n
 
     @property
-    def subtree_height(self) -> int:
-        return self.h // self.d
+    def h0(self) -> int:
+        return self.h_vec[0]
 
     @property
-    def shape(self) -> tuple[int, int, int, int]:
-        return (self.h, self.d, self.a, self.w)
+    def tree_bits(self) -> int:
+        return self.h - self.h0
+
+    @property
+    def digest_bytes(self) -> int:
+        return ((self.k * self.a + 7) // 8) + ((self.tree_bits + 7) // 8) + ((self.h0 + 7) // 8)
+
+    @property
+    def subtree(self) -> str:
+        if all(v == self.h_vec[0] for v in self.h_vec):
+            return str(self.h_vec[0])
+        return "-"
+
+    @property
+    def h_profile(self) -> str:
+        return "[" + ",".join(str(v) for v in self.h_vec) + "]"
 
 
 FAMILIES = (
     Family("Kylin-128", 128, 80, 16, 128),
     Family("Kylin-256", 256, 128, 32, 256),
     Family("Kylin-512", 512, 256, 64, 512),
+)
+
+
+FROZEN_Q64_PROFILES: dict[str, dict[str, int | tuple[int, ...]]] = {
+    "Kylin-128": {
+        "h": 65,
+        "d": 9,
+        "h_vec": (7, 7, 7, 7, 7, 7, 7, 8, 8),
+        "a": 13,
+        "k": 11,
+        "w": 73,
+        "length": 22,
+    },
+    "Kylin-256": {
+        "h": 68,
+        "d": 10,
+        "h_vec": (6, 6, 7, 7, 7, 7, 7, 7, 7, 7),
+        "a": 13,
+        "k": 22,
+        "w": 54,
+        "length": 46,
+    },
+    "Kylin-512": {
+        "h": 70,
+        "d": 4,
+        "h_vec": (17, 17, 18, 18),
+        "a": 20,
+        "k": 27,
+        "w": 64,
+        "length": 87,
+    },
+}
+
+MIN_REQUIRED_BITSEC = {
+    "Kylin-128": 127.0,
+    "Kylin-256": 255.0,
+    "Kylin-512": 511.0,
+}
+
+
+# Fixed external baseline sets kept in code for future tuning/reference.
+BASELINE_PARAMETERS = (
+    BaselineParameter(
+        name="sphincs-a-128s",
+        q_sigs=2**64,
+        n=16,
+        h=63,
+        d=9,
+        h_prime=7,
+        log_t=13,
+        a=13,
+        k=12,
+        w=73,
+        l=22,
+        lgw=None,
+        m=28,
+        bitsec=128,
+        sec_level="I",
+        category="1",
+        bytes_value=None,
+    ),
+    BaselineParameter(
+        name="sphincs-a-256s",
+        q_sigs=2**64,
+        n=32,
+        h=66,
+        d=11,
+        h_prime=6,
+        log_t=13,
+        a=13,
+        k=23,
+        w=79,
+        l=42,
+        lgw=None,
+        m=47,
+        bitsec=255,
+        sec_level="V",
+        category="5",
+        bytes_value=None,
+    ),
+    BaselineParameter(
+        name="SLH-DSA-SHAKE-128-24",
+        q_sigs=2**24,
+        n=16,
+        h=22,
+        d=1,
+        h_prime=22,
+        log_t=24,
+        a=24,
+        k=6,
+        w=4,
+        l=67,
+        lgw=2,
+        m=21,
+        bitsec=127.28077264423924,
+        sec_level="I",
+        category="1",
+        bytes_value=32,
+    ),
+    BaselineParameter(
+        name="SLH-DSA-SHAKE-256-24",
+        q_sigs=2**24,
+        n=32,
+        h=21,
+        d=1,
+        h_prime=21,
+        log_t=25,
+        a=25,
+        k=12,
+        w=4,
+        l=131,
+        lgw=2,
+        m=41,
+        bitsec=255.35935186139096,
+        sec_level="V",
+        category="5",
+        bytes_value=64,
+    ),
 )
 
 
@@ -112,8 +289,13 @@ def wotscs_length(message_bits: int, w: int) -> int:
     raise RuntimeError(f"failed to find WOTSCS length for {message_bits=} {w=}")
 
 
-def divisors(value: int) -> list[int]:
-    return [d for d in range(6, value) if value % d == 0]
+def layer_count_choices(h: int) -> range:
+    """Enumerate feasible HT layer counts without assuming h is divisible by d."""
+    # If each layer is at most MAX_LAYER_HEIGHT, we need at least ceil(h / max_h_i)
+    # layers. We keep the upper bound compact for runtime and reproducibility.
+    min_d = max(6, (h + MAX_LAYER_HEIGHT - 1) // MAX_LAYER_HEIGHT)
+    max_d = min(24, h)
+    return range(min_d, max_d + 1)
 
 
 @lru_cache(maxsize=None)
@@ -146,8 +328,81 @@ def signature_bytes(n: int, h: int, d: int, a: int, k: int, length: int) -> int:
     return ((a + 1) * k + h + length * d + 1) * n
 
 
-def hash_calls(h: int, d: int, a: int, k: int, w: int, length: int) -> int:
-    return k * (2 ** (a + 1)) + d * ((2 ** (h // d)) * (length * w + 1))
+def hash_calls(h_vec: Sequence[int], a: int, k: int, w: int, length: int) -> int:
+    # FORS plus HT signing proxy from the text formulas.
+    return k * (2 ** (a + 1)) + sum((2**layer_h) * (length * w + 1) for layer_h in h_vec)
+
+
+def balanced_profile(h: int, d: int) -> tuple[int, ...]:
+    base = h // d
+    rem = h % d
+    return tuple(base + (1 if i < rem else 0) for i in range(d))
+
+
+def shift_height(profile: tuple[int, ...], src: int, dst: int, amount: int) -> tuple[int, ...] | None:
+    if amount <= 0:
+        return profile
+    p = list(profile)
+    if src == dst:
+        return tuple(p)
+    if p[src] - amount < 1:
+        return None
+    p[src] -= amount
+    p[dst] += amount
+    return tuple(p)
+
+
+def profile_is_compatible(h: int, h_vec: Sequence[int]) -> bool:
+    if not h_vec:
+        return False
+    if any(v < 1 for v in h_vec):
+        return False
+    if sum(h_vec) != h:
+        return False
+    if max(h_vec) > MAX_LAYER_HEIGHT:
+        return False
+    h0 = h_vec[0]
+    if h - h0 > 64:
+        return False
+    return True
+
+
+def generate_layer_profiles(h: int, d: int) -> list[tuple[int, ...]]:
+    """Generate a small deterministic candidate set of h-vectors.
+
+    We keep the profile space intentionally compact for reproducibility and
+    runtime. The balanced profile is always included, and a few near-balanced
+    perturbations are added when valid.
+    """
+    core = balanced_profile(h, d)
+    profiles: set[tuple[int, ...]] = {core}
+
+    # Move one/two levels from top to bottom and vice versa as nearby variants.
+    top = d - 1
+    maybe = [
+        shift_height(core, top, 0, 1),
+        shift_height(core, top, 0, 2),
+        shift_height(core, 0, top, 1),
+        shift_height(core, 0, top, 2),
+    ]
+
+    # Also perturb around the middle layers to avoid strict end-biased choices.
+    mid = d // 2
+    maybe.extend(
+        [
+            shift_height(core, mid, 0, 1),
+            shift_height(core, mid, top, 1),
+            shift_height(core, top, mid, 1),
+            shift_height(core, 0, mid, 1),
+        ]
+    )
+
+    for candidate in maybe:
+        if candidate is not None and profile_is_compatible(h, candidate):
+            profiles.add(candidate)
+
+    # Deterministic ordering.
+    return sorted(profiles)
 
 
 @lru_cache(maxsize=None)
@@ -169,12 +424,9 @@ def minimal_k(family: Family, h: int, a: int) -> int | None:
     return None
 
 
-def enumerate_candidates(family: Family) -> list[Candidate]:
+def enumerate_candidates(family: Family, h_choices: Sequence[int] = H_CHOICES) -> list[Candidate]:
     candidates: list[Candidate] = []
-    for h in H_CHOICES:
-        ds = divisors(h)
-        if not ds:
-            continue
+    for h in h_choices:
         for a in A_CHOICES:
             k = minimal_k(family, h, a)
             if k is None:
@@ -183,116 +435,97 @@ def enumerate_candidates(family: Family) -> list[Candidate]:
             quantum = float(quantum_bit_security(family.n, h, a, k))
             for w in W_CHOICES:
                 length = wotscs_length(8 * family.n, w)
-                for d in ds:
-                    candidates.append(
-                        Candidate(
-                            family=family,
-                            h=h,
-                            d=d,
-                            a=a,
-                            k=k,
-                            w=w,
-                            length=length,
-                            classical_bitsec=classical,
-                            quantum_bitsec=quantum,
-                            sig_bytes=signature_bytes(family.n, h, d, a, k, length),
-                            hash_calls=hash_calls(h, d, a, k, w, length),
+                for d in layer_count_choices(h):
+                    for h_vec in generate_layer_profiles(h, d):
+                        candidates.append(
+                            Candidate(
+                                family=family,
+                                h=h,
+                                d=d,
+                                h_vec=h_vec,
+                                a=a,
+                                k=k,
+                                w=w,
+                                length=length,
+                                classical_bitsec=classical,
+                                quantum_bitsec=quantum,
+                                sig_bytes=signature_bytes(family.n, h, d, a, k, length),
+                                hash_calls=hash_calls(h_vec, a, k, w, length),
+                            )
                         )
-                    )
     return candidates
 
 
-def pareto_frontier(candidates: list[Candidate]) -> list[Candidate]:
-    frontier: list[Candidate] = []
-    best_speed = math.inf
-    for candidate in sorted(candidates, key=lambda c: (c.sig_bytes, c.hash_calls)):
-        if candidate.hash_calls < best_speed:
-            frontier.append(candidate)
-            best_speed = candidate.hash_calls
-    return frontier
-
-
-def frontier_anchor(frontier: list[Candidate]) -> tuple[int, int]:
-    return (
-        min(candidate.sig_bytes for candidate in frontier),
-        min(candidate.hash_calls for candidate in frontier),
-    )
-
-
-def balance_score(candidate: Candidate, min_sig: int, min_speed: int) -> float:
-    return max(
-        math.log(candidate.sig_bytes / min_sig, 2),
-        math.log(candidate.hash_calls / min_speed, 2),
-    )
-
-
-def choose_common_shape(frontiers: dict[str, list[Candidate]]) -> tuple[tuple[int, int, int, int], dict[str, Candidate]]:
-    by_family_shape: dict[str, dict[tuple[int, int, int, int], Candidate]] = {}
-    anchors: dict[str, tuple[int, int]] = {}
-    fastest_by_family: dict[str, int] = {}
-    for family_name, frontier in frontiers.items():
-        anchors[family_name] = frontier_anchor(frontier)
-        fastest_by_family[family_name] = min(candidate.hash_calls for candidate in frontier)
-        by_family_shape[family_name] = {candidate.shape: candidate for candidate in frontier}
-
-    common_shapes = set.intersection(*(set(shapes.keys()) for shapes in by_family_shape.values()))
-    best_shape: tuple[int, int, int, int] | None = None
-    best_candidates: dict[str, Candidate] | None = None
-    best_score: tuple[int, int, float, float] | None = None
-
-    for shape in sorted(common_shapes):
-        chosen = {family_name: by_family_shape[family_name][shape] for family_name in by_family_shape}
-        if any(
-            candidate.hash_calls > fastest_by_family[family_name] * SPEED_FACTOR
-            for family_name, candidate in chosen.items()
-        ):
-            continue
-        scores = []
-        total_sig = 0
-        total_speed = 0
-        for family_name, candidate in chosen.items():
-            min_sig, min_speed = anchors[family_name]
-            scores.append(balance_score(candidate, min_sig, min_speed))
-            total_sig += candidate.sig_bytes
-            total_speed += candidate.hash_calls
-        objective = (total_sig, total_speed, sum(scores), max(scores))
-        if best_score is None or objective < best_score:
-            best_score = objective
-            best_shape = shape
-            best_candidates = chosen
-
-    if best_shape is None or best_candidates is None:
-        raise RuntimeError(
-            f"failed to find a common NGCC parameter shape within the {SPEED_FACTOR}x speed cap"
-        )
-
-    return best_shape, best_candidates
-
-
-def choose_fixed_shape(candidates: dict[str, list[Candidate]], shape: tuple[int, int, int, int]) -> dict[str, Candidate]:
+def choose_fixed_shape(
+    candidates: dict[str, list[Candidate]],
+    shape: tuple[int, int, int, int],
+) -> dict[str, Candidate]:
+    h, d, a, w = shape
     chosen: dict[str, Candidate] = {}
     for family_name, family_candidates in candidates.items():
-        matches = [candidate for candidate in family_candidates if candidate.shape == shape]
+        matches = [
+            candidate
+            for candidate in family_candidates
+            if candidate.h == h and candidate.d == d and candidate.a == a and candidate.w == w
+        ]
         if not matches:
             raise RuntimeError(f"failed to find fixed shape {shape} for {family_name}")
-        chosen[family_name] = min(matches, key=lambda c: (c.sig_bytes, c.hash_calls))
+        # Same signature size for fixed (h,d,a,k,w,l,n); prefer faster profile.
+        chosen[family_name] = min(matches, key=lambda c: (c.sig_bytes, c.hash_calls, c.h_vec))
     return chosen
 
 
-def write_csv(candidates: dict[str, Candidate], path: Path) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    fieldnames = [
+def choose_frozen_q64_profiles() -> dict[str, Candidate]:
+    family_by_name = {family.name: family for family in FAMILIES}
+    chosen: dict[str, Candidate] = {}
+    for family_name, profile in FROZEN_Q64_PROFILES.items():
+        family = family_by_name[family_name]
+        h = int(profile["h"])
+        d = int(profile["d"])
+        h_vec = tuple(profile["h_vec"])  # type: ignore[arg-type]
+        a = int(profile["a"])
+        k = int(profile["k"])
+        w = int(profile["w"])
+        length = int(profile["length"])
+
+        if len(h_vec) != d or not profile_is_compatible(h, h_vec):
+            raise RuntimeError(f"invalid frozen profile for {family_name}: h={h}, d={d}, h_vec={h_vec}")
+        if classical_bit_security(family.n, h, a, k) < MIN_REQUIRED_BITSEC[family_name]:
+            raise RuntimeError(f"frozen profile does not meet target bit security for {family_name}")
+
+        chosen[family_name] = Candidate(
+            family=family,
+            h=h,
+            d=d,
+            h_vec=h_vec,
+            a=a,
+            k=k,
+            w=w,
+            length=length,
+            classical_bitsec=float(classical_bit_security(family.n, h, a, k)),
+            quantum_bitsec=float(quantum_bit_security(family.n, h, a, k)),
+            sig_bytes=signature_bytes(family.n, h, d, a, k, length),
+            hash_calls=hash_calls(h_vec, a, k, w, length),
+        )
+    return chosen
+
+
+def candidate_fieldnames() -> list[str]:
+    return [
         "name",
         "ngccclassical",
         "ngccquantum",
         "n",
         "h",
         "d",
+        "h_profile",
+        "h0",
         "a",
         "k",
         "w",
         "len",
         "subtree",
+        "digest_bytes",
         "classical",
         "quantum",
         "pk",
@@ -301,69 +534,334 @@ def write_csv(candidates: dict[str, Candidate], path: Path) -> None:
         "hashcalls",
         "q",
     ]
+
+
+def baseline_fieldnames() -> list[str]:
+    return [
+        "name",
+        "q",
+        "n",
+        "h",
+        "d",
+        "h_prime",
+        "log_t",
+        "a",
+        "k",
+        "w",
+        "l",
+        "lgw",
+        "m",
+        "bitsec",
+        "sec_level",
+        "category",
+        "bytes",
+    ]
+
+
+def baseline_to_row(baseline: BaselineParameter) -> dict[str, str | int | float]:
+    return {
+        "name": baseline.name,
+        "q": format_q(baseline.q_sigs),
+        "n": baseline.n,
+        "h": baseline.h,
+        "d": baseline.d,
+        "h_prime": baseline.h_prime if baseline.h_prime is not None else "",
+        "log_t": baseline.log_t if baseline.log_t is not None else "",
+        "a": baseline.a if baseline.a is not None else "",
+        "k": baseline.k,
+        "w": baseline.w if baseline.w is not None else "",
+        "l": baseline.l if baseline.l is not None else "",
+        "lgw": baseline.lgw if baseline.lgw is not None else "",
+        "m": baseline.m if baseline.m is not None else "",
+        "bitsec": baseline.bitsec if baseline.bitsec is not None else "",
+        "sec_level": baseline.sec_level if baseline.sec_level is not None else "",
+        "category": baseline.category if baseline.category is not None else "",
+        "bytes": baseline.bytes_value if baseline.bytes_value is not None else "",
+    }
+
+
+def candidate_to_row(candidate: Candidate) -> dict[str, str | int]:
+    return {
+        "name": candidate.family.name,
+        "ngccclassical": candidate.family.ngcc_classical,
+        "ngccquantum": candidate.family.ngcc_quantum,
+        "n": candidate.family.n,
+        "h": candidate.h,
+        "d": candidate.d,
+        "h_profile": candidate.h_profile,
+        "h0": candidate.h0,
+        "a": candidate.a,
+        "k": candidate.k,
+        "w": candidate.w,
+        "len": candidate.length,
+        "subtree": candidate.subtree,
+        "digest_bytes": candidate.digest_bytes,
+        "classical": f"{candidate.classical_bitsec:.1f}",
+        "quantum": f"{candidate.quantum_bitsec:.1f}",
+        "pk": candidate.pk_bytes,
+        "sk": candidate.sk_bytes,
+        "sig": candidate.sig_bytes,
+        "hashcalls": candidate.hash_calls,
+        "q": format_q(Q_SIGS),
+    }
+
+
+def write_baseline_csv(path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer = csv.DictWriter(handle, fieldnames=baseline_fieldnames())
+        writer.writeheader()
+        for baseline in BASELINE_PARAMETERS:
+            writer.writerow(baseline_to_row(baseline))
+
+
+def write_selected_csv(candidates: dict[str, Candidate], path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=candidate_fieldnames())
         writer.writeheader()
         for family_name in sorted(candidates):
-            candidate = candidates[family_name]
-            writer.writerow(
-                {
-                    "name": candidate.family.name,
-                    "ngccclassical": candidate.family.ngcc_classical,
-                    "ngccquantum": candidate.family.ngcc_quantum,
-                    "n": candidate.family.n,
-                    "h": candidate.h,
-                    "d": candidate.d,
-                    "a": candidate.a,
-                    "k": candidate.k,
-                    "w": candidate.w,
-                    "len": candidate.length,
-                    "subtree": candidate.subtree_height,
-                    "classical": f"{candidate.classical_bitsec:.1f}",
-                    "quantum": f"{candidate.family.ngcc_quantum:.1f}",
-                    "pk": candidate.pk_bytes,
-                    "sk": candidate.sk_bytes,
-                    "sig": candidate.sig_bytes,
-                    "hashcalls": candidate.hash_calls,
-                    "q": f"2^{int(math.log2(Q_SIGS))}",
-                }
-            )
+            writer.writerow(candidate_to_row(candidates[family_name]))
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--write-csv",
-        type=Path,
-        help="Write the selected parameter rows to a CSV file.",
+def write_matches_csv(candidates: Sequence[Candidate], path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=candidate_fieldnames())
+        writer.writeheader()
+        for candidate in candidates:
+            writer.writerow(candidate_to_row(candidate))
+
+
+def print_baselines() -> None:
+    print("Baselines kept in code:")
+    for baseline in BASELINE_PARAMETERS:
+        print(
+            f"{baseline.name}: q={format_q(baseline.q_sigs)}, n={baseline.n}, h={baseline.h}, "
+            f"d={baseline.d}, h'={baseline.h_prime if baseline.h_prime is not None else '-'}, "
+            f"log_t={baseline.log_t if baseline.log_t is not None else '-'}, "
+            f"a={baseline.a if baseline.a is not None else '-'}, k={baseline.k}, "
+            f"w={baseline.w if baseline.w is not None else '-'}, "
+            f"l={baseline.l if baseline.l is not None else '-'}, "
+            f"lgw={baseline.lgw if baseline.lgw is not None else '-'}, "
+            f"m={baseline.m if baseline.m is not None else '-'}, "
+            f"bitsec={baseline.bitsec if baseline.bitsec is not None else '-'}, "
+            f"sec_level={baseline.sec_level if baseline.sec_level is not None else '-'}, "
+            f"category={baseline.category if baseline.category is not None else '-'}, "
+            f"bytes={baseline.bytes_value if baseline.bytes_value is not None else '-'}"
+        )
+
+
+def sort_key(candidate: Candidate) -> tuple[int, int, int, int, int, int, int, tuple[int, ...]]:
+    return (
+        candidate.sig_bytes,
+        candidate.hash_calls,
+        candidate.h,
+        candidate.d,
+        candidate.a,
+        candidate.k,
+        candidate.w,
+        candidate.h_vec,
     )
-    args = parser.parse_args()
 
-    all_candidates: dict[str, list[Candidate]] = {}
-    frontiers: dict[str, list[Candidate]] = {}
-    for family in FAMILIES:
-        all_candidates[family.name] = enumerate_candidates(family)
-        frontiers[family.name] = pareto_frontier(all_candidates[family.name])
 
-    shape = PREFERRED_SHAPE
-    chosen = choose_fixed_shape(all_candidates, shape)
+def select_matches(
+    all_candidates: dict[str, list[Candidate]],
+    sig_max: int | None,
+) -> dict[str, list[Candidate]]:
+    selected: dict[str, list[Candidate]] = {}
+    for family_name, family_candidates in all_candidates.items():
+        rows = family_candidates
+        if sig_max is not None:
+            rows = [candidate for candidate in rows if candidate.sig_bytes <= sig_max]
+        selected[family_name] = sorted(rows, key=sort_key)
+    return selected
 
-    print("Selected first-stage implementation shape (h, d, a, w):", shape)
-    for family_name in sorted(chosen):
-        candidate = chosen[family_name]
+
+def print_selected(
+    selected: dict[str, Candidate],
+    shape: tuple[int, int, int, int] | None = None,
+) -> None:
+    print("Query budget q:", format_q(Q_SIGS))
+    if shape is None:
+        print("Selected frozen packaged profiles (per family).")
+    else:
+        print("Selected fixed implementation shape (h, d, a, w):", shape)
+    for family_name in sorted(selected):
+        candidate = selected[family_name]
         print(
             f"{candidate.family.name}: "
             f"n={candidate.family.n}, h={candidate.h}, d={candidate.d}, "
+            f"h_vec={candidate.h_profile}, h0={candidate.h0}, "
             f"a={candidate.a}, k={candidate.k}, w={candidate.w}, len={candidate.length}, "
             f"classical={candidate.classical_bitsec:.1f}, "
             f"ngcc_quantum={candidate.family.ngcc_quantum}, "
             f"formula_quantum={candidate.quantum_bitsec:.1f}, "
             f"pk={candidate.pk_bytes}, sk={candidate.sk_bytes}, sig={candidate.sig_bytes}, "
-            f"hashcalls={candidate.hash_calls}"
+            f"digest_bytes={candidate.digest_bytes}, hashcalls={candidate.hash_calls}"
         )
 
+
+def print_matches(
+    matched: dict[str, list[Candidate]],
+    h_min: int,
+    h_max: int,
+    sig_max: int | None,
+    top: int,
+) -> None:
+    sig_desc = f"sig <= {sig_max}" if sig_max is not None else "sig unconstrained"
+    print(f"Search constraints: q={format_q(Q_SIGS)}, h=[{h_min},{h_max}], {sig_desc}")
+    total = 0
+    for family_name in sorted(matched):
+        rows = matched[family_name]
+        total += len(rows)
+        print(f"{family_name}: {len(rows)} matches")
+        for candidate in rows[:top]:
+            print(
+                f"  sig={candidate.sig_bytes}, hashcalls={candidate.hash_calls}, "
+                f"h={candidate.h}, d={candidate.d}, h_vec={candidate.h_profile}, "
+                f"a={candidate.a}, k={candidate.k}, w={candidate.w}, len={candidate.length}, "
+                f"classical={candidate.classical_bitsec:.1f}"
+            )
+    print(f"Total matches: {total}")
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--print-baselines",
+        action="store_true",
+        help="Print the fixed baseline parameter sets kept in this script.",
+    )
+    parser.add_argument(
+        "--write-baseline-csv",
+        type=Path,
+        default=None,
+        help="Write baseline parameter sets to a CSV file and exit.",
+    )
+    parser.add_argument(
+        "--search",
+        action="store_true",
+        help="Run constrained search and print matching candidates instead of fixed-shape selection.",
+    )
+    parser.add_argument(
+        "--h-min",
+        type=int,
+        default=min(H_CHOICES),
+        help="Minimum h for candidate enumeration.",
+    )
+    parser.add_argument(
+        "--h-max",
+        type=int,
+        default=max(H_CHOICES),
+        help="Maximum h for candidate enumeration.",
+    )
+    parser.add_argument(
+        "--sig-max",
+        type=int,
+        default=None,
+        help="Optional signature-size upper bound (bytes) used by --search.",
+    )
+    parser.add_argument(
+        "--top",
+        type=int,
+        default=10,
+        help="How many matched rows per family to print in --search mode.",
+    )
+    parser.add_argument(
+        "--write-search-csv",
+        type=Path,
+        default=None,
+        help="Optional CSV path for all matched candidates in --search mode.",
+    )
+    q_group = parser.add_mutually_exclusive_group()
+    q_group.add_argument(
+        "--q-bits",
+        type=int,
+        default=64,
+        help="Set q as 2^Q_BITS (default: 64).",
+    )
+    q_group.add_argument(
+        "--q-sigs",
+        type=int,
+        default=None,
+        help="Set q directly as an integer signature-query budget.",
+    )
+    parser.add_argument(
+        "--write-csv",
+        type=Path,
+        default=Path("paper/data/para_ngcc.csv"),
+        help="Write the selected parameter rows to a CSV file.",
+    )
+    parser.add_argument(
+        "--shape",
+        nargs=4,
+        metavar=("H", "D", "A", "W"),
+        type=int,
+        default=None,
+        help="Optional fixed shape (h, d, a, w). If omitted with q=2^64, emit frozen packaged profiles.",
+    )
+    args = parser.parse_args()
+
+    if args.h_min < 1:
+        parser.error("--h-min must be >= 1")
+    if args.h_max < args.h_min:
+        parser.error("--h-max must be >= --h-min")
+    if args.top < 1:
+        parser.error("--top must be >= 1")
+    if args.q_sigs is not None and args.q_sigs <= 0:
+        parser.error("--q-sigs must be > 0")
+    if args.q_bits < 0:
+        parser.error("--q-bits must be >= 0")
+
+    if args.print_baselines:
+        print_baselines()
+    if args.write_baseline_csv:
+        write_baseline_csv(args.write_baseline_csv)
+        print(f"Wrote {args.write_baseline_csv}")
+    if args.print_baselines or args.write_baseline_csv:
+        return
+
+    q_sigs = args.q_sigs if args.q_sigs is not None else 2**args.q_bits
+    set_query_budget(q_sigs)
+    h_choices = tuple(range(args.h_min, args.h_max + 1))
+
+    shape = tuple(args.shape) if args.shape is not None else None
+    if shape is not None and len(shape) != 4:
+        parser.error("--shape must provide exactly 4 integers")
+
+    # Default non-search output is the frozen packaged q=2^64 profiles.
+    if not args.search and shape is None and q_sigs == DEFAULT_Q_SIGS:
+        chosen = choose_frozen_q64_profiles()
+        print_selected(chosen)
+        if args.write_csv:
+            write_selected_csv(chosen, args.write_csv)
+            print(f"Wrote {args.write_csv}")
+        return
+
+    all_candidates: dict[str, list[Candidate]] = {}
+    for family in FAMILIES:
+        all_candidates[family.name] = enumerate_candidates(family, h_choices)
+
+    if args.search:
+        matched = select_matches(all_candidates, args.sig_max)
+        print_matches(matched, args.h_min, args.h_max, args.sig_max, args.top)
+        if args.write_search_csv:
+            flat_rows: list[Candidate] = []
+            for family_name in sorted(matched):
+                flat_rows.extend(matched[family_name])
+            write_matches_csv(flat_rows, args.write_search_csv)
+            print(f"Wrote {args.write_search_csv}")
+        return
+
+    if shape is None:
+        shape = PREFERRED_SHAPE
+
+    chosen = choose_fixed_shape(all_candidates, shape)
+    print_selected(chosen, shape)
+
     if args.write_csv:
-        write_csv(chosen, args.write_csv)
+        write_selected_csv(chosen, args.write_csv)
         print(f"Wrote {args.write_csv}")
 
 

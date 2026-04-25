@@ -1,15 +1,27 @@
 Kylin NGCC Implementation Package
 
-This package contains first-stage NGCC digital-signature implementations for:
+This package contains NGCC digital-signature implementations for:
 
 - Kylin-128
 - Kylin-256
 - Kylin-512
+- Kylin-128-q24
+- Kylin-256-q24
+- Kylin-512-q24
 
 The reference implementation is portable C99. The optimized implementation
 currently uses the same portable source code with an `-O3 -march=native` build
 profile for mainstream 64-bit PC processors; deeper code-level optimization is
 tracked as later work.
+
+Current frozen packaged parameters are:
+
+- `Kylin-128`: `q=2^64, h=65, d=9, h_vec=[7,7,7,7,7,7,7,8,8], a=13, k=11, w=73, len=22`
+- `Kylin-256`: `q=2^64, h=68, d=10, h_vec=[6,6,7,7,7,7,7,7,7,7], a=13, k=22, w=54, len=46`
+- `Kylin-512`: `q=2^64, h=70, d=4, h_vec=[17,17,18,18], a=20, k=27, w=64, len=87`
+- `Kylin-128-q24`: `q=2^24, h=22, d=1, h_vec=[22], a=24, k=6, w=4, len=67`
+- `Kylin-256-q24`: `q=2^24, h=21, d=1, h_vec=[21], a=25, k=12, w=4, len=131`
+- `Kylin-512-q24`: `q=2^24, h=57, d=3, h_vec=[19,19,19], a=20, k=24, w=64, len=87`
 
 The packaged NGCC wrappers accept messages up to `2^60` bytes, i.e. `2^63`
 bits, matching the submission bound recorded in the draft.

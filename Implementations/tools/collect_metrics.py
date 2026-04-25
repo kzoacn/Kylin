@@ -15,15 +15,6 @@ BENCH_CSV = REPO_ROOT / "paper" / "data" / "package_bench.csv"
 MEMORY_CSV = REPO_ROOT / "paper" / "data" / "package_memory.csv"
 SUMMARY_MD = REPO_ROOT / "Implementations" / "benchmarks" / "summary.md"
 
-INSTANCE_DIRS = [
-    REPO_ROOT / "Implementations" / "Reference_Implementation" / "Kylin-128",
-    REPO_ROOT / "Implementations" / "Reference_Implementation" / "Kylin-256",
-    REPO_ROOT / "Implementations" / "Reference_Implementation" / "Kylin-512",
-    REPO_ROOT / "Implementations" / "Optimized_Implementation" / "Kylin-128",
-    REPO_ROOT / "Implementations" / "Optimized_Implementation" / "Kylin-256",
-    REPO_ROOT / "Implementations" / "Optimized_Implementation" / "Kylin-512",
-]
-
 
 def run(command: list[str], cwd: Path) -> str:
     completed = subprocess.run(
@@ -84,11 +75,28 @@ def implementation_label(instance_dir: Path) -> str:
     return "opt"
 
 
+def discover_instance_dirs() -> list[Path]:
+    directories: list[Path] = []
+    for impl_dir in ("Reference_Implementation", "Optimized_Implementation"):
+        root = REPO_ROOT / "Implementations" / impl_dir
+        directories.extend(
+            sorted(
+                path for path in root.glob("Kylin-*")
+                if path.is_dir() and (path / "Makefile").is_file()
+            )
+        )
+    return directories
+
+
 def collect() -> tuple[list[dict[str, str]], list[dict[str, str]]]:
     bench_rows: list[dict[str, str]] = []
     memory_rows: list[dict[str, str]] = []
+    instance_dirs = discover_instance_dirs()
 
-    for instance_dir in INSTANCE_DIRS:
+    if not instance_dirs:
+        raise RuntimeError("no Kylin instance directories found")
+
+    for instance_dir in instance_dirs:
         impl = implementation_label(instance_dir)
         print(f"[metrics] collecting {impl} {instance_dir.name}", flush=True)
 

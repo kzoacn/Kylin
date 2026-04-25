@@ -1,4 +1,11 @@
 
 \section{Parameter Evaluation Sage Script}
 \label{apx:script} 
+The script below evaluates parameter candidates with per-layer hypertree heights
+$(h_0,\ldots,h_{d-1})$ satisfying $\sum_{i=0}^{d-1} h_i = h$. It uses $h_0$ for
+the message-digest index split and uses $\sum_{i=0}^{d-1} 2^{h_i}$ in the HT
+hash-call proxy. The currently frozen rows are recorded in
+\texttt{paper/data/para\_kylin\_final\_6profiles.csv}, including the packaged
+$q=2^{64}$ tuples \texttt{Kylin-128/256/512} and the companion $q=2^{24}$
+tuples \texttt{Kylin-128-q24/256-q24/512-q24}.
 \inputminted[breaklines,tabsize=4,fontsize=\tiny]{python}{paper/code/para.sage}
