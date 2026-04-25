@@ -376,3 +376,26 @@
   - 6 个新增目录均 `make clean && make` 编译通过（ref + opt）。
   - `python3 -m py_compile Implementations/tools/collect_metrics.py` 通过。
   - `Reference/Kylin-128-q24` 功能自测在 180 秒超时窗口内未完成（`timeout` 退出码 `124`）；符合 q24 变体较慢预期，需在更长时间窗口做完整运行验证。
+
+### 2026-04-26 - Kylin-128 Optimized Path Deepening (Done)
+
+- 仅针对 `Implementations/Optimized_Implementation/Kylin-128` 做深度优化，未改参数集与接口行为。
+- 主要优化项：
+  - `auxfunc.c`：
+    - 重构 SM3 压缩核心为无轮内分支版本（`i<16` 与 `i>=16` 分离），并引入旋转常量表。
+    - 增加 x86 运行时分发：`AVX2+BMI2` 可用时启用 SIMD 加载路径，其他平台自动回落标量路径。
+    - `pseudoXOF` 新增字节对齐快路径，改为直接计算 `SM3(msg || ct)`，移除热路径堆分配和大块临时拷贝。
+  - `hash_iccs.c`、`thash_iccs.c`：
+    - 高频组包从 `malloc/free` 改为栈缓冲优先（超限再回退堆分配），降低签名路径分配开销。
+  - `Makefile`（优化实现 `Kylin-128`）：
+    - 默认优化编译参数升级为 `-O3 -march=native -flto -fomit-frame-pointer -funroll-loops -fno-plt`，链接增加 `-flto -fno-plt`。
+  - `Implementations/README`：
+    - 更新说明为 `Kylin-128` 已包含代码级优化（不再是仅编译参数区分）。
+- 正确性回归：
+  - `Reference_Implementation/Kylin-128` 与 `Optimized_Implementation/Kylin-128` 的 `KAT_SIG` 输出 `sha256` 一致：
+    - `41143927762b70429d98e3aeb50c5835afd7a0e7ef2ad6a48420720f4e98a4c3`
+  - `make test`（opt）通过。
+- 性能结果（默认口径，9 轮中位数，单位 ms）：
+  - `Reference`：`keygen=311.633`, `sign=1868.617`, `verify=5.303`
+  - `Optimized`：`keygen=280.359`, `sign=1701.369`, `verify=4.979`
+  - 倍数 `ref/opt`：`keygen=1.112x`, `sign=1.098x`, `verify=1.065x`

@@ -10,9 +10,9 @@ This package contains NGCC digital-signature implementations for:
 - Kylin-512-q24
 
 The reference implementation is portable C99. The optimized implementation
-currently uses the same portable source code with an `-O3 -march=native` build
-profile for mainstream 64-bit PC processors; deeper code-level optimization is
-tracked as later work.
+targets mainstream 64-bit PC processors with compiler and code-level
+optimizations. In particular, `Optimized_Implementation/Kylin-128` includes
+runtime-dispatched hash-path acceleration and reduced allocation overhead.
 
 Current frozen packaged parameters are:
 

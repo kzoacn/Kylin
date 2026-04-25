@@ -1,6 +1,6 @@
 CC ?= gcc
-CFLAGS ?= -O3 -march=native -std=c99 -Wall -Wextra -Wpedantic
-LDFLAGS ?=
+CFLAGS ?= -O3 -march=native -flto -fomit-frame-pointer -funroll-loops -fno-plt -std=c99 -Wall -Wextra -Wpedantic
+LDFLAGS ?= -flto -fno-plt
 INSTANCE = Kylin-128
 TOOLS_DIR = ../../tools
 BENCH_SOURCE = $(TOOLS_DIR)/bench_sig.c

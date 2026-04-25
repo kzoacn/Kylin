@@ -9,6 +9,8 @@
 #include "params.h"
 #include "utils.h"
 
+#define XOF_TAG_STACK_BUF_BYTES 512U
+
 static int xof_with_tag(unsigned char *out, unsigned long long outlen,
                         const unsigned char *tag, unsigned long long taglen,
                         const unsigned char *a, unsigned long long alen,
@@ -17,7 +19,8 @@ static int xof_with_tag(unsigned char *out, unsigned long long outlen,
                         const unsigned char *d, unsigned long long dlen)
 {
     unsigned long long inlen = taglen + alen + blen + clen + dlen;
-    unsigned char *buf;
+    unsigned char stack_buf[XOF_TAG_STACK_BUF_BYTES];
+    unsigned char *buf = stack_buf;
     unsigned char *p;
     int ret;
 
@@ -25,9 +28,11 @@ static int xof_with_tag(unsigned char *out, unsigned long long outlen,
         return -1;
     }
 
-    buf = (unsigned char *)malloc((size_t)inlen);
-    if (buf == 0) {
-        return -1;
+    if (inlen > (unsigned long long)sizeof(stack_buf)) {
+        buf = (unsigned char *)malloc((size_t)inlen);
+        if (buf == 0) {
+            return -1;
+        }
     }
 
     p = buf;
@@ -50,7 +55,9 @@ static int xof_with_tag(unsigned char *out, unsigned long long outlen,
     }
 
     ret = pseudoXOF(outlen * 8ULL, buf, inlen * 8ULL, out);
-    free(buf);
+    if (buf != stack_buf) {
+        free(buf);
+    }
     return ret;
 }
 

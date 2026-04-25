@@ -30,9 +30,43 @@ other purposes.
 #define P0(x) ((x) ^ L_SHIFT((x), 9) ^ L_SHIFT((x), 17))
 #define P1(x) ((x) ^ L_SHIFT((x), 15) ^ L_SHIFT((x), 23))
 #define PUT32(a, b) ((a)[0] = (unsigned char)((b) >> 24), \
-					 (a)[1] = (unsigned char)((b) >> 16), \
-					 (a)[2] = (unsigned char)((b) >> 8),  \
-					 (a)[3] = (unsigned char)(b))
+						 (a)[1] = (unsigned char)((b) >> 16), \
+						 (a)[2] = (unsigned char)((b) >> 8),  \
+						 (a)[3] = (unsigned char)(b))
+
+#if defined(__x86_64__) || defined(__i386__) || defined(_M_X64) || defined(_M_IX86)
+#define SM3_HAS_X86_DISPATCH 1
+#include <immintrin.h>
+#else
+#define SM3_HAS_X86_DISPATCH 0
+#endif
+
+static inline unsigned int load_u32_be(const unsigned char *in)
+{
+	return ((unsigned int)in[0] << 24) |
+	       ((unsigned int)in[1] << 16) |
+	       ((unsigned int)in[2] << 8) |
+	       ((unsigned int)in[3]);
+}
+
+static const unsigned int sm3_tj_rot[64] = {
+	0x79CC4519U, 0xF3988A32U, 0xE7311465U, 0xCE6228CBU,
+	0x9CC45197U, 0x3988A32FU, 0x7311465EU, 0xE6228CBCU,
+	0xCC451979U, 0x988A32F3U, 0x311465E7U, 0x6228CBCEU,
+	0xC451979CU, 0x88A32F39U, 0x11465E73U, 0x228CBCE6U,
+	0x9D8A7A87U, 0x3B14F50FU, 0x7629EA1EU, 0xEC53D43CU,
+	0xD8A7A879U, 0xB14F50F3U, 0x629EA1E7U, 0xC53D43CEU,
+	0x8A7A879DU, 0x14F50F3BU, 0x29EA1E76U, 0x53D43CECU,
+	0xA7A879D8U, 0x4F50F3B1U, 0x9EA1E762U, 0x3D43CEC5U,
+	0x7A879D8AU, 0xF50F3B14U, 0xEA1E7629U, 0xD43CEC53U,
+	0xA879D8A7U, 0x50F3B14FU, 0xA1E7629EU, 0x43CEC53DU,
+	0x879D8A7AU, 0x0F3B14F5U, 0x1E7629EAU, 0x3CEC53D4U,
+	0x79D8A7A8U, 0xF3B14F50U, 0xE7629EA1U, 0xCEC53D43U,
+	0x9D8A7A87U, 0x3B14F50FU, 0x7629EA1EU, 0xEC53D43CU,
+	0xD8A7A879U, 0xB14F50F3U, 0x629EA1E7U, 0xC53D43CEU,
+	0x8A7A879DU, 0x14F50F3BU, 0x29EA1E76U, 0x53D43CECU,
+	0xA7A879D8U, 0x4F50F3B1U, 0x9EA1E762U, 0x3D43CEC5U
+};
 
 // GB/T 32905-2016
 static void sm3_bit_init(unsigned int *init_digest)
@@ -47,28 +81,47 @@ static void sm3_bit_init(unsigned int *init_digest)
 	init_digest[7] = 0xB0FB0E4E;
 }
 
-static void sm3_bit_compress(unsigned int dgst[8], const unsigned char *msg, unsigned long long blocks)
+static void sm3_bit_compress_core(unsigned int dgst[8], const unsigned char *msg, unsigned long long blocks, int use_simd_loader)
 {
 	unsigned int A, B, C, D, E, F, G, H;
 	unsigned int W[68];
-	unsigned int W_prime[64];
 	unsigned int SS1, SS2, TT1, TT2;
-	int i;
+	unsigned int Wj;
+	unsigned int i;
+
 	while (blocks--)
 	{
-		/***********************Round function*************************/
-		for (i = 0; i < 16; i++)
+		if (use_simd_loader)
 		{
-			W[i] = ((unsigned int)(msg + i * 4)[0] << 24 | (unsigned int)(msg + i * 4)[1] << 16 | (unsigned int)(msg + i * 4)[2] << 8 | (unsigned int)(msg + i * 4)[3]);
+			#if SM3_HAS_X86_DISPATCH
+			const __m128i shuffle = _mm_setr_epi8(3, 2, 1, 0, 7, 6, 5, 4,
+			                                      11, 10, 9, 8, 15, 14, 13, 12);
+			__m128i m0 = _mm_loadu_si128((const __m128i *)(msg + 0));
+			__m128i m1 = _mm_loadu_si128((const __m128i *)(msg + 16));
+			__m128i m2 = _mm_loadu_si128((const __m128i *)(msg + 32));
+			__m128i m3 = _mm_loadu_si128((const __m128i *)(msg + 48));
+			_mm_storeu_si128((__m128i *)&W[0], _mm_shuffle_epi8(m0, shuffle));
+			_mm_storeu_si128((__m128i *)&W[4], _mm_shuffle_epi8(m1, shuffle));
+			_mm_storeu_si128((__m128i *)&W[8], _mm_shuffle_epi8(m2, shuffle));
+			_mm_storeu_si128((__m128i *)&W[12], _mm_shuffle_epi8(m3, shuffle));
+			#else
+			for (i = 0; i < 16; i++) {
+				W[i] = load_u32_be(msg + i * 4);
+			}
+			#endif
 		}
-		for (; i < 68; i++)
+		else
 		{
-			W[i] = P1(W[i - 16] ^ W[i - 9] ^ L_SHIFT(W[i - 3], 15)) ^ L_SHIFT(W[i - 13], 7) ^ W[i - 6];
+			for (i = 0; i < 16; i++) {
+				W[i] = load_u32_be(msg + i * 4);
+			}
 		}
-		for (i = 0; i < 64; i++)
-		{
-			W_prime[i] = W[i] ^ W[i + 4];
+
+		for (i = 16; i < 68; i++) {
+			W[i] = P1(W[i - 16] ^ W[i - 9] ^ L_SHIFT(W[i - 3], 15)) ^
+			       L_SHIFT(W[i - 13], 7) ^ W[i - 6];
 		}
+
 		A = dgst[0];
 		B = dgst[1];
 		C = dgst[2];
@@ -77,27 +130,13 @@ static void sm3_bit_compress(unsigned int dgst[8], const unsigned char *msg, uns
 		F = dgst[5];
 		G = dgst[6];
 		H = dgst[7];
-		for (i = 0; i < 64; i++)
-		{
-			if (i < 16)
-			{
-				SS1 = L_SHIFT(L_SHIFT(A, 12) + E + L_SHIFT(0x79cc4519U, i & 0x1F), 7);
-			}
-			else
-			{
-				SS1 = L_SHIFT(L_SHIFT(A, 12) + E + L_SHIFT(0x7a879d8aU, i & 0x1F), 7);
-			}
+
+		for (i = 0; i < 16; i++) {
+			Wj = W[i] ^ W[i + 4];
+			SS1 = L_SHIFT(L_SHIFT(A, 12) + E + sm3_tj_rot[i], 7);
 			SS2 = SS1 ^ L_SHIFT(A, 12);
-			if (i < 16)
-			{
-				TT1 = FF1(A, B, C) + D + SS2 + W_prime[i];
-				TT2 = GG1(E, F, G) + H + SS1 + W[i];
-			}
-			else
-			{
-				TT1 = FF2(A, B, C) + D + SS2 + W_prime[i];
-				TT2 = GG2(E, F, G) + H + SS1 + W[i];
-			}
+			TT1 = FF1(A, B, C) + D + SS2 + Wj;
+			TT2 = GG1(E, F, G) + H + SS1 + W[i];
 			D = C;
 			C = L_SHIFT(B, 9);
 			B = A;
@@ -107,6 +146,23 @@ static void sm3_bit_compress(unsigned int dgst[8], const unsigned char *msg, uns
 			F = E;
 			E = P0(TT2);
 		}
+
+		for (i = 16; i < 64; i++) {
+			Wj = W[i] ^ W[i + 4];
+			SS1 = L_SHIFT(L_SHIFT(A, 12) + E + sm3_tj_rot[i], 7);
+			SS2 = SS1 ^ L_SHIFT(A, 12);
+			TT1 = FF2(A, B, C) + D + SS2 + Wj;
+			TT2 = GG2(E, F, G) + H + SS1 + W[i];
+			D = C;
+			C = L_SHIFT(B, 9);
+			B = A;
+			A = TT1;
+			H = G;
+			G = L_SHIFT(F, 19);
+			F = E;
+			E = P0(TT2);
+		}
+
 		dgst[0] ^= A;
 		dgst[1] ^= B;
 		dgst[2] ^= C;
@@ -115,7 +171,89 @@ static void sm3_bit_compress(unsigned int dgst[8], const unsigned char *msg, uns
 		dgst[5] ^= F;
 		dgst[6] ^= G;
 		dgst[7] ^= H;
-		msg += 64;
+			msg += 64;
+	}
+}
+
+static void sm3_bit_compress_scalar(unsigned int dgst[8], const unsigned char *msg, unsigned long long blocks)
+{
+	sm3_bit_compress_core(dgst, msg, blocks, 0);
+}
+
+#if SM3_HAS_X86_DISPATCH
+__attribute__((target("avx2,bmi2,ssse3")))
+static void sm3_bit_compress_avx2(unsigned int dgst[8], const unsigned char *msg, unsigned long long blocks)
+{
+	sm3_bit_compress_core(dgst, msg, blocks, 1);
+}
+#endif
+
+typedef void (*sm3_compress_fn)(unsigned int dgst[8], const unsigned char *msg, unsigned long long blocks);
+
+static sm3_compress_fn sm3_select_compress(void)
+{
+#if SM3_HAS_X86_DISPATCH
+	__builtin_cpu_init();
+	if (__builtin_cpu_supports("avx2") && __builtin_cpu_supports("bmi2")) {
+		return sm3_bit_compress_avx2;
+	}
+#endif
+	return sm3_bit_compress_scalar;
+}
+
+static sm3_compress_fn sm3_get_compress_impl(void)
+{
+	static sm3_compress_fn compress_impl = NULL;
+	if (compress_impl == NULL) {
+		compress_impl = sm3_select_compress();
+	}
+	return compress_impl;
+}
+
+static void sm3_hash_bytes_plus_u32_be(const unsigned char *msg, unsigned long long msg_len_bytes,
+									   unsigned int suffix_be, unsigned char *dgst)
+{
+	sm3_compress_fn compress_impl = sm3_get_compress_impl();
+	unsigned long long block_num = msg_len_bytes / 64ULL;
+	unsigned long long remain = msg_len_bytes % 64ULL;
+	unsigned int digest[8];
+	unsigned char tail[128];
+	unsigned long long tail_len = remain + 4ULL;
+	unsigned long long total_bits = (msg_len_bytes + 4ULL) * 8ULL;
+	unsigned long long rem_mod;
+	unsigned long long pad_zeros;
+
+	sm3_bit_init(digest);
+	if (block_num != 0ULL) {
+		compress_impl(digest, msg, block_num);
+	}
+
+	if (remain != 0ULL) {
+		memcpy(tail, msg + block_num * 64ULL, (size_t)remain);
+	}
+	tail[remain + 0ULL] = (unsigned char)(suffix_be >> 24);
+	tail[remain + 1ULL] = (unsigned char)(suffix_be >> 16);
+	tail[remain + 2ULL] = (unsigned char)(suffix_be >> 8);
+	tail[remain + 3ULL] = (unsigned char)(suffix_be);
+	tail[tail_len++] = 0x80;
+
+	rem_mod = tail_len & 63ULL;
+	if (rem_mod <= 56ULL) {
+		pad_zeros = 56ULL - rem_mod;
+	} else {
+		pad_zeros = 64ULL + 56ULL - rem_mod;
+	}
+	memset(tail + tail_len, 0, (size_t)pad_zeros);
+	tail_len += pad_zeros;
+
+	PUT32(tail + tail_len + 0ULL, (unsigned int)(total_bits >> 32));
+	PUT32(tail + tail_len + 4ULL, (unsigned int)(total_bits & 0xFFFFFFFFU));
+	tail_len += 8ULL;
+
+	compress_impl(digest, tail, tail_len / 64ULL);
+
+	for (int i = 0; i < 8; i++) {
+		PUT32(dgst + i * 4, digest[i]);
 	}
 }
 
@@ -123,6 +261,7 @@ static void sm3_bit(const unsigned char *msg, unsigned long long msg_bitlen, uns
 {
 	unsigned long long block_num;
 	unsigned long long remain;
+	sm3_compress_fn compress_impl = sm3_get_compress_impl();
 	block_num = msg_bitlen / 512;
 	remain = msg_bitlen & 0x1FF;
 	/*********************Initializing value********************/
@@ -131,7 +270,7 @@ static void sm3_bit(const unsigned char *msg, unsigned long long msg_bitlen, uns
 	/******************Round function**************************/
 	if (block_num != 0)
 	{
-		sm3_bit_compress(digest, msg, block_num);
+		compress_impl(digest, msg, block_num);
 	}
 	unsigned char block[64];
 	memset(block, 0, 64);
@@ -146,13 +285,13 @@ static void sm3_bit(const unsigned char *msg, unsigned long long msg_bitlen, uns
 	else
 	{
 		memset(block + (remain >> 3) + 1, 0, (512 - remain - 1) >> 3);
-		sm3_bit_compress(digest, block, 1);
+		compress_impl(digest, block, 1);
 		memset(block, 0, 64 - 8);
 	}
 	PUT32(block + 56, block_num >> 32 << 9);
 	PUT32(block + 60, (block_num << 9) + (remain));
 	/**********************Round function************************/
-	sm3_bit_compress(digest, block, 1);
+	compress_impl(digest, block, 1);
 	/*********************Output hash value**********************/
 	for (int i = 0; i < 8; i++)
 	{
@@ -482,48 +621,65 @@ int pseudohash(int digest_len_bits, const unsigned char *msg, unsigned long long
 int pseudoXOF(unsigned long long output_len_bits, const unsigned char *msg, unsigned long long msg_len_bits, unsigned char *output)
 {
 	unsigned int ct = 1;
-	unsigned char *cascade_msg_ct;
-	cascade_msg_ct = (unsigned char *)malloc((msg_len_bits + 7) / 8 + 4);
-	if (cascade_msg_ct == NULL)
-	{
-		fprintf(stderr, "ERROR: Memory allocation failed at %s, line %d. \n", __FILE__, __LINE__);
-		return MEMORY_ALLOCATION_FAILED;
-	}
-	unsigned char *K;
-	K = (unsigned char *)malloc((output_len_bits + 255) / 8);
-	if (K == NULL)
-	{
-		fprintf(stderr, "ERROR: Memory allocation failed at %s, line %d. \n", __FILE__, __LINE__);
-		return MEMORY_ALLOCATION_FAILED;
+	const unsigned long long blocks = (output_len_bits + 255) / 256;
+	const unsigned long long msg_len_bytes = (msg_len_bits + 7) / 8;
+	const unsigned long long out_len_bytes = (output_len_bits + 7) / 8;
+	unsigned long long produced = 0;
+	unsigned char block[32];
+	unsigned char stack_buf[512];
+	unsigned char *cascade_msg_ct = stack_buf;
+
+	if (blocks == 0) {
+		return XOF_SUCCESS;
 	}
 
-	for (unsigned int i = 0; i < (output_len_bits + 255) / 256; i++)
-	{
-		memcpy(cascade_msg_ct, msg, (msg_len_bits + 7) / 8);
-		if (msg_len_bits % 8 == 0)
-		{
-			cascade_msg_ct[(msg_len_bits + 7) / 8] = ct >> 24;
-			cascade_msg_ct[(msg_len_bits + 7) / 8 + 1] = (ct & 0xffffff) >> 16;
-			cascade_msg_ct[(msg_len_bits + 7) / 8 + 2] = (ct & 0xffff) >> 8;
-			cascade_msg_ct[(msg_len_bits + 7) / 8 + 3] = ct & 0xff;
+	if ((msg_len_bits & 7ULL) == 0ULL) {
+		/*
+		 * Fast path for byte-aligned input (the dominant SPHINCS+ call pattern).
+		 * Hash msg || ct directly without copying msg into a temporary buffer.
+		 */
+		for (unsigned long long i = 0; i < blocks; i++) {
+			sm3_hash_bytes_plus_u32_be(msg, msg_len_bytes, ct, block);
+
+			{
+				const unsigned long long take = (out_len_bytes - produced > sizeof(block)) ?
+					(unsigned long long)sizeof(block) : (out_len_bytes - produced);
+				memcpy(output + produced, block, (size_t)take);
+				produced += take;
+			}
+			ct++;
 		}
-		else
-		{
+	} else {
+		if (msg_len_bytes + 4 > (unsigned long long)sizeof(stack_buf)) {
+			cascade_msg_ct = (unsigned char *)malloc((size_t)(msg_len_bytes + 4));
+			if (cascade_msg_ct == NULL) {
+				fprintf(stderr, "ERROR: Memory allocation failed at %s, line %d. \n", __FILE__, __LINE__);
+				return MEMORY_ALLOCATION_FAILED;
+			}
+		}
+		for (unsigned long long i = 0; i < blocks; i++) {
+			memcpy(cascade_msg_ct, msg, (size_t)msg_len_bytes);
 			normalize(cascade_msg_ct, msg_len_bits);
-			cascade_msg_ct[(msg_len_bits + 7) / 8 - 1] = cascade_msg_ct[(msg_len_bits + 7) / 8 - 1] ^ (ct >> (32 - (8 - (msg_len_bits % 8))));
-			cascade_msg_ct[(msg_len_bits + 7) / 8] = ((ct << (8 - (msg_len_bits % 8))) & 0xffffffff) >> 24;
-			cascade_msg_ct[(msg_len_bits + 7) / 8 + 1] = ((ct << (16 - (msg_len_bits % 8))) & 0xffffffff) >> 24;
-			cascade_msg_ct[(msg_len_bits + 7) / 8 + 2] = ((ct << (24 - (msg_len_bits % 8))) & 0xffffffff) >> 24;
-			cascade_msg_ct[(msg_len_bits + 7) / 8 + 3] = ((ct << (32 - (msg_len_bits % 8))) & 0xffffffff) >> 24;
+			cascade_msg_ct[msg_len_bytes - 1] ^= (unsigned char)(ct >> (32U - (8U - (msg_len_bits % 8U))));
+			cascade_msg_ct[msg_len_bytes + 0] = (unsigned char)(((ct << (8U - (msg_len_bits % 8U))) & 0xffffffffU) >> 24);
+			cascade_msg_ct[msg_len_bytes + 1] = (unsigned char)(((ct << (16U - (msg_len_bits % 8U))) & 0xffffffffU) >> 24);
+			cascade_msg_ct[msg_len_bytes + 2] = (unsigned char)(((ct << (24U - (msg_len_bits % 8U))) & 0xffffffffU) >> 24);
+			cascade_msg_ct[msg_len_bytes + 3] = (unsigned char)(((ct << (32U - (msg_len_bits % 8U))) & 0xffffffffU) >> 24);
+			sm3_bit(cascade_msg_ct, msg_len_bits + 32ULL, block);
+
+			{
+				const unsigned long long take = (out_len_bytes - produced > sizeof(block)) ?
+					(unsigned long long)sizeof(block) : (out_len_bytes - produced);
+				memcpy(output + produced, block, (size_t)take);
+				produced += take;
+			}
+			ct++;
 		}
-		sm3_bit(cascade_msg_ct, msg_len_bits + 32, K + i * 32);
-		ct++;
+		if (cascade_msg_ct != stack_buf) {
+			free(cascade_msg_ct);
+		}
 	}
-	memcpy(output, K, (output_len_bits + 7) / 8);
-	free(cascade_msg_ct);
-	free(K);
-	if (output_len_bits % 256 != 0)
-	{
+	if (output_len_bits % 8 != 0ULL) {
 		normalize(output, output_len_bits);
 	}
 	return XOF_SUCCESS;
