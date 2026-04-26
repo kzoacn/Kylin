@@ -25,7 +25,7 @@ Our optimization mainly stems from the optimization of the one-time signature sc
 Since our modification upon the \SPHINCSP scheme is limited to the encoding scheme of the underlying \WOTSP one-time signature, the security analysis of our new scheme remains largely the same as the original analysis.
 Based on the security analysis of the original work, we estimate the security level and carefully choose parameters in order to achieve optimized performance.
 
-To facilitate a fair comparison, we implement \SPHINCSA\ by adapting the code of \SPHINCSP\ and compare their performance on a desktop computer. As shown in \cref{tab:comp tiny}, under the ``small'' series parameters (optimized towards small signature size) our scheme reduces signature size and running time by 8-12\% and 2-16\% respectively at all security levels while under the ``fast'' series (optimized towards fast signing operations) our scheme exhibits better performance in general. 
+To facilitate a fair comparison, we implement \SPHINCSA\ by adapting the code of \SPHINCSP\ and compare against the \SPHINCSP\ ``small'' baselines. As shown in \cref{tab:comp tiny}, for the 128-bit and 256-bit small parameter sets, Kylin achieves smaller signatures, while its signing hash-call proxy increases and its verification hash-call proxy decreases.
 
 We refer to more detailed comparisons for the full spectrum of parameter choices in \cref{sec:performance}.
 As summarized in \cref{tab:kylin-package-bench}, the packaged Kylin instances provide the current repository-local performance profile for key generation, signing, and verification. For specific scenarios where verification time is critical, the parameters can be re-tuned towards faster verification.

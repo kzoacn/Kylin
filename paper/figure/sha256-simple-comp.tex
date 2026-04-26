@@ -2,14 +2,14 @@
 
 \begin{table*}[ht]
     \centering
-    \caption{Performance comparison between \SPHINCSP\ and \SPHINCSA, with simple tweakable hash function instantiated with \textsf{sha256}. Key generation, signing and verification time are in terms of CPU cycles; public key, secret key and signature size are in bytes. All cycle counts are the median of 100 runs.}
+    \caption{Comparison between \SPHINCSP\ small parameter sets and the selected packaged Kylin families. Signing and verification are reported in hash-call proxies; signature size is in bytes.}
     \label{tab:comp tiny}
     \begin{tabular}{c rrrr rrrr rrrr}%
     \toprule
        & \multicolumn{4}{c}{\SPHINCSP}  & \multicolumn{4}{c}{\SPHINCSA}  &\multicolumn{4}{c}{Relative Change} \\ %\cmidrule{2-5} \cmidrule{6-9} \cmidrule{10-13} 
-      Param. &  KeyGen & Sign & Verify & Size &  KeyGen & Sign & Verify & Size &  KeyGen & Sign & Verify & Size\\ \midrule
-      \csvreader[head to column names]{paper/data/compare-mini.csv}{}% use head of csv as column names
-      { \nameone  & $\keygenone$ & $\signone$ &$\verifyone$ & \signatureone & $\keygentwo$ & $\signtwo$ &$\verifytwo$ & \signaturetwo & \keygenratio & \signratio &\verifyratio & \signatureratio \\}%
+      Param. &  KeyGen & Sign (Hashcall) & Verify (Hashcall) & Size &  KeyGen & Sign (Hashcall) & Verify (Hashcall) & Size &  KeyGen & Sign & Verify & Size\\ \midrule
+      128s & $-$ & $2047872$ & $7369$ & $6880$ & $-$ & $2442880$ & $7357$ & $6688$ & $-$ & $19.29\%$ & $-0.16\%$ & $-2.79\%$ \\
+      256s & $-$ & $2713408$ & $18418$ & $27232$ & $-$ & $3223168$ & $12577$ & $26784$ & $-$ & $18.79\%$ & $-31.71\%$ & $-1.65\%$ \\
      \vspace{-1em} \\ \bottomrule
     \end{tabular}
 \end{table*}
@@ -17,15 +17,15 @@
 \else
 \begin{table}[th]
     \centering
-    \caption{Performance comparison between \SPHINCSP\ and \SPHINCSA, with simple tweakable hash function instantiated with \textsf{shake}. Key generation, signing and verification time are in terms of CPU cycles; public key, secret key and signature size are in bytes. All cycle counts are the median of 100 runs.}
+    \caption{Comparison between \SPHINCSP\ small parameter sets and the selected packaged Kylin families. Signing and verification are reported in hash-call proxies; signature size is in bytes.}
     \label{tab:comp tiny}
     \resizebox{\columnwidth}{!}{%
     \begin{tabular}{c rrrr rrrr rrrr}%
     \toprule
        & \multicolumn{4}{c}{\SPHINCSP}  & \multicolumn{4}{c}{\SPHINCSA}  &\multicolumn{4}{c}{Relative Change} \\ %\cmidrule{2-5} \cmidrule{6-9} \cmidrule{10-13} 
-      Param. &  KeyGen & Sign & Verify & Size &  KeyGen & Sign & Verify & Size &  KeyGen & Sign & Verify & Size\\ \midrule
-      \csvreader[head to column names]{paper/data/compare-mini.csv}{}% use head of csv as column names
-      { \nameone  & $\keygenone$ & $\signone$ &$\verifyone$ & \signatureone & $\keygentwo$ & $\signtwo$ &$\verifytwo$ & \signaturetwo & \keygenratio & \signratio &\verifyratio & \signatureratio \\}%
+      Param. &  KeyGen & Sign (Hashcall) & Verify (Hashcall) & Size &  KeyGen & Sign (Hashcall) & Verify (Hashcall) & Size &  KeyGen & Sign & Verify & Size\\ \midrule
+      128s & $-$ & $2047872$ & $7369$ & $6880$ & $-$ & $2442880$ & $7357$ & $6688$ & $-$ & $19.29\%$ & $-0.16\%$ & $-2.79\%$ \\
+      256s & $-$ & $2713408$ & $18418$ & $27232$ & $-$ & $3223168$ & $12577$ & $26784$ & $-$ & $18.79\%$ & $-31.71\%$ & $-1.65\%$ \\
      \vspace{-1em} \\ \bottomrule
     \end{tabular}%
     }
