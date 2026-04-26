@@ -54,6 +54,10 @@ extern "C"
                              const unsigned char *pub_seed,
                              const uint32_t addrs[4][8]);
 
+    /// @brief Check for SSE2 support via CPUID
+    /// @return 1 if SSE2 is available, 0 otherwise
+    int have_sse2(void);
+
 #ifdef __cplusplus
 }
 #endif

@@ -680,6 +680,17 @@ int pseudoXOF(unsigned long long output_len_bits, const unsigned char *msg, unsi
 	return XOF_SUCCESS;
 }
 
+/* SSE2 CPUID check — shared by wotsx1.c and wots.c */
+#if defined(__x86_64__) || defined(__i386__) || defined(_M_X64) || defined(_M_IX86)
+int have_sse2(void)
+{
+	__builtin_cpu_init();
+	return __builtin_cpu_supports("sse2");
+}
+#else
+int have_sse2(void) { return 0; }
+#endif
+
 /* =========================================================================
  * 4-way SSE2 WOTS chain step for n=32
  * ========================================================================= */

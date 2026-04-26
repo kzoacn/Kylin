@@ -12,16 +12,6 @@
 
 #define CHAIN_GROUP 4
 
-#if defined(__x86_64__) || defined(__i386__) || defined(_M_X64) || defined(_M_IX86)
-static int have_sse2(void)
-{
-	__builtin_cpu_init();
-	return __builtin_cpu_supports("sse2");
-}
-#else
-static int have_sse2(void) { return 0; }
-#endif
-
 /*
  * Generates a WOTS public key using 4-way SSE2 when available.
  */

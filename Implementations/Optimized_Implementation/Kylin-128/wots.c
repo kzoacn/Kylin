@@ -11,6 +11,7 @@
 #include "wotsx1.h"
 #include "address.h"
 #include "params.h"
+#include "auxfunc.h"
 
 #define SPX_BIGINT_BITS (8 * SPX_N + 1)
 #define SPX_BIGINT_LIMBS ((SPX_BIGINT_BITS + 63) / 64)
@@ -169,13 +170,77 @@ void wots_pk_from_sig(unsigned char *pk,
                       const spx_ctx *ctx, uint32_t addr[8])
 {
     unsigned int lengths[SPX_WOTS_LEN];
-    uint32_t i;
+    uint32_t i, k;
 
     chain_lengths(lengths, msg);
 
-    for (i = 0; i < SPX_WOTS_LEN; i++) {
-        set_chain_addr(addr, i);
-        gen_chain(pk + i * SPX_N, sig + i * SPX_N,
-                  lengths[i], SPX_WOTS_W - 1 - lengths[i], ctx, addr);
+    if (have_sse2()) {
+        const unsigned int CHAIN_GROUP = 4;
+        const unsigned int full_groups = SPX_WOTS_LEN / CHAIN_GROUP;
+        const unsigned char *pub_seed = ctx->pub_seed;
+        unsigned char group_bufs[CHAIN_GROUP * SPX_N];
+        uint32_t group_addrs[CHAIN_GROUP][8];
+        unsigned int g, c;
+
+        for (g = 0; g < full_groups; g++) {
+            unsigned int base = g * CHAIN_GROUP;
+            unsigned int min_start = SPX_WOTS_W;
+
+            for (c = 0; c < CHAIN_GROUP; c++) {
+                unsigned int chain_idx = base + c;
+                unsigned int start = lengths[chain_idx];
+
+                if (start < min_start) min_start = start;
+
+                /* Copy signature value as starting point */
+                memcpy(group_bufs + c * SPX_N, sig + chain_idx * SPX_N, SPX_N);
+
+                /* Set up address (hash_addr set per-iteration) */
+                memcpy(group_addrs[c], addr, 32);
+                ((unsigned char *)group_addrs[c])[SPX_OFFSET_CHAIN_ADDR] = (unsigned char)chain_idx;
+                ((unsigned char *)group_addrs[c])[SPX_OFFSET_TYPE]       = SPX_ADDR_TYPE_WOTS;
+            }
+
+            /* Run all chains in lockstep from min_start to W-1.
+             * Inactive chains (k < start) have their output restored to the
+             * signature value after each 4-way step. */
+            for (k = min_start; k < SPX_WOTS_W - 1; k++) {
+                for (c = 0; c < CHAIN_GROUP; c++) {
+                    if (k >= lengths[base + c]) {
+                        ((unsigned char *)group_addrs[c])[SPX_OFFSET_HASH_ADDR] = (unsigned char)k;
+                    }
+                }
+                thash_wots_chain_4x(group_bufs, group_bufs, pub_seed,
+                                    (const uint32_t (*)[8])group_addrs);
+
+                /* Restore chains that have not yet reached their start step */
+                for (c = 0; c < CHAIN_GROUP; c++) {
+                    if (k < lengths[base + c]) {
+                        memcpy(group_bufs + c * SPX_N,
+                               sig + (base + c) * SPX_N, SPX_N);
+                    }
+                }
+            }
+
+            /* Copy results to pk */
+            for (c = 0; c < CHAIN_GROUP; c++) {
+                memcpy(pk + (base + c) * SPX_N, group_bufs + c * SPX_N, SPX_N);
+            }
+        }
+
+        /* Remaining chains with scalar path */
+        for (i = full_groups * CHAIN_GROUP; i < SPX_WOTS_LEN; i++) {
+            set_chain_addr(addr, i);
+            set_type(addr, SPX_ADDR_TYPE_WOTS);
+            gen_chain(pk + i * SPX_N, sig + i * SPX_N,
+                      lengths[i], SPX_WOTS_W - 1 - lengths[i], ctx, addr);
+        }
+    } else {
+        /* Scalar fallback */
+        for (i = 0; i < SPX_WOTS_LEN; i++) {
+            set_chain_addr(addr, i);
+            gen_chain(pk + i * SPX_N, sig + i * SPX_N,
+                      lengths[i], SPX_WOTS_W - 1 - lengths[i], ctx, addr);
+        }
     }
 }
