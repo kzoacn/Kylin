@@ -10,7 +10,7 @@ This appendix records the items that are still missing or still need to be refor
     \item The recommended families now use $h\in\{65,68,70\}$ and are tuned with $q=2^{64}$, which supports the call's requirement of at least $2^{64}$ signatures under one key pair in the intended single-key model. The packaged NGCC SIG wrapper explicitly accepts messages up to $2^{60}$ bytes, i.e.\ $2^{63}$ bits.
     \item A submission-style correctness statement for the packaged instances now appears in \cref{sec:submission-overview}.
     \item The security section now states the current scope of the side-channel, multi-key, and repeated-key claims explicitly: the first-stage software package makes no dedicated side-channel-hardening claim, uses single-key analysis by default, and targets $q=2^{64}$ repeated-key usage for one long-term key pair.
-    \item Repository-local benchmark and memory summaries for all six packaged implementations are now generated automatically and recorded in \texttt{paper/data/package\_bench.csv} and \texttt{paper/data/package\_memory.csv}.
+    \item Repository-local benchmark and memory summaries for the three packaged implementations plus the three $q=2^{24}$ additional companion implementations are now generated automatically and recorded in \texttt{paper/data/package\_bench.csv} and \texttt{paper/data/package\_memory.csv}.
     \item \todo{Add optional benchmark data for 32-bit embedded platforms and hardware platforms if these results become available.}
 \end{itemize}
 
@@ -30,6 +30,7 @@ This appendix records the items that are still missing or still need to be refor
     \item First-stage optimized 64-bit PC implementations are now present for all three instances; they currently share the portable code path with an optimized build profile. \todo{Replace or supplement this with deeper architecture-specific optimization before final submission, if desired.}
     \item The implementations use the NGCC SIG API provided in \texttt{API\_PKC.zip}.
     \item A repository-local \texttt{README} for the implementation package has been added.
+    \item The three $q=2^{24}$ companion implementations are now organized under \texttt{Implementations/Additional\_Implementation/} as additional (non-primary) submission artifacts.
     \item Automated package-level benchmark and memory-summary generation is now part of the repository workflow and feeds the tables in \cref{tab:kylin-package-bench,tab:kylin-package-memory}.
 \end{itemize}
 

@@ -1,6 +1,9 @@
 REF_DIRS := $(sort $(dir $(wildcard Implementations/Reference_Implementation/Kylin-*/Makefile)))
 OPT_DIRS := $(sort $(dir $(wildcard Implementations/Optimized_Implementation/Kylin-*/Makefile)))
-ALL_DIRS := $(REF_DIRS) $(OPT_DIRS)
+ADD_REF_DIRS := $(sort $(dir $(wildcard Implementations/Additional_Implementation/Reference_Implementation/Kylin-*/Makefile)))
+ADD_OPT_DIRS := $(sort $(dir $(wildcard Implementations/Additional_Implementation/Optimized_Implementation/Kylin-*/Makefile)))
+ALL_DIRS := $(REF_DIRS) $(OPT_DIRS) $(ADD_REF_DIRS) $(ADD_OPT_DIRS)
+KAT_DIRS := $(REF_DIRS) $(ADD_REF_DIRS)
 
 .PHONY: all build test kat metrics clean params verify
 
@@ -20,7 +23,7 @@ test:
 	done
 
 kat:
-	@for d in $(REF_DIRS); do \
+	@for d in $(KAT_DIRS); do \
 		$(MAKE) -C $$d kat; \
 	done
 

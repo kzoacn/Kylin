@@ -76,9 +76,16 @@ def implementation_label(instance_dir: Path) -> str:
 
 
 def discover_instance_dirs() -> list[Path]:
+    roots = (
+        REPO_ROOT / "Implementations" / "Reference_Implementation",
+        REPO_ROOT / "Implementations" / "Optimized_Implementation",
+        REPO_ROOT / "Implementations" / "Additional_Implementation" / "Reference_Implementation",
+        REPO_ROOT / "Implementations" / "Additional_Implementation" / "Optimized_Implementation",
+    )
     directories: list[Path] = []
-    for impl_dir in ("Reference_Implementation", "Optimized_Implementation"):
-        root = REPO_ROOT / "Implementations" / impl_dir
+    for root in roots:
+        if not root.is_dir():
+            continue
         directories.extend(
             sorted(
                 path for path in root.glob("Kylin-*")

@@ -2,12 +2,13 @@ Kylin NGCC Implementation Package
 
 This package contains NGCC digital-signature implementations for:
 
-- Kylin-128
-- Kylin-256
-- Kylin-512
-- Kylin-128-q24
-- Kylin-256-q24
-- Kylin-512-q24
+- Primary submission profiles (`q=2^64`): `Kylin-128`, `Kylin-256`, `Kylin-512`
+- Additional companion profiles (`q=2^24`): `Kylin-128-q24`, `Kylin-256-q24`, `Kylin-512-q24`
+
+Directory layout:
+
+- `Reference_Implementation/` and `Optimized_Implementation/` store the primary three-profile submission set.
+- `Additional_Implementation/Reference_Implementation/` and `Additional_Implementation/Optimized_Implementation/` store the three `q=2^24` companion implementations.
 
 The reference implementation is portable C99. The optimized implementation
 targets mainstream 64-bit PC processors with compiler and code-level
@@ -37,13 +38,16 @@ benchmark and memory summaries.
 Build all instances only:
 
     for d in Implementations/Reference_Implementation/Kylin-* \
-             Implementations/Optimized_Implementation/Kylin-*; do
+             Implementations/Optimized_Implementation/Kylin-* \
+             Implementations/Additional_Implementation/Reference_Implementation/Kylin-* \
+             Implementations/Additional_Implementation/Optimized_Implementation/Kylin-*; do
         (cd "$d" && make clean && make && make test)
     done
 
 Generate reference KAT vectors:
 
-    for d in Implementations/Reference_Implementation/Kylin-*; do
+    for d in Implementations/Reference_Implementation/Kylin-* \
+             Implementations/Additional_Implementation/Reference_Implementation/Kylin-*; do
         (cd "$d" && make kat)
     done
 

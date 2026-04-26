@@ -4,14 +4,10 @@
 
 项目当前目标是**完成 Kylin 的 NGCC 提交质量收敛**，重点不再是历史整理，而是把现有包提升到可提交、可解释、可复现的状态。
 
-提交范围已固定为六组配置：
+当前实现布局如下：
 
-- `Kylin-128`
-- `Kylin-256`
-- `Kylin-512`
-- `Kylin-128-q24`
-- `Kylin-256-q24`
-- `Kylin-512-q24`
+- 主提交实现（`q=2^64`）：`Kylin-128`、`Kylin-256`、`Kylin-512`
+- Additional 实现（`q=2^24`）：`Kylin-128-q24`、`Kylin-256-q24`、`Kylin-512-q24`
 
 参数定版文件：`paper/data/para_kylin_final_6profiles.csv`。
 
@@ -19,7 +15,7 @@
 
 ## 2. 已有基础（已完成）
 
-- 当前三组基线实例（128/256/512）的参考实现与优化实现目录已建立；六组最终参数已导出并冻结。
+- 当前三组基线实例（128/256/512）的参考实现与优化实现目录已建立；`q=2^24` 三组已作为 Additional 实现维护；六组最终参数已导出并冻结。
 - NGCC SIG API 封装、KAT 生成链路、顶层自动化构建流程已可运行。
 - 文档已移除历史家族对比内容，主叙事聚焦 Kylin 提交包。
 - `make verify` 与论文多轮编译流程已通过，主文档引用已修复。
@@ -399,3 +395,17 @@
   - `Reference`：`keygen=311.633`, `sign=1868.617`, `verify=5.303`
   - `Optimized`：`keygen=280.359`, `sign=1701.369`, `verify=4.979`
   - 倍数 `ref/opt`：`keygen=1.112x`, `sign=1.098x`, `verify=1.065x`
+
+### 2026-04-26 - Move `q=2^24` Profiles to `Additional_Implementation` (Done)
+
+- 按决策将三组 `q=2^24` 实现从主实现目录迁移到 Additional 目录，并保留完整代码历史（`git mv`）：
+  - `Implementations/Reference_Implementation/Kylin-*-q24 -> Implementations/Additional_Implementation/Reference_Implementation/Kylin-*-q24`
+  - `Implementations/Optimized_Implementation/Kylin-*-q24 -> Implementations/Additional_Implementation/Optimized_Implementation/Kylin-*-q24`
+- 同步更新工程自动化，保证迁移后构建、KAT 与指标收集不漏项：
+  - 顶层 `Makefile` 已纳入 Additional 目录实例扫描，`kat` 目标同时覆盖主参考与 Additional 参考目录。
+  - `Implementations/tools/collect_metrics.py` 已扩展为同时发现主实现与 Additional 实现实例。
+- 同步更新记录文档：
+  - `AGENTS.md`（主提交三组 + Additional 三组的定位）
+  - `Implementations/README`（目录结构与命令示例）
+  - `docs/README.md`（仓库实现布局更新说明）
+  - `paper/tex/submission_overview.tex`、`paper/tex/submission_checklist.tex`（将 q24 三组标注为 Additional 实现）
