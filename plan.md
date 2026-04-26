@@ -7,7 +7,7 @@
 当前实现布局如下：
 
 - 主提交实现（`q=2^64`）：`Kylin-128`、`Kylin-256`、`Kylin-512`
-- Additional 实现（`q=2^24`）：`Kylin-128-q24`、`Kylin-256-q24`、`Kylin-512-q24`
+- Additional 实现（`q=2^24`，仅 Ref）：`Kylin-128-q24`、`Kylin-256-q24`、`Kylin-512-q24`
 
 参数定版文件：`paper/data/para_kylin_final_6profiles.csv`。
 
@@ -15,7 +15,7 @@
 
 ## 2. 已有基础（已完成）
 
-- 当前三组基线实例（128/256/512）的参考实现与优化实现目录已建立；`q=2^24` 三组已作为 Additional 实现维护；六组最终参数已导出并冻结。
+- 当前三组基线实例（128/256/512）的参考实现与优化实现目录已建立；`q=2^24` 三组已作为 Additional（仅 Ref）实现维护；六组最终参数已导出并冻结。
 - NGCC SIG API 封装、KAT 生成链路、顶层自动化构建流程已可运行。
 - 文档已移除历史家族对比内容，主叙事聚焦 Kylin 提交包。
 - `make verify` 与论文多轮编译流程已通过，主文档引用已修复。
@@ -409,3 +409,18 @@
   - `Implementations/README`（目录结构与命令示例）
   - `docs/README.md`（仓库实现布局更新说明）
   - `paper/tex/submission_overview.tex`、`paper/tex/submission_checklist.tex`（将 q24 三组标注为 Additional 实现）
+
+### 2026-04-26 - Flatten `Additional_Implementation` to Ref-Only Layout (Done)
+
+- 按最新决定，`Additional_Implementation` 不再区分 `Reference_Implementation` 与 `Optimized_Implementation` 子目录，只保留 Ref 版本：
+  - `Implementations/Additional_Implementation/Kylin-128-q24`
+  - `Implementations/Additional_Implementation/Kylin-256-q24`
+  - `Implementations/Additional_Implementation/Kylin-512-q24`
+- 目录迁移与清理：
+  - 已将 `Additional_Implementation/Reference_Implementation/Kylin-*-q24` 拉平迁移至 `Additional_Implementation/Kylin-*-q24`。
+  - 已删除 `Additional_Implementation/Optimized_Implementation/` 下三组 `q24` 目录。
+- 工程脚本同步：
+  - 顶层 `Makefile` 改为扫描 `Implementations/Additional_Implementation/Kylin-*`。
+  - `Implementations/tools/collect_metrics.py` 改为直接发现 `Implementations/Additional_Implementation/Kylin-*`，并将 Additional 实例标记为 `ref`。
+- 文档同步：
+  - `AGENTS.md`、`Implementations/README`、`docs/README.md`、`paper/tex/submission_overview.tex`、`paper/tex/submission_checklist.tex` 已更新为 “Additional 仅 Ref” 口径。

@@ -70,7 +70,10 @@ def parse_stack_usage(instance_dir: Path) -> tuple[int, str]:
 
 
 def implementation_label(instance_dir: Path) -> str:
-    if "Reference_Implementation" in instance_dir.parts:
+    if (
+        "Reference_Implementation" in instance_dir.parts
+        or "Additional_Implementation" in instance_dir.parts
+    ):
         return "ref"
     return "opt"
 
@@ -79,8 +82,7 @@ def discover_instance_dirs() -> list[Path]:
     roots = (
         REPO_ROOT / "Implementations" / "Reference_Implementation",
         REPO_ROOT / "Implementations" / "Optimized_Implementation",
-        REPO_ROOT / "Implementations" / "Additional_Implementation" / "Reference_Implementation",
-        REPO_ROOT / "Implementations" / "Additional_Implementation" / "Optimized_Implementation",
+        REPO_ROOT / "Implementations" / "Additional_Implementation",
     )
     directories: list[Path] = []
     for root in roots:

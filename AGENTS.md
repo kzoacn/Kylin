@@ -6,7 +6,7 @@
 - `main.tex` and `paper/` are the current English submission document source.
 - The NGCC code package is under `Implementations/`.
 - Primary submission profiles are fixed as three variants: `Kylin-128`, `Kylin-256`, and `Kylin-512`.
-- Companion `q=2^24` variants (`Kylin-128-q24`, `Kylin-256-q24`, `Kylin-512-q24`) are maintained as additional implementations under `Implementations/Additional_Implementation/`.
+- Companion `q=2^24` variants (`Kylin-128-q24`, `Kylin-256-q24`, `Kylin-512-q24`) are maintained as reference-only additional implementations under `Implementations/Additional_Implementation/`.
 - Frozen parameter source of truth is `paper/data/para_kylin_final_6profiles.csv`.
 - Frozen parameter set (do not retune unless explicitly requested):
   - `Kylin-128`: `q=2^64, n=16, h=65, d=9, h_vec=[7,7,7,7,7,7,7,8,8], a=13, k=11, w=73, len=22`
