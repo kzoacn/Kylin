@@ -240,6 +240,15 @@
 - 修复 `6.1.5 XMSS Signature` 与 `6.2.3 HT Signature` 中误用的 `*` 符号，统一改为 `\cdot` 形式，避免排版异常字符。
 - 完成 `main.tex` 全量编译并通过，确认上述修改已在 PDF 中生效。
 
+### 2026-04-26 - NGCC Hash-Instantiation Rewrite + q=2^24 Appendix (Done)
+
+- 统一修复 `\len` 显示口径：宏定义改为稳定形式，并在 `paper/tex/sphincsp.tex` 内将 `\tt len` / 裸 `len` 的混用统一为 `\len`，避免章节内显示风格不一致。
+- 重写 `9.2 Instantiations of Hash Functions`：从旧的 `SHA2/SHAKE` 叙述切换到 NGCC/ICCS 代码口径，明确使用 `sm3hash`、`pseudohash`、`pseudoXOF`，并给出基于 `pseudoXOF` 的域分离映射描述。
+- 大幅改写 `11 Security Claims and Analysis` 的实例化部分：移除 `SHA2/SHA3/SHAKE` 专门论述，改为 ICCS 辅助函数实现口径与现有 generic-analysis 表述。
+- 删除 `12 Performance Evaluation` 中 `Additional platforms` 的 TODO 段落。
+- 在附录新增 `$q=2^{24}$` 参数说明节（仅三行 `Kylin-128-q24/256-q24/512-q24`），补充动机说明（应用侧对尺寸/验签的诉求 + NIST 4 月 13 日新草案背景）与冻结参数表。
+- 完成 `main.tex` 全量编译并通过，新增附录与章节修改均已进入 `main.pdf`。
+
 ### 2026-04-25 - Baseline `None` Inference and Bit-Security Verification (Done)
 
 - 对 `paper/code/search_ngcc_params.py` 中四条 baseline 进行了可确定字段推理：`h'`, `log_t/a`, `w/lgw`, `l`, `m`, `sec_level/category`（含映射与公式推导）。
