@@ -6,7 +6,7 @@ This appendix records the items that are still missing or still need to be refor
 \subsection{Algorithm Text TODOs}
 
 \begin{itemize}
-    \item A submission-style security-claim table for the selected NGCC 128/256/512-bit families has now been added in \cref{tab:ngcc-parameters}. \todo{If desired, add a supplementary note explaining how the single-key $q=2^{64}$ tuning used for parameter selection relates to the evaluation document's broader ``at most $2^{80}$ queries'' convention.}
+    \item A submission-style security-claim table for the selected NGCC 128/256/512-bit families has now been added in \cref{tab:ngcc-parameters}, with a single-key $q=2^{64}$ concrete-security setting aligned with the packaged instances.
     \item The recommended families now use $h\in\{65,68,70\}$ and are tuned with $q=2^{64}$, which supports the call's requirement of at least $2^{64}$ signatures under one key pair in the intended single-key model. The packaged NGCC SIG wrapper explicitly accepts messages up to $2^{60}$ bytes, i.e.\ $2^{63}$ bits.
     \item A submission-style correctness statement for the packaged instances now appears in \cref{sec:submission-overview}.
     \item The security section now states the current scope of the side-channel, multi-key, and repeated-key claims explicitly: the first-stage software package makes no dedicated side-channel-hardening claim, uses single-key analysis by default, and targets $q=2^{64}$ repeated-key usage for one long-term key pair.

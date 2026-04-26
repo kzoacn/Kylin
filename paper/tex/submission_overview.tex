@@ -60,7 +60,7 @@ The selected families were chosen for the following reasons:
     \item The rows satisfy the finalized security targets with computed bit security approximately $127.2$, $255.9$, and $511.4$ for the three packaged NGCC instances.
     \item The selected hypertree heights $h\in\{65,68,70\}$ all exceed the call's minimum $2^{64}$-message requirement under the single-key usage model.
     \item The parameter tuples were fixed after constrained search with explicit checks against signature size and sign/verify hash-call constraints, and then frozen for implementation consistency.
-    \item \todo{If the final package wants to mirror the evaluation document's broader ``at most $2^{80}$ queries'' convention literally in the concrete-security tables, add a separate note clarifying the relation between that convention and the single-key $q=2^{64}$ tuning used here.}
+    \item The concrete-security table and packaged parameter search consistently use the single-key $q=2^{64}$ tuning that matches the package's repeated-key usage target.
 \end{itemize}
 
 \subsection{Correctness and Failure Probability}

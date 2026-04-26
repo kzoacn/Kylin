@@ -424,3 +424,14 @@
   - `Implementations/tools/collect_metrics.py` 改为直接发现 `Implementations/Additional_Implementation/Kylin-*`，并将 Additional 实例标记为 `ref`。
 - 文档同步：
   - `AGENTS.md`、`Implementations/README`、`docs/README.md`、`paper/tex/submission_overview.tex`、`paper/tex/submission_checklist.tex` 已更新为 “Additional 仅 Ref” 口径。
+
+### 2026-04-26 - Draft Cleanup: Remove Empty Inputs and `q=2^80` Wording (Done)
+
+- 按“今天出初稿”的收敛目标完成文稿结构与口径清理：
+  - `main.tex` 移除空章节输入：`paper/tex/preliminary`、`paper/tex/revisit`、`paper/tex/results`（三个文件保留但不再纳入主文稿）。
+  - `paper/tex/submission_overview.tex` 删除 `2^80` 相关 TODO，改为明确单钥 `q=2^64` 的一致口径。
+  - `paper/tex/submission_checklist.tex` 删除 `2^80` 相关 TODO，改为“安全表已按 `q=2^64` 对齐”的完成态描述。
+  - `paper/tex/sphincsp.tex` 的 repeated-key 条目删除 `q <= 2^80` 扩展解释，仅保留 `q=2^64` 目标声明。
+- 验证：
+  - 关键词复扫：`paper/tex` 与 `main.tex` 中已无 `2^80` / `q<=2^80` 表述。
+  - 编译验证：`latexmk -pdf -shell-escape -interaction=nonstopmode -halt-on-error -outdir=/tmp/kylin-draftcheck main.tex` 通过，输出 `/tmp/kylin-draftcheck/main.pdf`。
