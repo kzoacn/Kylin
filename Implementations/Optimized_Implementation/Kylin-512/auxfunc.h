@@ -12,6 +12,8 @@ other purposes.
 #ifndef AUXFUNC_H
 #define AUXFUNC_H
 
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -42,6 +44,15 @@ extern "C"
     /// @param[out] output Base address of output byte array
     /// @return 0 for success, others for error
     int pseudoXOF(unsigned long long output_len_bits, const unsigned char *msg, unsigned long long msg_len_bits, unsigned char *output);
+
+    /// @brief 4-way SSE2 WOTS chain step — processes 4 chains in parallel
+    /// @param[out] out 4*64 = 256 bytes output (contiguous per chain)
+    /// @param[in]  in  4*64 = 256 bytes input (contiguous per chain)
+    /// @param[in]  pub_seed 64 bytes public seed
+    /// @param[in]  addrs 4 address arrays (addrs[0..3][0..7])
+    void thash_wots_chain_4x(unsigned char *out, const unsigned char *in,
+                             const unsigned char *pub_seed,
+                             const uint32_t addrs[4][8]);
 
 #ifdef __cplusplus
 }

@@ -7,8 +7,8 @@
 #include "drng.h"
 
 #define MSG_LEN 32U
-#define WARMUP_ITERS 0
-#define MEASURE_ITERS 1
+#define WARMUP_ITERS 3
+#define MEASURE_ITERS 9
 
 DRNG_ctx drng_algorithm;
 

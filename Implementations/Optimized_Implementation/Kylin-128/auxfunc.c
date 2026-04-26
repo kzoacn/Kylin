@@ -81,6 +81,27 @@ static void sm3_bit_init(unsigned int *init_digest)
 	init_digest[7] = 0xB0FB0E4E;
 }
 
+/* Macro-based fully unrolled SM3 round */
+#define SM3_R_FF1(r) do { \
+	Wj = W[r] ^ W[r + 4]; \
+	SS1 = L_SHIFT(L_SHIFT(A, 12) + E + sm3_tj_rot[r], 7); \
+	SS2 = SS1 ^ L_SHIFT(A, 12); \
+	TT1 = FF1(A, B, C) + D + SS2 + Wj; \
+	TT2 = GG1(E, F, G) + H + SS1 + W[r]; \
+	D = C; C = L_SHIFT(B, 9); B = A; A = TT1; \
+	H = G; G = L_SHIFT(F, 19); F = E; E = P0(TT2); \
+} while (0)
+
+#define SM3_R_FF2(r) do { \
+	Wj = W[r] ^ W[r + 4]; \
+	SS1 = L_SHIFT(L_SHIFT(A, 12) + E + sm3_tj_rot[r], 7); \
+	SS2 = SS1 ^ L_SHIFT(A, 12); \
+	TT1 = FF2(A, B, C) + D + SS2 + Wj; \
+	TT2 = GG2(E, F, G) + H + SS1 + W[r]; \
+	D = C; C = L_SHIFT(B, 9); B = A; A = TT1; \
+	H = G; G = L_SHIFT(F, 19); F = E; E = P0(TT2); \
+} while (0)
+
 static void sm3_bit_compress_core(unsigned int dgst[8], const unsigned char *msg, unsigned long long blocks, int use_simd_loader)
 {
 	unsigned int A, B, C, D, E, F, G, H;
@@ -94,27 +115,25 @@ static void sm3_bit_compress_core(unsigned int dgst[8], const unsigned char *msg
 		if (use_simd_loader)
 		{
 			#if SM3_HAS_X86_DISPATCH
-			const __m128i shuffle = _mm_setr_epi8(3, 2, 1, 0, 7, 6, 5, 4,
-			                                      11, 10, 9, 8, 15, 14, 13, 12);
-			__m128i m0 = _mm_loadu_si128((const __m128i *)(msg + 0));
-			__m128i m1 = _mm_loadu_si128((const __m128i *)(msg + 16));
-			__m128i m2 = _mm_loadu_si128((const __m128i *)(msg + 32));
-			__m128i m3 = _mm_loadu_si128((const __m128i *)(msg + 48));
-			_mm_storeu_si128((__m128i *)&W[0], _mm_shuffle_epi8(m0, shuffle));
-			_mm_storeu_si128((__m128i *)&W[4], _mm_shuffle_epi8(m1, shuffle));
-			_mm_storeu_si128((__m128i *)&W[8], _mm_shuffle_epi8(m2, shuffle));
-			_mm_storeu_si128((__m128i *)&W[12], _mm_shuffle_epi8(m3, shuffle));
-			#else
-			for (i = 0; i < 16; i++) {
-				W[i] = load_u32_be(msg + i * 4);
+			{
+				const __m128i shuffle = _mm_setr_epi8(3, 2, 1, 0, 7, 6, 5, 4,
+				                                      11, 10, 9, 8, 15, 14, 13, 12);
+				__m128i m0 = _mm_loadu_si128((const __m128i *)(msg + 0));
+				__m128i m1 = _mm_loadu_si128((const __m128i *)(msg + 16));
+				__m128i m2 = _mm_loadu_si128((const __m128i *)(msg + 32));
+				__m128i m3 = _mm_loadu_si128((const __m128i *)(msg + 48));
+				_mm_storeu_si128((__m128i *)&W[0], _mm_shuffle_epi8(m0, shuffle));
+				_mm_storeu_si128((__m128i *)&W[4], _mm_shuffle_epi8(m1, shuffle));
+				_mm_storeu_si128((__m128i *)&W[8], _mm_shuffle_epi8(m2, shuffle));
+				_mm_storeu_si128((__m128i *)&W[12], _mm_shuffle_epi8(m3, shuffle));
 			}
+			#else
+			for (i = 0; i < 16; i++) { W[i] = load_u32_be(msg + i * 4); }
 			#endif
 		}
 		else
 		{
-			for (i = 0; i < 16; i++) {
-				W[i] = load_u32_be(msg + i * 4);
-			}
+			for (i = 0; i < 16; i++) { W[i] = load_u32_be(msg + i * 4); }
 		}
 
 		for (i = 16; i < 68; i++) {
@@ -122,58 +141,34 @@ static void sm3_bit_compress_core(unsigned int dgst[8], const unsigned char *msg
 			       L_SHIFT(W[i - 13], 7) ^ W[i - 6];
 		}
 
-		A = dgst[0];
-		B = dgst[1];
-		C = dgst[2];
-		D = dgst[3];
-		E = dgst[4];
-		F = dgst[5];
-		G = dgst[6];
-		H = dgst[7];
+		A = dgst[0]; B = dgst[1]; C = dgst[2]; D = dgst[3];
+		E = dgst[4]; F = dgst[5]; G = dgst[6]; H = dgst[7];
 
-		for (i = 0; i < 16; i++) {
-			Wj = W[i] ^ W[i + 4];
-			SS1 = L_SHIFT(L_SHIFT(A, 12) + E + sm3_tj_rot[i], 7);
-			SS2 = SS1 ^ L_SHIFT(A, 12);
-			TT1 = FF1(A, B, C) + D + SS2 + Wj;
-			TT2 = GG1(E, F, G) + H + SS1 + W[i];
-			D = C;
-			C = L_SHIFT(B, 9);
-			B = A;
-			A = TT1;
-			H = G;
-			G = L_SHIFT(F, 19);
-			F = E;
-			E = P0(TT2);
-		}
+		SM3_R_FF1(0);  SM3_R_FF1(1);  SM3_R_FF1(2);  SM3_R_FF1(3);
+		SM3_R_FF1(4);  SM3_R_FF1(5);  SM3_R_FF1(6);  SM3_R_FF1(7);
+		SM3_R_FF1(8);  SM3_R_FF1(9);  SM3_R_FF1(10); SM3_R_FF1(11);
+		SM3_R_FF1(12); SM3_R_FF1(13); SM3_R_FF1(14); SM3_R_FF1(15);
+		SM3_R_FF2(16); SM3_R_FF2(17); SM3_R_FF2(18); SM3_R_FF2(19);
+		SM3_R_FF2(20); SM3_R_FF2(21); SM3_R_FF2(22); SM3_R_FF2(23);
+		SM3_R_FF2(24); SM3_R_FF2(25); SM3_R_FF2(26); SM3_R_FF2(27);
+		SM3_R_FF2(28); SM3_R_FF2(29); SM3_R_FF2(30); SM3_R_FF2(31);
+		SM3_R_FF2(32); SM3_R_FF2(33); SM3_R_FF2(34); SM3_R_FF2(35);
+		SM3_R_FF2(36); SM3_R_FF2(37); SM3_R_FF2(38); SM3_R_FF2(39);
+		SM3_R_FF2(40); SM3_R_FF2(41); SM3_R_FF2(42); SM3_R_FF2(43);
+		SM3_R_FF2(44); SM3_R_FF2(45); SM3_R_FF2(46); SM3_R_FF2(47);
+		SM3_R_FF2(48); SM3_R_FF2(49); SM3_R_FF2(50); SM3_R_FF2(51);
+		SM3_R_FF2(52); SM3_R_FF2(53); SM3_R_FF2(54); SM3_R_FF2(55);
+		SM3_R_FF2(56); SM3_R_FF2(57); SM3_R_FF2(58); SM3_R_FF2(59);
+		SM3_R_FF2(60); SM3_R_FF2(61); SM3_R_FF2(62); SM3_R_FF2(63);
 
-		for (i = 16; i < 64; i++) {
-			Wj = W[i] ^ W[i + 4];
-			SS1 = L_SHIFT(L_SHIFT(A, 12) + E + sm3_tj_rot[i], 7);
-			SS2 = SS1 ^ L_SHIFT(A, 12);
-			TT1 = FF2(A, B, C) + D + SS2 + Wj;
-			TT2 = GG2(E, F, G) + H + SS1 + W[i];
-			D = C;
-			C = L_SHIFT(B, 9);
-			B = A;
-			A = TT1;
-			H = G;
-			G = L_SHIFT(F, 19);
-			F = E;
-			E = P0(TT2);
-		}
-
-		dgst[0] ^= A;
-		dgst[1] ^= B;
-		dgst[2] ^= C;
-		dgst[3] ^= D;
-		dgst[4] ^= E;
-		dgst[5] ^= F;
-		dgst[6] ^= G;
-		dgst[7] ^= H;
-			msg += 64;
+		dgst[0] ^= A; dgst[1] ^= B; dgst[2] ^= C; dgst[3] ^= D;
+		dgst[4] ^= E; dgst[5] ^= F; dgst[6] ^= G; dgst[7] ^= H;
+		msg += 64;
 	}
 }
+
+#undef SM3_R_FF1
+#undef SM3_R_FF2
 
 static void sm3_bit_compress_scalar(unsigned int dgst[8], const unsigned char *msg, unsigned long long blocks)
 {
@@ -684,3 +679,170 @@ int pseudoXOF(unsigned long long output_len_bits, const unsigned char *msg, unsi
 	}
 	return XOF_SUCCESS;
 }
+
+/* =========================================================================
+ * 4-way SSE2 WOTS chain step
+ * ========================================================================= */
+
+#if SM3_HAS_X86_DISPATCH
+
+#include <emmintrin.h>
+
+static inline __m128i mm_rotl32(__m128i x, int n)
+{
+	return _mm_or_si128(_mm_slli_epi32(x, n), _mm_srli_epi32(x, 32 - n));
+}
+
+static inline __m128i mm_p0(__m128i x)
+{
+	__m128i t = _mm_xor_si128(mm_rotl32(x, 9), mm_rotl32(x, 17));
+	return _mm_xor_si128(x, t);
+}
+
+static inline __m128i mm_p1(__m128i x)
+{
+	__m128i t = _mm_xor_si128(mm_rotl32(x, 15), mm_rotl32(x, 23));
+	return _mm_xor_si128(x, t);
+}
+
+static void sm3_4x_rounds(__m128i dgst[8], const __m128i W[68])
+{
+	__m128i A = dgst[0], B = dgst[1], C = dgst[2], D = dgst[3];
+	__m128i E = dgst[4], F = dgst[5], G = dgst[6], H = dgst[7];
+	__m128i SS1, SS2, TT1, TT2, Wj, tj_r;
+	int r;
+
+	for (r = 0; r < 16; r++) {
+		tj_r = _mm_set1_epi32((int)sm3_tj_rot[r]);
+		Wj = _mm_xor_si128(W[r], W[r + 4]);
+		SS1 = mm_rotl32(_mm_add_epi32(_mm_add_epi32(mm_rotl32(A, 12), E), tj_r), 7);
+		SS2 = _mm_xor_si128(SS1, mm_rotl32(A, 12));
+		TT1 = _mm_add_epi32(_mm_add_epi32(_mm_add_epi32(
+			_mm_xor_si128(_mm_xor_si128(A, B), C), D), SS2), Wj);
+		TT2 = _mm_add_epi32(_mm_add_epi32(_mm_add_epi32(
+			_mm_xor_si128(_mm_xor_si128(E, F), G), H), SS1), W[r]);
+		D = C; C = mm_rotl32(B, 9); B = A; A = TT1;
+		H = G; G = mm_rotl32(F, 19); F = E; E = mm_p0(TT2);
+	}
+
+	for (r = 16; r < 64; r++) {
+		tj_r = _mm_set1_epi32((int)sm3_tj_rot[r]);
+		Wj = _mm_xor_si128(W[r], W[r + 4]);
+		SS1 = mm_rotl32(_mm_add_epi32(_mm_add_epi32(mm_rotl32(A, 12), E), tj_r), 7);
+		SS2 = _mm_xor_si128(SS1, mm_rotl32(A, 12));
+		TT1 = _mm_add_epi32(_mm_add_epi32(_mm_add_epi32(
+			_mm_or_si128(_mm_or_si128(_mm_and_si128(A, B), _mm_and_si128(A, C)),
+				_mm_and_si128(B, C)), D), SS2), Wj);
+		TT2 = _mm_add_epi32(_mm_add_epi32(_mm_add_epi32(
+			_mm_xor_si128(_mm_and_si128(_mm_xor_si128(F, G), E), G), H), SS1), W[r]);
+		D = C; C = mm_rotl32(B, 9); B = A; A = TT1;
+		H = G; G = mm_rotl32(F, 19); F = E; E = mm_p0(TT2);
+	}
+
+	dgst[0] = _mm_xor_si128(dgst[0], A); dgst[1] = _mm_xor_si128(dgst[1], B);
+	dgst[2] = _mm_xor_si128(dgst[2], C); dgst[3] = _mm_xor_si128(dgst[3], D);
+	dgst[4] = _mm_xor_si128(dgst[4], E); dgst[5] = _mm_xor_si128(dgst[5], F);
+	dgst[6] = _mm_xor_si128(dgst[6], G); dgst[7] = _mm_xor_si128(dgst[7], H);
+}
+
+static void sm3_4x_expand(__m128i W[68])
+{
+	int j;
+	for (j = 16; j < 68; j++) {
+		W[j] = _mm_xor_si128(
+			_mm_xor_si128(
+				mm_p1(_mm_xor_si128(_mm_xor_si128(W[j - 16], W[j - 9]),
+					mm_rotl32(W[j - 3], 15))),
+				mm_rotl32(W[j - 13], 7)),
+			W[j - 6]);
+	}
+}
+
+/*
+ * thash_wots_chain_4x — process 4 WOTS chains in parallel using SSE2.
+ *
+ * Builds 4 complete 64-byte message blocks via memcpy (identical byte layout
+ * to the generic thash), then uses 128-bit SIMD to run 4 SM3 compressions
+ * in parallel for both blocks.
+ *
+ * out: 4 × 16 = 64 bytes output
+ * in:  4 × 16 = 64 bytes input
+ * pub_seed: 16 bytes (shared)
+ * addrs: 4 × 8 uint32_t addresses (only addrs[lane][5]=chain_idx varies per lane;
+ *        addrs[lane][6]=hash_addr is the same for all lanes)
+ */
+void thash_wots_chain_4x(unsigned char *out, const unsigned char *in,
+                         const unsigned char *pub_seed,
+                         const uint32_t addrs[4][8])
+{
+	static const unsigned char tag[] = "Kylin-THASH-v1";
+	__m128i dgst[8], W[68];
+	unsigned char block0[4][64], block1[4][64];
+	const unsigned long long total_bits = (78ULL + 4ULL) * 8ULL;
+	int j, lane;
+
+	/* Build 4 Block 0 messages */
+	for (lane = 0; lane < 4; lane++) {
+		unsigned char *b = block0[lane];
+		memcpy(b, tag, 14);
+		memcpy(b + 14, pub_seed, 16);
+		memcpy(b + 30, addrs[lane], 32);
+		memcpy(b + 62, in + lane * 16, 2);
+	}
+
+	/* Build 4 Block 1 (tail) messages */
+	for (lane = 0; lane < 4; lane++) {
+		unsigned char *b = block1[lane];
+		memcpy(b, in + lane * 16 + 2, 14);
+		b[14] = 0x00; b[15] = 0x00;
+		b[16] = 0x00; b[17] = 0x01;
+		b[18] = 0x80;
+		memset(b + 19, 0, 64 - 19 - 8);
+		PUT32(b + 56, (unsigned int)(total_bits >> 32));
+		PUT32(b + 60, (unsigned int)total_bits);
+	}
+
+	/* SM3 IV */
+	dgst[0] = _mm_set1_epi32(0x7380166F); dgst[1] = _mm_set1_epi32(0x4914B2B9);
+	dgst[2] = _mm_set1_epi32(0x172442D7); dgst[3] = _mm_set1_epi32(0xDA8A0600);
+	dgst[4] = _mm_set1_epi32(0xA96F30BC); dgst[5] = _mm_set1_epi32(0x163138AA);
+	dgst[6] = _mm_set1_epi32(0xE38DEE4D); dgst[7] = _mm_set1_epi32(0xB0FB0E4E);
+
+	/* Block 0: load W[0..15] from 4 message blocks */
+	for (j = 0; j < 16; j++) {
+		W[j] = _mm_setr_epi32(
+			(int)load_u32_be(block0[0] + j * 4),
+			(int)load_u32_be(block0[1] + j * 4),
+			(int)load_u32_be(block0[2] + j * 4),
+			(int)load_u32_be(block0[3] + j * 4));
+	}
+	sm3_4x_expand(W);
+	sm3_4x_rounds(dgst, W);
+
+	/* Block 1: load W[0..15] from 4 tail blocks */
+	for (j = 0; j < 16; j++) {
+		W[j] = _mm_setr_epi32(
+			(int)load_u32_be(block1[0] + j * 4),
+			(int)load_u32_be(block1[1] + j * 4),
+			(int)load_u32_be(block1[2] + j * 4),
+			(int)load_u32_be(block1[3] + j * 4));
+	}
+	sm3_4x_expand(W);
+	sm3_4x_rounds(dgst, W);
+
+	/* Extract: first 4 words × 4 lanes = 16 bytes per lane */
+	{
+		unsigned int all[8][4];
+		for (j = 0; j < 8; j++)
+			_mm_storeu_si128((__m128i *)all[j], dgst[j]);
+
+		for (lane = 0; lane < 4; lane++) {
+			PUT32(out + lane * 16,      all[0][lane]);
+			PUT32(out + lane * 16 + 4,  all[1][lane]);
+			PUT32(out + lane * 16 + 8,  all[2][lane]);
+			PUT32(out + lane * 16 + 12, all[3][lane]);
+		}
+	}
+}
+
+#endif /* SM3_HAS_X86_DISPATCH */
