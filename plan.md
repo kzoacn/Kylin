@@ -466,3 +466,16 @@
 - 验证：
   - 关键词复扫：`paper/tex` 与 `main.tex` 中已无 `2^80` / `q<=2^80` 表述。
   - 编译验证：`latexmk -pdf -shell-escape -interaction=nonstopmode -halt-on-error -outdir=/tmp/kylin-draftcheck main.tex` 通过，输出 `/tmp/kylin-draftcheck/main.pdf`。
+
+### 2026-04-26 - Draft Cleanup: Replace Remaining `spa_*` Markers with `kylin_*` (Done)
+
+- 清理文稿中残留的旧算法入口记号：
+  - `paper/tex/sphincsp.tex` 中三处 `\inputminted` 已从 `paper/code/spa_*.cs` 改为 `paper/code/kylin_*.cs`。
+  - 文中展示的 keygen/sign/verify 伪代码入口统一为 `kylin_keygen`、`kylin_sign`、`kylin_verify`。
+- 同步整理代码示例文件名：
+  - `paper/code/spa_keygen.cs -> paper/code/kylin_keygen.cs`
+  - `paper/code/spa_sign.cs -> paper/code/kylin_sign.cs`
+  - `paper/code/spa_verify.cs -> paper/code/kylin_verify.cs`
+- 验证：
+  - 关键词复扫：`paper/tex` 与 `paper/code` 中已无 `spa_` 残留。
+  - 编译验证：`latexmk -pdf -shell-escape -interaction=nonstopmode -halt-on-error -outdir=/tmp/kylin-spa-clean main.tex` 通过，输出 `/tmp/kylin-spa-clean/main.pdf`。

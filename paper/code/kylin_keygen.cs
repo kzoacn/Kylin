@@ -1,6 +1,6 @@
 # Input: (none)
 # Output: $\SPHINCSA$ key pair (SK,PK)
-spa_keygen( ){
+kylin_keygen( ){
   SK.seed = sec_rand(n);
   SK.prf = sec_rand(n);
   PK.seed = sec_rand(n);

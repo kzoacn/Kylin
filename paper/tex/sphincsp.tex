@@ -650,19 +650,19 @@ All the restrictions stated in the previous sections apply. Recall that we use $
 \end{itemize}
 In the following, we assume that all algorithms have access to these parameters.
 
-\subsection{\SPHINCSA\ Key Generation (Function \texttt{spx\_keygen})}
+\subsection{\SPHINCSA\ Key Generation (Function \texttt{kylin\_keygen})}
 
 The \SPHINCSA\ private key contains two elements. First, the $n$-byte secret seed $\sk.\seed$ which is used to generate all the \WOTSCS\ and FORS private key elements. Second, an $n$-byte PRF key $\sk.\prf$ which is used to deterministically generate a randomization value for the randomized message hash.
 
 The \SPHINCSA\ public key also contains two elements. First, the HT public key, i.e.~the root of the tree on the top layer. Second, an $n$-byte public seed value $\pk.\seed$ which is sampled uniformly at random.
 
-As \texttt{spa\_sign} does not get the public key, but needs access to $\pk.\seed$ (and possibly to $\pk.\root$ for fault attack mitigation), the \SPHINCSA\ secret key contains a copy of the public key.
+As \texttt{kylin\_sign} does not get the public key, but needs access to $\pk.\seed$ (and possibly to $\pk.\root$ for fault attack mitigation), the \SPHINCSA\ secret key contains a copy of the public key.
 
-The description of algorithm \texttt{spa\_keygen} assumes the existence of a function \texttt{sec\_rand} which on input $i$ returns $i$-bytes of cryptographically strong randomness.
+The description of algorithm \texttt{kylin\_keygen} assumes the existence of a function \texttt{sec\_rand} which on input $i$ returns $i$-bytes of cryptographically strong randomness.
 
 \begin{algorithm}
-    \inputminted[breaklines,linenos,tabsize=2,mathescape,escapeinside=||]{C}{paper/code/spa_keygen.cs}
-    \caption{\texttt{spa\_keygen} ---  Generate a \SPHINCSA\ key pair.}
+    \inputminted[breaklines,linenos,tabsize=2,mathescape,escapeinside=||]{C}{paper/code/kylin_keygen.cs}
+    \caption{\texttt{kylin\_keygen} ---  Generate a \SPHINCSA\ key pair.}
     \label{alg:spxkeygen}
 \end{algorithm}
 
@@ -703,25 +703,25 @@ The data format for a signature is given in \cref{fig:spx15}.
     \caption{ \SPHINCSA\ signature.} \label{fig:spx15}
 \end{figure}
 
-\subsection{\SPHINCSA\ Signature Generation (Function \texttt{spa\_sign})}
+\subsection{\SPHINCSA\ Signature Generation (Function \texttt{kylin\_sign})}
 
 Generating a \SPHINCSA\ signature consists of four steps. First, a random value $\randstr$ is pseudorandomly generated. Next, this is used to compute a $m$ byte message digest which is split into a $\lfloor(k\log t+7)/8\rfloor$-byte partial message digest \texttt{tmp\_md}, a $\lfloor(h-h_0+7)/8\rfloor$-byte tree index \texttt{tmp\_idx\_tree}, and a $\lfloor(h_0+7)/8\rfloor$-byte leaf index \texttt{tmp\_idx\_leaf}. Next, the actual values $\md$, \texttt{idx\_tree}, and \texttt{idx\_leaf} are computed by extracting the necessary number of bits. The partial message digest md is then signed with the \texttt{idx\_leaf}-th FORS key pair of the \texttt{idx\_tree}-th XMSS tree on the lowest HT layer. The public key of the FORS key pair is then signed using HT.The index is never actually used as a whole, but immediately split into a tree index and a leaf index, for ease of implementation.
 
 When computing $\tt{R}$, the PRF takes a $n$-byte string opt which is initialized with $\pk.\seed$ but can be overwritten with randomness if the global variable \texttt{RANDOMIZE} is set. This option is given as otherwise \SPHINCSA\ signatures would be always deterministic.  
 
 \begin{algorithm}[ht]
-    \inputminted[breaklines,linenos,tabsize=2,mathescape,escapeinside=||]{C}{paper/code/spa_sign.cs}
-    \caption{ \texttt{spa\_sign} --- Generating a \SPHINCSA\ signature.}
+    \inputminted[breaklines,linenos,tabsize=2,mathescape,escapeinside=||]{C}{paper/code/kylin_sign.cs}
+    \caption{ \texttt{kylin\_sign} --- Generating a \SPHINCSA\ signature.}
     \label{alg:spxsign}
 \end{algorithm}
 
-\subsection{\SPHINCSA\ Signature Verification (Function \texttt{spa\_verify})}
+\subsection{\SPHINCSA\ Signature Verification (Function \texttt{kylin\_verify})}
 
 \SPHINCSA\ signature verification (Algorithm \ref{alg:spxvrfy}) can be summarized as recomputing message digest and index, computing a candidate FORS public key, and verifying the HT signature on that public key. Note that the HT signature verification will fail if the FORS public key is not matching the real one (with overwhelming probability). \SPHINCSA\ signature verification takes a message $M$, a signature \sig, and a \SPHINCSA\ public key $\pk$.
 
 \begin{algorithm}[ht]
-    \inputminted[breaklines,linenos,tabsize=2,mathescape,escapeinside=||]{C}{paper/code/spa_verify.cs}
-    \caption{ \texttt{spa\_verify} --- Verify a \SPHINCSA\ signature $\bf SIG$ on a message $M$ using a \SPHINCSA\ public key $\bf PK$.}
+    \inputminted[breaklines,linenos,tabsize=2,mathescape,escapeinside=||]{C}{paper/code/kylin_verify.cs}
+    \caption{ \texttt{kylin\_verify} --- Verify a \SPHINCSA\ signature $\bf SIG$ on a message $M$ using a \SPHINCSA\ public key $\bf PK$.}
     \label{alg:spxvrfy}
 \end{algorithm}
 

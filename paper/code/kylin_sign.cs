@@ -1,10 +1,14 @@
-# Input: Message M, signature SIG, public key PK
-# Output: Boolean
-spa_verify(M, SIG, PK){ // init
-  ADRS = toByte(0, 32);
-  R = SIG.getR();
-  SIG_FORS = SIG.getSIG_FORS();
-  SIG_HT = SIG.getSIG_HT();
+# Input: Message M, private key SK = (SK.seed, SK.prf, PK.seed, PK.root)
+# Output: $\SPHINCSA$ signature SIG
+kylin_sign(M, SK){ // init
+ADRS = toByte(0, 32);
+  // generate randomizer
+  opt = PK.seed;
+  if(RANDOMIZE){
+    opt = rand(n);
+  }
+  R = PRF_msg(SK.prf, opt, M);
+  SIG = SIG || R;
   // compute message digest and index
   digest = H_msg(R, PK.seed, PK.root, M);
   tmp_md = first floor((ka +7)/ 8) bytes of digest;
@@ -13,13 +17,18 @@ spa_verify(M, SIG, PK){ // init
   md = first ka bits of tmp_md;
   idx_tree = first h - h_0 bits of tmp_idx_tree;
   idx_leaf = first h_0 bits of tmp_idx_leaf;
-  // compute FORS public key
+  // FORS sign
   ADRS.setLayerAddress(0);
   ADRS.setTreeAddress(idx_tree);
   ADRS.setType(FORS_TREE);
   ADRS.setKeyPairAddress(idx_leaf);
+  SIG_FORS = fors_sign(md, SK.seed, PK.seed, ADRS);
+  SIG = SIG || SIG_FORS;
+  // get FORS public key
   PK_FORS = fors_pkFromSig(SIG_FORS, md, PK.seed, ADRS);
-  // verify HT signature
+  // sign FORS public key with HT
   ADRS.setType(TREE);
-  return ht_verify(PK_FORS, SIG_HT, PK.seed, idx_tree, idx_leaf, PK.root);
+  SIG_HT = ht_sign(PK_FORS, SK.seed, PK.seed, idx_tree, idx_leaf);
+  SIG = SIG || SIG_HT;
+  return SIG; 
 }
