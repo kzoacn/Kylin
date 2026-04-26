@@ -18,7 +18,7 @@ This revised draft is organized as the first-stage NGCC submission package for \
     Core algorithms & Key generation, signature generation, signature verification \\
     Baseline construction & Kylin is the NGCC submission name for the \SPHINCSA\ construction, itself derived from \SPHINCSP\ with \WOTSCS\ replacing \WOTSP\ and with retuned parameter sets \\
     Hash/XOF interface in the packaged code & ICCS auxiliary functions, with domain-separated wrappers built from \texttt{pseudoXOF} \\
-    Parameter sets currently included & Packaged NGCC instances \texttt{Kylin-128}, \texttt{Kylin-256}, and \texttt{Kylin-512}; plus frozen $q=2^{24}$ companion profiles retained as reference-only additional implementations under \texttt{Implementations/Additional\_Implementation/} and in \texttt{paper/data/para\_kylin\_final\_6profiles.csv} \\
+    Parameter sets currently included & Packaged NGCC instances \texttt{Kylin-128}, \texttt{Kylin-256}, and \texttt{Kylin-512}; plus frozen $q=2^{24}$ companion profiles retained as reference-only additional implementations \\
     Submitters & \todo{List the names, affiliations, postal addresses, phone numbers, email addresses, and signatures of all submitters.} \\
     Primary contact & \todo{Identify the submission contact and provide the signed contact information required by the call.} \\
     \bottomrule
@@ -30,17 +30,17 @@ This revised draft is organized as the first-stage NGCC submission package for \
 \begin{itemize}
     \item The required algorithm description is provided by the technical sections on notation, the one-time signature layer, the hypertree, FORS, the full \SPHINCSA\ construction, and the parameter/hash-function instantiations; see \cref{sec:notation,sec:ots,sec:hypertree,sec:fors,sec:spx-core,sec:instantiations}.
     \item The required design rationale, security analysis, performance evaluation, and feature statement are provided in \cref{sec:wots-optimization,sec:design-rationale,sec:security-claims,sec:performance,sec:feature-statement}.
-    \item The submission package includes NGCC-oriented families covering the required 128/256/512-bit classical levels with corresponding 80/128/256-bit generic quantum levels; see \cref{tab:ngcc-parameters}. The final six-profile search results are frozen in \texttt{paper/data/para\_kylin\_final\_6profiles.csv} and reproducible from \texttt{paper/code/search\_kylin\_six\_profiles.py}.
+    \item The submission package includes NGCC-oriented families covering the required 128/256/512-bit classical levels with corresponding 80/128/256-bit generic quantum levels; see \cref{tab:ngcc-parameters}. The final six-profile search results are frozen in the repository and retained for implementation consistency.
     \item The packaged NGCC rows are tuned with $q=2^{64}$ in the concrete-security formulas, with hypertree heights $h\in\{65,68,70\}$, so the submission text can state support for at least $2^{64}$ signatures under one key pair in the intended single-key usage model.
     \item The NGCC SIG wrapper in the packaged code accepts message lengths up to $2^{60}$ bytes, i.e.\ $2^{63}$ bits, which matches the bound stated in the call.
     \item Separate submission artifacts required by the call, including signed forms and ownership/IP statements, are tracked in Appendix~\ref{apx:submission-checklist}. The packaged ISO C reference implementation, packaged optimized implementation, and generated test vectors are now present in the repository.
 \end{itemize}
 
-For the actual NGCC submission package, this revised draft uses a frozen three-family $q=2^{64}$ Kylin parameter set extracted from the completed six-profile search workflow. The final rows are recorded in \texttt{paper/data/para\_ngcc.csv} (for packaged code) and \texttt{paper/data/para\_kylin\_final\_6profiles.csv} (full frozen set including $q=2^{24}$ companion rows that are delivered as reference-only additional implementations in \texttt{Implementations/Additional\_Implementation/}).
+For the actual NGCC submission package, this revised draft uses a frozen three-family $q=2^{64}$ Kylin parameter set extracted from the completed six-profile search workflow. The packaged code uses the three $q=2^{64}$ rows, while the companion $q=2^{24}$ rows are retained separately as reference-only additional implementations.
 
 \begin{table}[htbp]
     \centering
-    \caption{Frozen NGCC-aligned Kylin parameter families used by the packaged implementations ($q=2^{64}$ rows from \texttt{paper/data/para\_kylin\_final\_6profiles.csv}).}
+    \caption{Frozen NGCC-aligned Kylin parameter families used by the packaged implementations.}
     \label{tab:ngcc-parameters}
     \scriptsize
     \begin{tabular}{l c c c c c c c c c c c c}

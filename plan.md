@@ -479,3 +479,17 @@
 - 验证：
   - 关键词复扫：`paper/tex` 与 `paper/code` 中已无 `spa_` 残留。
   - 编译验证：`latexmk -pdf -shell-escape -interaction=nonstopmode -halt-on-error -outdir=/tmp/kylin-spa-clean main.tex` 通过，输出 `/tmp/kylin-spa-clean/main.pdf`。
+
+### 2026-04-26 - Draft Polish: Fix `\len`, Remove File-Path Mentions, Reorder Section 3.1 (Done)
+
+- 修复 `\len` 宏的正文渲染与间距：
+  - `paper/tex/defs.tex` 中为 `\len` 补上 `\xspace`，使其在正文中按 `len` 稳定显示并保留自然空格。
+- 调整第 3 节结构与引导语：
+  - `paper/tex/construction.tex` 在 `3 Kylin vs. SPHINCS+` 开头补充一句，明确除了 `\WOTSCS` 编码优化外，还采用了更灵活的 hypertree 分层。
+  - 将 `Diverse Layer Heights in the Hypertree` 提前为 `3.1`，原 `The WOTS+ Encoding` 顺延为 `3.2`。
+- 收紧论文中的仓库材料引用口径：
+  - `paper/tex/abstract.tex`、`paper/tex/submission_overview.tex`、`paper/tex/submission_checklist.tex`、`paper/tex/sphincsp-appendix.tex` 中移除正文里直接显示的 `.csv`、`.py`、`.txt`、`.zip` 路径/文件名，改为自然语言描述。
+  - 保留 LaTeX 内部 `\csvreader` / `\inputminted` 输入路径，不影响排版生成。
+- 验证：
+  - 编译验证：`latexmk -pdf -shell-escape -interaction=nonstopmode -halt-on-error -outdir=/tmp/kylin-doc-polish main.tex` 通过，输出 `/tmp/kylin-doc-polish/main.pdf`。
+  - 成品核对：PDF 文本中已出现 `3.1 Diverse Layer Heights in the Hypertree` 与 `3.2 The WOTS+ Encoding`。

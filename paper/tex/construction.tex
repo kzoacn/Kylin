@@ -2,17 +2,9 @@
 
 In this section we highlight our improvement upon the original \SPHINCSP\ scheme, namely, the one-time signature component.
 Our optimized scheme, \WOTSCS, allows a larger message space / signature size ratio as compared to the original \WOTSP\ scheme, allowing a smaller one-time signature size. As a result, the parameters of the hash-based signature scheme can thus be re-tuned to reduce the signature size without exacerbating the computation time.
+In addition, Kylin uses a more flexible hypertree layout with diverse per-layer heights, which lets the packaged parameter sets remain well balanced even when $h$ is not divisible by $d$.
 
 We explain the details of our optimization as well as some technical proofs in this section.
-
-\subsection{The \WOTSP~Encoding}
-
-The reason that the \WOTSP (as well as other Winternitz-type OTS) scheme introduces the checksum is that in absence of the checksum the adversary can efficiently forge signatures given a single pair of valid message signature. That is, given $(\sigma,m)$ he forges any $m'$ satisfying $\forall i(m_i\leq m'_i)$ by computing $\hashF^{m'_i}(sk_i)$ $=\hashF^{m'_i-m_i}\big( \hashF^{m_i}(sk_i)\big)$.
-
-\ignore{
-The adversary has advantages in the \WOTSP (as well as other Winternitz type one time signature scheme) if there is no checksum. It can easily obtain $\hashF^{m'_i}(sk_i)$ forall $m'_i$ such that $ m_i\leq m'_i$ from a valid pair of signature and message $(\sigma,m)$. That means the adversary can forge any $m'$ such that $\forall i,m_i\leq m'_i$.
-}
-The checksum addresses the issue: an increase in any $m_i$ leads to a decrease in at least one $C_i$ (recall $C=\sum_{i=1}^{l_1}(w-1-m_i)$). Therefore, the adversary cannot forge any $(m',C')$ satisfying both $\forall i(m_i\leq m'_i)$ and $\forall i(C_i\leq C'_i)$ at the same time.
 
 \subsection{Diverse Layer Heights in the Hypertree}
 
@@ -24,6 +16,15 @@ Let $r = h \bmod d$. Our default balancing rule is:
     \item choose $r$ layers with height $\left\lceil h/d \right\rceil$.
 \end{itemize}
 Equivalently, the profile is as balanced as possible and differs by at most one between any two layer heights.
+
+\subsection{The \WOTSP~Encoding}
+
+The reason that the \WOTSP (as well as other Winternitz-type OTS) scheme introduces the checksum is that in absence of the checksum the adversary can efficiently forge signatures given a single pair of valid message signature. That is, given $(\sigma,m)$ he forges any $m'$ satisfying $\forall i(m_i\leq m'_i)$ by computing $\hashF^{m'_i}(sk_i)$ $=\hashF^{m'_i-m_i}\big( \hashF^{m_i}(sk_i)\big)$.
+
+\ignore{
+The adversary has advantages in the \WOTSP (as well as other Winternitz type one time signature scheme) if there is no checksum. It can easily obtain $\hashF^{m'_i}(sk_i)$ forall $m'_i$ such that $ m_i\leq m'_i$ from a valid pair of signature and message $(\sigma,m)$. That means the adversary can forge any $m'$ such that $\forall i,m_i\leq m'_i$.
+}
+The checksum addresses the issue: an increase in any $m_i$ leads to a decrease in at least one $C_i$ (recall $C=\sum_{i=1}^{l_1}(w-1-m_i)$). Therefore, the adversary cannot forge any $(m',C')$ satisfying both $\forall i(m_i\leq m'_i)$ and $\forall i(C_i\leq C'_i)$ at the same time.
 
 
 
