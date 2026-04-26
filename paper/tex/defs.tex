@@ -44,8 +44,8 @@
 \newcommand{\BW}{{\rm BW}}
 \newcommand{\RBW}{{\rm RBW}}
 
-\newcommand{\pk}{\ensuremath{\mathbf{PK}}\xspace}
-\newcommand{\sk}{\ensuremath{\mathbf{SK}}\xspace}
+\DeclareRobustCommand{\pk}{\ifmmode\mathtt{PK}\else\texttt{PK}\xspace\fi}
+\DeclareRobustCommand{\sk}{\ifmmode\mathtt{SK}\else\texttt{SK}\xspace\fi}
 
 
 \newcommand{\SPHINCSP}{\texorpdfstring{\ensuremath{\text{SPHINCS}^{+}}\xspace}{SPHINCS+}}

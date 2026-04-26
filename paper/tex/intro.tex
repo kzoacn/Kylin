@@ -1,4 +1,4 @@
-\section{Algorithm Description and Background} \label{sec:intro}
+\section{Algorithm Description} \label{sec:intro}
 
 Hash-based signature is one of the most promising candidates for (and perhaps the most conservative approach to)  post-quantum digital signatures. An advantage of hash-based signatures is that its (classical as well as quantum) security strength is better understood (and easier to evaluate) than other candidates, by solely relying on the idealized hardness\footnote{The design philosophy of symmetric primitives (including hash functions) is that they should only admit generic attacks, otherwise the design is considered to be flawed.} of the cryptographic hash functions.  
 
@@ -25,7 +25,7 @@ Our optimization mainly stems from the optimization of the one-time signature sc
 Since our modification upon the \SPHINCSP scheme is limited to the encoding scheme of the underlying \WOTSP one-time signature, the security analysis of our new scheme remains largely the same as the original analysis.
 Based on the security analysis of the original work, we estimate the security level and carefully choose parameters in order to achieve optimized performance.
 
-To facilitate a direct package-level view, \cref{tab:comp tiny} now reports the hash-call proxies and key/signature sizes for \texttt{Kylin-128}, \texttt{Kylin-256}, and \texttt{Kylin-512}. In particular, the table includes key-generation, signing, and verification hash-call metrics under the frozen packaged parameter sets.
+To facilitate a direct package-level view, \cref{tab:comp tiny} reports the hash-call proxies and key/signature sizes for \texttt{Kylin-128}, \texttt{Kylin-256}, and \texttt{Kylin-512}. In particular, the table includes key-generation, signing, and verification hash-call metrics under the frozen packaged parameter sets.
 
 We refer to more detailed comparisons for the full spectrum of parameter choices in \cref{sec:performance}.
 As summarized in \cref{tab:kylin-package-bench}, the packaged Kylin instances provide the current repository-local performance profile for key generation, signing, and verification. For specific scenarios where verification time is critical, the parameters can be re-tuned towards faster verification.

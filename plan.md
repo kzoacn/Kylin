@@ -98,6 +98,24 @@
 
 ## 5. 进度日志
 
+### 2026-04-26 - NGCC 3.3 Specification Section Rewrite (Done)
+
+- 按 `docs/Submission Requirements for Public-Key Cryptographic Algorithms.md` 中 3.3.2--3.3.5 的口径重写正文关键章节：
+  - `Design Rationale` 补入数学困难问题、参数选择依据、失败/伪造概率影响分析，并明确 Diverse Layer Heights 优化；
+  - `Security Statements and Analyses` 增加理论安全 TODO、具体安全/失败概率表、当前不声明的其他安全特性；
+  - `Performance Evaluation` 增加 hash-call/signature-size 表、本机 64-bit PC 平台配置和软件性能/传输存储开销合表；
+  - `Feature Statements` 按创新性、简洁性、灵活性、兼容性、可扩展性和平台实现优势重写。
+- 文档结构调整：
+  - `main.tex` 不再输入摘要、`Submission Package Overview`、`Basic Information`；
+  - `Algorithm Description and Background` 改名为 `Algorithm Description`；
+  - 冻结主参数表迁入算法规格正文，继续使用 `Kylin-128/256/512` 三组主提交实例。
+- 修复 `\pk` / `\sk` 渲染：
+  - 改为文本/数学双模式 robust 宏；
+  - 将 hash-call 表改为手写冻结值，避免 CSV 表头 `pk`/`sk` 与正文宏再次冲突。
+- 验证：
+  - 编译验证：`latexmk -pdf -shell-escape -interaction=nonstopmode -halt-on-error main.tex` 通过，并刷新 `main.pdf`。
+  - PDF 文本抽查：TOC 中已无 `Abstract`、`Submission Package Overview`、`Basic Information`；正文中 `PK.seed` / `SK.seed` 可正常抽取。
+
 ### 2026-04-26 - Kylin-512 Re-selection under `sign_hashcalls < 6.4e6` (Done)
 
 - 按新约束重新筛选主提交 `Kylin-512`：目标改为在 `sign_hashcalls < 6,400,000` 前提下最小化 `sig`。
