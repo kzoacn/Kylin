@@ -91,7 +91,7 @@ void wots_gen_leafx1(unsigned char *dest,
 				for (c = 0; c < CHAIN_GROUP; c++) {
 					((unsigned char *)group_addrs[c])[SPX_OFFSET_HASH_ADDR] = (unsigned char)k;
 				}
-				thash_wots_chain_4x(group_bufs, group_bufs, pub_seed, group_addrs);
+				thash_wots_chain_4x(group_bufs, group_bufs, pub_seed, (const uint32_t (*)[8])group_addrs);
 
 				for (c = 0; c < CHAIN_GROUP; c++) {
 					if (k + 1 == group_wots_k[c]) {
