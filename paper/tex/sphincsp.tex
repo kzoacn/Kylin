@@ -384,7 +384,7 @@ The XMSS public key is computed as described in \texttt{xmss\_PKgen} (\cref{alg:
 
 \subsubsection{XMSS Signature}
 
-An XMSS signature is a $((\len+h_{\mathrm{XMSS}})*n)$-byte string consisting of
+An XMSS signature is a $((\len+h_{\mathrm{XMSS}})\cdot n)$-byte string consisting of
 \begin{itemize}
     \item a \WOTSCS\ signature \sigots taking $\len\cdot n$ bytes,
 
@@ -461,7 +461,7 @@ The HT public key is the public key (root node) of the single XMSS tree on the t
 \end{algorithm}
 \subsubsection{HT Signature}
 
-A HT signature $\sight$ is a byte string of length $(h+d*\len)*n$. It consists of $d$ XMSS signatures, where layer $i$ contributes one XMSS signature of $(h_i+\len)*n$ bytes.
+A HT signature $\sight$ is a byte string of length $(h+d\cdot\len)\cdot n$. It consists of $d$ XMSS signatures, where layer $i$ contributes one XMSS signature of $(h_i+\len)\cdot n$ bytes.
 
 The data format for a signature is given in \cref{fig:spx11}.
 

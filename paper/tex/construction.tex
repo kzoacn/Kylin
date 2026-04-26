@@ -14,6 +14,17 @@ The adversary has advantages in the \WOTSP (as well as other Winternitz type one
 }
 The checksum addresses the issue: an increase in any $m_i$ leads to a decrease in at least one $C_i$ (recall $C=\sum_{i=1}^{l_1}(w-1-m_i)$). Therefore, the adversary cannot forge any $(m',C')$ satisfying both $\forall i(m_i\leq m'_i)$ and $\forall i(C_i\leq C'_i)$ at the same time.
 
+\subsection{Diverse Layer Heights in the Hypertree}
+
+Earlier parameter profiles often imposed the divisibility condition $h \bmod d = 0$ so that every layer had the same height $h/d$. In this draft, we allow per-layer heights $(h_0,\ldots,h_{d-1})$ to be non-uniform as long as $\sum_{i=0}^{d-1} h_i = h$.
+
+Let $r = h \bmod d$. Our default balancing rule is:
+\begin{itemize}
+    \item choose $d-r$ layers with height $\left\lfloor h/d \right\rfloor$,
+    \item choose $r$ layers with height $\left\lceil h/d \right\rceil$.
+\end{itemize}
+Equivalently, the profile is as balanced as possible and differs by at most one between any two layer heights.
+
 
 
 

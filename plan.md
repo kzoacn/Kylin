@@ -225,6 +225,21 @@
 - 基于冻结参数补齐 `KeyGen Hashcall`，并整理为 `paper/data/kylin_hashcall_metrics.csv`；同时修复 `csvsimple` 下划线列名导致的 LaTeX 编译错误（列名改为无下划线）。
 - 完成 `main.tex` 全量编译并通过，输出 PDF 已更新，表 2/表 3 显示符合当前提交需求。
 
+### 2026-04-26 - Table 3 KeyGen Fix + Intro/Spec Text Cleanup (Done)
+
+- 修正 `Table 3` 的 `KeyGen (Hashcall)` 口径：按正文“仅生成顶层 XMSS 树”的复杂度描述重算，使用顶层高度 `h_{d-1}` 计算，更新后分别为：
+  - `Kylin-128`: `417279`
+  - `Kylin-256`: `324095`
+  - `Kylin-512`: `1482948607`
+- 在 `Introduction` 的 `Stateless signatures` 段落前添加 TODO，标注后续补充 related work。
+- 删除 `Other Changes Made` 段落中 “remove haraka and robust version ...” 句子。
+- 在 `3 Kylin vs. SPHINCS+` 章节新增“Diverse Layer Heights in the Hypertree”小节，明确：
+  - 不再要求 `h mod d = 0`；
+  - 允许每层高度 `h_i` 不同且满足 `sum h_i = h`；
+  - 令 `r = h mod d`，默认采用 `d-r` 个 `floor(h/d)` 与 `r` 个 `ceil(h/d)` 的平衡分配规则。
+- 修复 `6.1.5 XMSS Signature` 与 `6.2.3 HT Signature` 中误用的 `*` 符号，统一改为 `\cdot` 形式，避免排版异常字符。
+- 完成 `main.tex` 全量编译并通过，确认上述修改已在 PDF 中生效。
+
 ### 2026-04-25 - Baseline `None` Inference and Bit-Security Verification (Done)
 
 - 对 `paper/code/search_ngcc_params.py` 中四条 baseline 进行了可确定字段推理：`h'`, `log_t/a`, `w/lgw`, `l`, `m`, `sec_level/category`（含映射与公式推导）。
