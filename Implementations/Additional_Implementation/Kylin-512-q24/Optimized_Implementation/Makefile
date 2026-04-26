@@ -1,5 +1,5 @@
 CC ?= gcc
-CFLAGS ?= -O2 -std=c99 -Wall -Wextra -Wpedantic
+CFLAGS ?= -O3 -march=native -std=c99 -Wall -Wextra -Wpedantic
 LDFLAGS ?=
 INSTANCE = Kylin-512-q24
 TOOLS_DIR = ../../tools
@@ -56,3 +56,7 @@ kat: KAT_SIG
 clean:
 	$(RM) KAT_SIG test_sig bench_sig
 	$(RM) -r output .stack-usage
+
+bench1: bench_sig_1iter.c $(COMMON_SOURCES)
+	$(CC) $(CFLAGS) -I. -o bench_sig_1iter bench_sig_1iter.c $(COMMON_SOURCES) $(LDFLAGS)
+	./bench_sig_1iter
