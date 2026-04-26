@@ -1,4 +1,4 @@
-\section{Submission Package Checklist and Outstanding TODOs}
+\section{Packaging Checklist and Remaining External Deliverables}
 \label{apx:submission-checklist}
 
 This appendix records the items that are still missing or still need to be reformatted for a complete NGCC submission package.
@@ -8,7 +8,7 @@ This appendix records the items that are still missing or still need to be refor
 \begin{itemize}
     \item A submission-style security-claim table for the selected NGCC 128/256/512-bit families has now been added in \cref{tab:ngcc-parameters}, with a single-key $q=2^{64}$ concrete-security setting aligned with the packaged instances.
     \item The recommended families now use $h\in\{65,68,70\}$ and are tuned with $q=2^{64}$, which supports the call's requirement of at least $2^{64}$ signatures under one key pair in the intended single-key model. The packaged NGCC SIG wrapper explicitly accepts messages up to $2^{60}$ bytes, i.e.\ $2^{63}$ bits.
-    \item A submission-style correctness statement for the packaged instances now appears in \cref{sec:submission-overview}.
+    \item A submission-style correctness statement for the packaged instances now appears in \cref{sec:security-claims}.
     \item The security section now states the current scope of the side-channel, multi-key, and repeated-key claims explicitly: the first-stage software package makes no dedicated side-channel-hardening claim, uses single-key analysis by default, and targets $q=2^{64}$ repeated-key usage for one long-term key pair.
     \item Repository-local benchmark and memory summaries for the three packaged implementations plus the three $q=2^{24}$ additional companion implementations are now generated automatically and included in the repository materials.
     \item \todo{Add optional benchmark data for 32-bit embedded platforms and hardware platforms if these results become available.}
@@ -32,6 +32,7 @@ This appendix records the items that are still missing or still need to be refor
     \item A repository-local \texttt{README} for the implementation package has been added.
     \item The three $q=2^{24}$ companion implementations are now organized as additional (non-primary), reference-only submission artifacts.
     \item Automated package-level benchmark and memory-summary generation is now part of the repository workflow and feeds the tables in \cref{tab:kylin-package-bench,tab:kylin-package-memory}.
+    \item The main document now summarizes the implementation package, test-vector package, and intellectual-property package explicitly in \cref{sec:implementation-codes,sec:test-vectors,sec:ip-statements}.
 \end{itemize}
 
 \subsection{Test Vectors}

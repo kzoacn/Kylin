@@ -1,0 +1,27 @@
+\section{Test Vectors}
+\label{sec:test-vectors}
+
+The submission package includes known-answer test vectors for all three primary digital-signature instances submitted to NGCC. These vectors are intended to verify correctness and interoperability of the packaged implementations.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Published Kylin known-answer test coverage for the primary submission set.}
+    \label{tab:kat-coverage}
+    \begin{tabular}{l c c}
+    \toprule
+    Instance & Functionality & Published vector status \\ \midrule
+    Kylin-128 & Digital signature & Included \\
+    Kylin-256 & Digital signature & Included \\
+    Kylin-512 & Digital signature & Included \\
+    \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Generation and Coverage}
+
+\begin{itemize}
+    \item The published vectors follow the NGCC digital-signature KAT naming convention and cover each of the three primary submitted instances.
+    \item They are generated with the ICCS KAT driver and deterministic random-generator interface required by the call.
+    \item The reference implementation package includes automated support for regenerating the published vectors, which keeps the implementation tree and the distributed vector set synchronized.
+    \item The companion $q=2^{24}$ implementations can also regenerate vectors through the same workflow if supplementary vectors are requested, but the primary published KAT set is limited to the three submitted NGCC instances.
+\end{itemize}

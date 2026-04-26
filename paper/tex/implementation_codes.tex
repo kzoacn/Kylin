@@ -1,0 +1,36 @@
+\section{Implementation Codes}
+\label{sec:implementation-codes}
+
+This section summarizes the implementation material included in the Kylin submission package and its alignment with the NGCC implementation requirements for digital signatures.
+
+\subsection{Included Implementations}
+
+\begin{table}[htbp]
+    \centering
+    \caption{Implementation coverage in the current Kylin submission package.}
+    \label{tab:implementation-coverage}
+    \begin{tabular}{l c c p{0.30\linewidth}}
+    \toprule
+    Instance & Reference & Optimized & Role in package \\ \midrule
+    Kylin-128 & Yes & Yes & Primary submitted instance \\
+    Kylin-256 & Yes & Yes & Primary submitted instance \\
+    Kylin-512 & Yes & Yes & Primary submitted instance \\
+    Kylin-128-q24 & Yes & No & Additional reference-only companion instance \\
+    Kylin-256-q24 & Yes & No & Additional reference-only companion instance \\
+    Kylin-512-q24 & Yes & No & Additional reference-only companion instance \\
+    \bottomrule
+    \end{tabular}
+\end{table}
+
+The primary submission package therefore contains both a portable reference implementation and an optimized 64-bit PC implementation for each submitted NGCC instance. The companion $q=2^{24}$ profiles are retained only as additional reference implementations for comparative and supplementary evaluation.
+
+\subsection{Implementation Conformance Summary}
+
+\begin{itemize}
+    \item The reference implementation is written as portable ISO C code and follows the ICCS digital-signature API profile.
+    \item The optimized implementation targets mainstream 64-bit PC processors while preserving the same external behavior and submission-facing interface.
+    \item All packaged implementations expose the required signature functionality: key generation, signature generation, and signature verification.
+    \item The packaged code routes hash and XOF calls through the ICCS auxiliary interfaces, using \texttt{sm3hash}, \texttt{pseudohash}, and \texttt{pseudoXOF} through domain-separated wrappers.
+    \item KAT-mode randomness is taken from the ICCS deterministic random-generator interface, matching the submission requirements for reproducible test-vector generation.
+    \item Automated build scripts and per-instance documentation are included with the implementation package so that the submitted instances can be rebuilt, tested, and used to regenerate the published vectors.
+\end{itemize}

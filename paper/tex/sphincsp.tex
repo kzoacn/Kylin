@@ -1,5 +1,5 @@
  
-\section{Notation}
+\section{Notation and Supporting Definitions}
 \label{sec:notation}
 
 
@@ -611,7 +611,7 @@ The method \texttt{fors\_pkFromSig} takes a $ k\log t$-bit string $M$, a FORS si
     \label{alg:forspkfromsig}
 \end{algorithm}
 
-\section{\SPHINCSA}
+\section{The Full Kylin Signature Scheme}
 \label{sec:spx-core}
 We now have all ingredients to describe our main construction \SPHINCSA. Essentially, \SPHINCSA\ follows the fundamental structure of \SPHINCSA\ with the only difference being the one-time signature component.
 
@@ -725,7 +725,7 @@ When computing $\tt{R}$, the PRF takes a $n$-byte string opt which is initialize
     \label{alg:spxvrfy}
 \end{algorithm}
 
-\section{Algorithm Parameters and Instantiations}
+\section{Parameter Sets and Hash/XOF Instantiation}
 \label{sec:instantiations}
 
 This section discusses instantiations for \SPHINCSA. \SPHINCSA\ can be viewed as a signature template. It is a way to build a signature scheme by instantiating the cryptographic function families used. We consider different ways to implement the cryptographic function families as different signature systems. Orthogonal to instantiating the cryptographic function families are parameter sets. Parameter sets assign specific values to the \SPHINCSA\ parameters described below.
@@ -870,12 +870,18 @@ Since one-time signature is extensively used in the \SPHINCSP hypertree structur
 We are able to prove that the encoding scheme in \WOTSCS is size optimal among all encoding scheme over tree structures (even including those not necessarily efficiently computable). Moreover, to the best of our knowledge, no existing DAG-based scheme achieves better performance in terms of signature size, which renders our scheme the size optimal one among all known schemes~\cite{optimalwots}. We are aware that the existence of probabilistic encoding schemes based on rejection sampling~\cite{cryptoeprint:2022/778}, and we consider the techniques thereof as of independent interest, since one can reduce the message length using the proof-of-work-style protocol in~\cite{cryptoeprint:2022/778} and apply our scheme on the shorter digest.
 
 
-\section{Security Claims and Analysis}
+\section{Security Statements and Analyses}
 \label{sec:security-claims}
 
 This section serves as the security-claim section of the submission draft. For the digital-signature functionality specified in \cref{sec:spx-core}, we claim EUF-CMA security under the assumptions and instantiations discussed below. The revised submission draft records the recommended NGCC-aligned families in \cref{tab:ngcc-parameters} and follows the packaged ICCS hash/XOF interface described in \cref{sec:hashfunctions}.
 
 We follow the security analysis framework of \SPHINCSP. As a result, the EUF-CMA security of the signature scheme can be reduced to the security of different properties of the tweakable hash functions. In the analysis model, these primitives are treated as (quantum) random oracles, so the stated bounds are interpreted against generic attacks.
+
+\paragraph{Correctness and failure probability.}
+
+\SPHINCSA\ is a stateless hash-based signature scheme. Under honest execution, the signing and verification algorithms are deterministic once the per-signature randomness is fixed, and the design does not introduce a decryption- or decapsulation-style failure event. In that sense, there is no intrinsic non-negligible correctness failure probability parameter analogous to code-based or lattice-based decapsulation failure.
+
+Accordingly, for every supported instance, every key pair output by the packaged key-generation algorithm, and every message of length at most $2^{63}$ bits, verification under the matching public key accepts every signature produced by the matching signing algorithm except in the event of implementation faults or a failure of the underlying cryptographic assumptions. The current package therefore treats correctness as a deterministic algorithmic property of the implementation, with no separate decryption-style failure term to report.
 
 In particular, the EUF-CMA security of the signature scheme relies on the following security properties of the underlying components:
 
@@ -987,7 +993,7 @@ The automated package measurements in \cref{tab:kylin-package-bench,tab:kylin-pa
 \paragraph{Transmission and storage overhead.}
 The public-key, secret-key, and signature sizes for the submitted Kylin instances are included directly in \cref{tab:kylin-package-bench}. These values also serve as the primary transmission and storage overhead figures for the current draft.
 
-\section{Feature Statement}
+\section{Feature Statements}
 \label{sec:feature-statement}
 
 This section summarizes the main characteristics of \SPHINCSA\ in the categories requested by the call.

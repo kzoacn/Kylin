@@ -507,3 +507,20 @@
 - 验证：
   - 编译验证：`latexmk -pdf -shell-escape -interaction=nonstopmode -halt-on-error main.tex` 通过，并刷新仓库根目录 `main.pdf`。
   - 成品抽查：PDF 文本中原先异常位置现已正确显示为 `len`，例如 “`CS-WOTS+ uses the parameters n, w and len`” 与 “`the values m and len are computed`”。
+
+### 2026-04-26 - Reorganize Paper Chapters Around NGCC Submission Requirements (Done)
+
+- 按 `docs/Submission Requirements for Public-Key Cryptographic Algorithms.md` 的提交包结构重排主文档章节：
+  - 将文稿前部改为 `Submission Package Overview` 与 `Basic Information` 两节；
+  - 明确说明 Sections `3--14` 共同构成算法规格部分；
+  - 在正文新增 `Implementation Codes`、`Test Vectors`、`Intellectual Property Statements` 三节，使主文档顺序与 NGCC 要求一致。
+- 具体文稿调整：
+  - `paper/tex/submission_overview.tex` 重写为提交包映射总览 + 基本信息结构，并保留冻结的三组主参数表；
+  - `paper/tex/intro.tex`、`paper/tex/construction.tex`、`paper/tex/sphincsp.tex` 的章节标题按“算法描述/设计差异/安全/性能/特性声明”口径重命名；
+  - `paper/tex/sphincsp.tex` 将 correctness/failure-probability 说明并入 `Security Statements and Analyses`；
+  - 新增 `paper/tex/implementation_codes.tex`、`paper/tex/test_vectors.tex`、`paper/tex/intellectual_property.tex` 三个正文文件；
+  - `main.tex` 更新主文档引入顺序；
+  - `paper/tex/submission_checklist.tex` 改名为面向外部交付的附录清单，并同步更新相关交叉引用。
+- 验证：
+  - 编译验证：`latexmk -pdf -shell-escape -interaction=nonstopmode -halt-on-error main.tex` 通过，并刷新仓库根目录 `main.pdf`。
+  - 目录抽查：成品 TOC 现已按 `Overview -> Basic Information -> Algorithm Description/Design/Security/Performance/Features -> Implementation Codes -> Test Vectors -> Intellectual Property Statements -> Appendices` 的顺序展开。
