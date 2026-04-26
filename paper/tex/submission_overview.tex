@@ -43,11 +43,11 @@ For the actual NGCC submission package, this revised draft uses a frozen three-f
     \caption{Frozen NGCC-aligned Kylin parameter families used by the packaged implementations ($q=2^{64}$ rows from \texttt{paper/data/para\_kylin\_final\_6profiles.csv}).}
     \label{tab:ngcc-parameters}
     \scriptsize
-    \begin{tabular}{l c c c c c c c c c c c c c}
+    \begin{tabular}{l c c c c c c c c c c c c}
     \toprule
-    Family & NGCC lvl & $n$ & $h$ & $d$ & $\log t$ & $k$ & $w$ & $l$ & bitsec & q-bitsec & pk & sk & sig \\ \midrule
-    \csvreader[head to column names]{paper/data/para_ngcc_table.csv}{}%
-    { \name & \ngccclassical/\ngccquantum & \n & \h & \d & \a & \k & \w & \len & \classical & \quantum & \pk & \sk & \sig \\ }
+    Family & NGCC lvl & $n$ & $h$ & $d$ & $\log t$ & $k$ & $w$ & $l$ & bitsec & pk & sk & sig \\ \midrule
+    \csvreader[head to column names]{paper/data/para_ngcc_table_rounded.csv}{}%
+    { \name & \ngccclassical/\ngccquantum & \n & \h & \d & \a & \k & \w & \len & \bitsec & \pk & \sk & \sig \\ }
     \vspace{-0.8em} \\ \bottomrule
     \end{tabular}
 \end{table}
@@ -57,7 +57,7 @@ The corresponding rough sign-time hash-call estimates are approximately $2.44 \t
 The selected families were chosen for the following reasons:
 
 \begin{itemize}
-    \item The rows satisfy the finalized security targets with computed bit security approximately $127.2$, $255.9$, and $511.4$ for the three packaged NGCC instances.
+    \item The rows satisfy the finalized security targets with rounded classical bit-security values $127$, $256$, and $511$ for the three packaged NGCC instances.
     \item The selected hypertree heights $h\in\{65,68,70\}$ all exceed the call's minimum $2^{64}$-message requirement under the single-key usage model.
     \item The parameter tuples were fixed after constrained search with explicit checks against signature size and sign/verify hash-call constraints, and then frozen for implementation consistency.
     \item The concrete-security table and packaged parameter search consistently use the single-key $q=2^{64}$ tuning that matches the package's repeated-key usage target.

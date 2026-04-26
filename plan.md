@@ -218,6 +218,13 @@
   - `python3 paper/code/search_ngcc_params.py --print-baselines`
   - `python3 paper/code/search_ngcc_params.py --write-baseline-csv paper/data/para_baselines.csv`
 
+### 2026-04-26 - Table 2/3 NGCC Draft Formatting Update (Done)
+
+- 按提交口径更新 `Table 2`：移除 `q-bitsec` 展示列，`bitsec` 改为整数显示（`127/256/511`），并新增 `paper/data/para_ngcc_table_rounded.csv` 作为定稿表格数据源。
+- 按提交口径重写 `Table 3`：取消与 `SPHINCS+` 的并列对比，仅展示 `Kylin-128/256/512` 三行指标；时间列统一改为 `Hashcall` 代理计数。
+- 基于冻结参数补齐 `KeyGen Hashcall`，并整理为 `paper/data/kylin_hashcall_metrics.csv`；同时修复 `csvsimple` 下划线列名导致的 LaTeX 编译错误（列名改为无下划线）。
+- 完成 `main.tex` 全量编译并通过，输出 PDF 已更新，表 2/表 3 显示符合当前提交需求。
+
 ### 2026-04-25 - Baseline `None` Inference and Bit-Security Verification (Done)
 
 - 对 `paper/code/search_ngcc_params.py` 中四条 baseline 进行了可确定字段推理：`h'`, `log_t/a`, `w/lgw`, `l`, `m`, `sec_level/category`（含映射与公式推导）。

@@ -2,14 +2,13 @@
 
 \begin{table*}[ht]
     \centering
-    \caption{Comparison between \SPHINCSP\ small parameter sets and the selected packaged Kylin families. Signing and verification are reported in hash-call proxies; signature size is in bytes.}
+    \caption{Hash-call and size metrics for the three packaged Kylin families. Key generation, signing, and verification are reported in hash-call proxies; key and signature sizes are in bytes.}
     \label{tab:comp tiny}
-    \begin{tabular}{c rrrr rrrr rrrr}%
+    \begin{tabular}{l r r r r r r}%
     \toprule
-       & \multicolumn{4}{c}{\SPHINCSP}  & \multicolumn{4}{c}{\SPHINCSA}  &\multicolumn{4}{c}{Relative Change} \\ %\cmidrule{2-5} \cmidrule{6-9} \cmidrule{10-13} 
-      Param. &  KeyGen & Sign (Hashcall) & Verify (Hashcall) & Size &  KeyGen & Sign (Hashcall) & Verify (Hashcall) & Size &  KeyGen & Sign & Verify & Size\\ \midrule
-      128s & $-$ & $2047872$ & $7369$ & $6880$ & $-$ & $2442880$ & $7357$ & $6688$ & $-$ & $19.29\%$ & $-0.16\%$ & $-2.79\%$ \\
-      256s & $-$ & $2713408$ & $18418$ & $27232$ & $-$ & $3223168$ & $12577$ & $26784$ & $-$ & $18.79\%$ & $-31.71\%$ & $-1.65\%$ \\
+      Instance & KeyGen (Hashcall) & Sign (Hashcall) & Verify (Hashcall) & Pk & Sk & Sig \\ \midrule
+      \csvreader[head to column names]{paper/data/kylin_hashcall_metrics.csv}{}%
+      { \name & \keygenhashcalls & \signhashcalls & \verifyhashcalls & \pk & \sk & \sig \\ }
      \vspace{-1em} \\ \bottomrule
     \end{tabular}
 \end{table*}
@@ -17,15 +16,14 @@
 \else
 \begin{table}[th]
     \centering
-    \caption{Comparison between \SPHINCSP\ small parameter sets and the selected packaged Kylin families. Signing and verification are reported in hash-call proxies; signature size is in bytes.}
+    \caption{Hash-call and size metrics for the three packaged Kylin families. Key generation, signing, and verification are reported in hash-call proxies; key and signature sizes are in bytes.}
     \label{tab:comp tiny}
     \resizebox{\columnwidth}{!}{%
-    \begin{tabular}{c rrrr rrrr rrrr}%
+    \begin{tabular}{l r r r r r r}%
     \toprule
-       & \multicolumn{4}{c}{\SPHINCSP}  & \multicolumn{4}{c}{\SPHINCSA}  &\multicolumn{4}{c}{Relative Change} \\ %\cmidrule{2-5} \cmidrule{6-9} \cmidrule{10-13} 
-      Param. &  KeyGen & Sign (Hashcall) & Verify (Hashcall) & Size &  KeyGen & Sign (Hashcall) & Verify (Hashcall) & Size &  KeyGen & Sign & Verify & Size\\ \midrule
-      128s & $-$ & $2047872$ & $7369$ & $6880$ & $-$ & $2442880$ & $7357$ & $6688$ & $-$ & $19.29\%$ & $-0.16\%$ & $-2.79\%$ \\
-      256s & $-$ & $2713408$ & $18418$ & $27232$ & $-$ & $3223168$ & $12577$ & $26784$ & $-$ & $18.79\%$ & $-31.71\%$ & $-1.65\%$ \\
+      Instance & KeyGen (Hashcall) & Sign (Hashcall) & Verify (Hashcall) & Pk & Sk & Sig \\ \midrule
+      \csvreader[head to column names]{paper/data/kylin_hashcall_metrics.csv}{}%
+      { \name & \keygenhashcalls & \signhashcalls & \verifyhashcalls & \pk & \sk & \sig \\ }
      \vspace{-1em} \\ \bottomrule
     \end{tabular}%
     }
