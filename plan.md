@@ -242,7 +242,7 @@
 
 ### 2026-04-26 - NGCC Hash-Instantiation Rewrite + q=2^24 Appendix (Done)
 
-- 统一修复 `\len` 显示口径：宏定义改为稳定形式，并在 `paper/tex/sphincsp.tex` 内将 `\tt len` / 裸 `len` 的混用统一为 `\len`，避免章节内显示风格不一致。
+- 统一修复 `\len` 显示口径：宏定义改为稳定形式，并在 `paper/tex/kylin.tex` 内将 `\tt len` / 裸 `len` 的混用统一为 `\len`，避免章节内显示风格不一致。
 - 重写 `9.2 Instantiations of Hash Functions`：从旧的 `SHA2/SHAKE` 叙述切换到 NGCC/ICCS 代码口径，明确使用 `sm3hash`、`pseudohash`、`pseudoXOF`，并给出基于 `pseudoXOF` 的域分离映射描述。
 - 大幅改写 `11 Security Claims and Analysis` 的实例化部分：移除 `SHA2/SHA3/SHAKE` 专门论述，改为 ICCS 辅助函数实现口径与现有 generic-analysis 表述。
 - 删除 `12 Performance Evaluation` 中 `Additional platforms` 的 TODO 段落。
@@ -358,7 +358,7 @@
 - 为支持非等高 `h_vec`，修复签名/验签层间索引推进逻辑：`kylin_sign.c` 中从第 `i` 层推进到第 `i+1` 层时，改为按 `h_{i+1}` 取位并右移（避免沿用等高假设）。
 - 文档与数据已对齐新定版参数：
   - `paper/data/para_ngcc.csv` 改为冻结的 `Kylin-128/256/512` 参数行。
-  - `paper/tex/abstract.tex`、`paper/tex/submission_overview.tex`、`paper/tex/submission_checklist.tex`、`paper/tex/sphincsp.tex`、`paper/tex/sphincsp-appendix.tex` 已移除旧的统一 `(70,10,14,64)` 叙述并更新为定版口径。
+  - `paper/tex/abstract.tex`、`paper/tex/submission_overview.tex`、`paper/tex/submission_checklist.tex`、`paper/tex/kylin.tex`、`paper/tex/kylin-appendix.tex` 已移除旧的统一 `(70,10,14,64)` 叙述并更新为定版口径。
   - `Implementations/README` 补充当前冻结实现参数。
 - `paper/code/search_ngcc_params.py` 默认行为已更新：在 `q=2^64` 且未显式给 `--shape` 时，直接输出冻结打包参数，避免 `make` 流程将 `para_ngcc.csv` 回滚到旧值。
 - 快速验证：
@@ -462,7 +462,7 @@
   - `main.tex` 移除空章节输入：`paper/tex/preliminary`、`paper/tex/revisit`、`paper/tex/results`（三个文件保留但不再纳入主文稿）。
   - `paper/tex/submission_overview.tex` 删除 `2^80` 相关 TODO，改为明确单钥 `q=2^64` 的一致口径。
   - `paper/tex/submission_checklist.tex` 删除 `2^80` 相关 TODO，改为“安全表已按 `q=2^64` 对齐”的完成态描述。
-  - `paper/tex/sphincsp.tex` 的 repeated-key 条目删除 `q <= 2^80` 扩展解释，仅保留 `q=2^64` 目标声明。
+  - `paper/tex/kylin.tex` 的 repeated-key 条目删除 `q <= 2^80` 扩展解释，仅保留 `q=2^64` 目标声明。
 - 验证：
   - 关键词复扫：`paper/tex` 与 `main.tex` 中已无 `2^80` / `q<=2^80` 表述。
   - 编译验证：`latexmk -pdf -shell-escape -interaction=nonstopmode -halt-on-error -outdir=/tmp/kylin-draftcheck main.tex` 通过，输出 `/tmp/kylin-draftcheck/main.pdf`。
@@ -470,7 +470,7 @@
 ### 2026-04-26 - Draft Cleanup: Replace Remaining `spa_*` Markers with `kylin_*` (Done)
 
 - 清理文稿中残留的旧算法入口记号：
-  - `paper/tex/sphincsp.tex` 中三处 `\inputminted` 已从 `paper/code/spa_*.cs` 改为 `paper/code/kylin_*.cs`。
+  - `paper/tex/kylin.tex` 中三处 `\inputminted` 已从 `paper/code/spa_*.cs` 改为 `paper/code/kylin_*.cs`。
   - 文中展示的 keygen/sign/verify 伪代码入口统一为 `kylin_keygen`、`kylin_sign`、`kylin_verify`。
 - 同步整理代码示例文件名：
   - `paper/code/spa_keygen.cs -> paper/code/kylin_keygen.cs`
@@ -488,7 +488,7 @@
   - `paper/tex/construction.tex` 在 `3 Kylin vs. SPHINCS+` 开头补充一句，明确除了 `\WOTSCS` 编码优化外，还采用了更灵活的 hypertree 分层。
   - 将 `Diverse Layer Heights in the Hypertree` 提前为 `3.1`，原 `The WOTS+ Encoding` 顺延为 `3.2`。
 - 收紧论文中的仓库材料引用口径：
-  - `paper/tex/abstract.tex`、`paper/tex/submission_overview.tex`、`paper/tex/submission_checklist.tex`、`paper/tex/sphincsp-appendix.tex` 中移除正文里直接显示的 `.csv`、`.py`、`.txt`、`.zip` 路径/文件名，改为自然语言描述。
+  - `paper/tex/abstract.tex`、`paper/tex/submission_overview.tex`、`paper/tex/submission_checklist.tex`、`paper/tex/kylin-appendix.tex` 中移除正文里直接显示的 `.csv`、`.py`、`.txt`、`.zip` 路径/文件名，改为自然语言描述。
   - 保留 LaTeX 内部 `\csvreader` / `\inputminted` 输入路径，不影响排版生成。
 - 验证：
   - 编译验证：`latexmk -pdf -shell-escape -interaction=nonstopmode -halt-on-error -outdir=/tmp/kylin-doc-polish main.tex` 通过，输出 `/tmp/kylin-doc-polish/main.pdf`。
@@ -502,7 +502,7 @@
 - 修复方式：
   - 将论文正文里的长度宏从 `\len` 统一重命名为 `\wotslen`；
   - `paper/tex/defs.tex` 改为 `\newcommand{\wotslen}{\ensuremath{\mathtt{len}}\xspace}`；
-  - `paper/tex/sphincsp.tex` 中所有正文/公式/复杂度表达里的 `\len` 均同步替换为 `\wotslen`；
+  - `paper/tex/kylin.tex` 中所有正文/公式/复杂度表达里的 `\len` 均同步替换为 `\wotslen`；
   - 保留 `submission_overview.tex` 表格行模板中的 `\len`，该处继续作为 CSV 列值宏使用。
 - 验证：
   - 编译验证：`latexmk -pdf -shell-escape -interaction=nonstopmode -halt-on-error main.tex` 通过，并刷新仓库根目录 `main.pdf`。
@@ -516,11 +516,24 @@
   - 在正文新增 `Implementation Codes`、`Test Vectors`、`Intellectual Property Statements` 三节，使主文档顺序与 NGCC 要求一致。
 - 具体文稿调整：
   - `paper/tex/submission_overview.tex` 重写为提交包映射总览 + 基本信息结构，并保留冻结的三组主参数表；
-  - `paper/tex/intro.tex`、`paper/tex/construction.tex`、`paper/tex/sphincsp.tex` 的章节标题按“算法描述/设计差异/安全/性能/特性声明”口径重命名；
-  - `paper/tex/sphincsp.tex` 将 correctness/failure-probability 说明并入 `Security Statements and Analyses`；
+  - `paper/tex/intro.tex`、`paper/tex/construction.tex`、`paper/tex/kylin.tex` 的章节标题按“算法描述/设计差异/安全/性能/特性声明”口径重命名；
+  - `paper/tex/kylin.tex` 将 correctness/failure-probability 说明并入 `Security Statements and Analyses`；
   - 新增 `paper/tex/implementation_codes.tex`、`paper/tex/test_vectors.tex`、`paper/tex/intellectual_property.tex` 三个正文文件；
   - `main.tex` 更新主文档引入顺序；
   - `paper/tex/submission_checklist.tex` 改名为面向外部交付的附录清单，并同步更新相关交叉引用。
 - 验证：
   - 编译验证：`latexmk -pdf -shell-escape -interaction=nonstopmode -halt-on-error main.tex` 通过，并刷新仓库根目录 `main.pdf`。
   - 目录抽查：成品 TOC 现已按 `Overview -> Basic Information -> Algorithm Description/Design/Security/Performance/Features -> Implementation Codes -> Test Vectors -> Intellectual Property Statements -> Appendices` 的顺序展开。
+
+### 2026-04-26 - Rename Remaining Legacy `sphincsp*.tex` Filenames to `kylin*` (Done)
+
+- 清理论文源码中的遗留文件命名：
+  - 论文主体 `.tex` 文件已统一改为 `kylin` 命名。
+  - 论文附录 `.tex` 文件已统一改为 `kylin-appendix` 命名。
+  - 相关 benchmark figure 的 `.tex` 文件也已同步改为 `kylin` 命名。
+- 同步更新入口与记录：
+  - `main.tex` 的 `\input{...}` 已改为新的 `kylin` / `kylin-appendix` 路径。
+  - `plan.md` 中此前记录到的旧路径已一并改成新的 Kylin 命名，避免仓库继续保留旧的论文文件命名。
+- 验证：
+  - 关键词复扫：仓库受管文件中已不再出现旧的 `sphincsp*.tex` 论文文件路径。
+  - 编译验证：`latexmk -pdf -shell-escape -interaction=nonstopmode -halt-on-error main.tex` 通过，并刷新仓库根目录 `main.pdf`。
