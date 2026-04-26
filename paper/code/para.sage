@@ -235,7 +235,7 @@ def verify_frozen_parameters(rows: list[dict[str, int | float | str]]) -> None:
     expected: dict[str, tuple[int, int, tuple[int, ...], int, int, int, int]] = {
         "Kylin-128": (65, 9, (7, 7, 7, 7, 7, 7, 7, 8, 8), 13, 11, 73, 22),
         "Kylin-256": (68, 10, (6, 6, 7, 7, 7, 7, 7, 7, 7, 7), 13, 22, 54, 46),
-        "Kylin-512": (70, 4, (17, 17, 18, 18), 20, 27, 64, 87),
+        "Kylin-512": (66, 11, (6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6), 13, 49, 97, 79),
     }
     for row in rows:
         name = str(row["name"])

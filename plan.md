@@ -98,6 +98,22 @@
 
 ## 5. 进度日志
 
+### 2026-04-26 - Kylin-512 Re-selection under `sign_hashcalls < 6.4e6` (Done)
+
+- 按新约束重新筛选主提交 `Kylin-512`：目标改为在 `sign_hashcalls < 6,400,000` 前提下最小化 `sig`。
+- 更新搜索脚本口径：
+  - `paper/code/search_kylin_six_profiles.py` 对 `Kylin-512` 放宽到 `w <= 128` 并按 `sign_hashcalls` 上限选点；
+  - `paper/code/search_ngcc_params.py` 同步放宽 `W_CHOICES`，并将冻结 `Kylin-512` 主配置改写为新参数。
+- 新冻结参数定为：
+  - `Kylin-512`: `q=2^64, n=64, h=66, d=11, h_vec=[6,6,6,6,6,6,6,6,6,6,6], a=13, k=49, w=97, len=79`
+- 对应指标：
+  - `sig = 103808`
+  - `sign_hashcalls = 6198272`
+  - `verify_hashcalls = 42476`
+  - `bitsec = 511.243016`
+- 代码与文档同步范围：冻结 CSV、主/优实现 `params.h`、README/摘要等硬编码参数说明。
+- 验证与产物同步：`Reference_Implementation/Kylin-512` 与 `Optimized_Implementation/Kylin-512` 的 `make test` 通过，新的 `Test_Vectors/KAT_SIG_Kylin-512.txt` 已生成并同步，`package_bench/package_memory/benchmarks summary` 已改写为新参数结果。
+
 ### 2026-04-24 - Plan Reset: NGCC Submission Focus
 
 - 将计划主线切换为“完善 NGCC 提交”，不再使用历史整理导向结构。

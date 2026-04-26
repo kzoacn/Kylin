@@ -6,12 +6,12 @@
 #define SPX_NAMESPACE(s) SPX_##s
 
 #define SPX_N 64
-#define SPX_FULL_HEIGHT 70
-#define SPX_D 4
-#define SPX_FORS_HEIGHT 20
-#define SPX_FORS_TREES 27
-#define SPX_WOTS_W 64
-#define SPX_WOTS_LEN 87
+#define SPX_FULL_HEIGHT 66
+#define SPX_D 11
+#define SPX_FORS_HEIGHT 13
+#define SPX_FORS_TREES 49
+#define SPX_WOTS_W 97
+#define SPX_WOTS_LEN 79
 
 #define SPX_ADDR_BYTES 32
 
@@ -19,20 +19,30 @@
 #define SPX_WOTS_PK_BYTES SPX_WOTS_BYTES
 #define SPX_WOTS_SUM (SPX_WOTS_LEN * (SPX_WOTS_W - 1) / 2)
 
-#if SPX_D != 4
-#error This implementation currently requires explicit per-layer heights for SPX_D == 4
+#if SPX_D != 11
+#error This implementation currently requires explicit per-layer heights for SPX_D == 11
 #endif
 
-#define SPX_TREE_HEIGHT_0 17
-#define SPX_TREE_HEIGHT_1 17
-#define SPX_TREE_HEIGHT_2 18
-#define SPX_TREE_HEIGHT_3 18
+#define SPX_TREE_HEIGHT_0 6
+#define SPX_TREE_HEIGHT_1 6
+#define SPX_TREE_HEIGHT_2 6
+#define SPX_TREE_HEIGHT_3 6
+#define SPX_TREE_HEIGHT_4 6
+#define SPX_TREE_HEIGHT_5 6
+#define SPX_TREE_HEIGHT_6 6
+#define SPX_TREE_HEIGHT_7 6
+#define SPX_TREE_HEIGHT_8 6
+#define SPX_TREE_HEIGHT_9 6
+#define SPX_TREE_HEIGHT_10 6
 
 #define SPX_BOTTOM_TREE_HEIGHT SPX_TREE_HEIGHT_0
-#define SPX_TOP_TREE_HEIGHT SPX_TREE_HEIGHT_3
+#define SPX_TOP_TREE_HEIGHT SPX_TREE_HEIGHT_10
 
 #define SPX_LAYER_HEIGHT_SUM \
-    (SPX_TREE_HEIGHT_0 + SPX_TREE_HEIGHT_1 + SPX_TREE_HEIGHT_2 + SPX_TREE_HEIGHT_3)
+    (SPX_TREE_HEIGHT_0 + SPX_TREE_HEIGHT_1 + SPX_TREE_HEIGHT_2 + \
+     SPX_TREE_HEIGHT_3 + SPX_TREE_HEIGHT_4 + SPX_TREE_HEIGHT_5 + \
+     SPX_TREE_HEIGHT_6 + SPX_TREE_HEIGHT_7 + SPX_TREE_HEIGHT_8 + \
+     SPX_TREE_HEIGHT_9 + SPX_TREE_HEIGHT_10)
 
 #if SPX_LAYER_HEIGHT_SUM != SPX_FULL_HEIGHT
 #error Sum of per-layer heights must equal SPX_FULL_HEIGHT
@@ -63,7 +73,10 @@
 static inline uint32_t spx_tree_height(uint32_t layer)
 {
     static const uint8_t heights[SPX_D] = {
-        SPX_TREE_HEIGHT_0, SPX_TREE_HEIGHT_1, SPX_TREE_HEIGHT_2, SPX_TREE_HEIGHT_3
+        SPX_TREE_HEIGHT_0, SPX_TREE_HEIGHT_1, SPX_TREE_HEIGHT_2,
+        SPX_TREE_HEIGHT_3, SPX_TREE_HEIGHT_4, SPX_TREE_HEIGHT_5,
+        SPX_TREE_HEIGHT_6, SPX_TREE_HEIGHT_7, SPX_TREE_HEIGHT_8,
+        SPX_TREE_HEIGHT_9, SPX_TREE_HEIGHT_10
     };
 
     return heights[layer];

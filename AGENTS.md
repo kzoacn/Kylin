@@ -11,7 +11,7 @@
 - Frozen parameter set (do not retune unless explicitly requested):
   - `Kylin-128`: `q=2^64, n=16, h=65, d=9, h_vec=[7,7,7,7,7,7,7,8,8], a=13, k=11, w=73, len=22`
   - `Kylin-256`: `q=2^64, n=32, h=68, d=10, h_vec=[6,6,7,7,7,7,7,7,7,7], a=13, k=22, w=54, len=46`
-  - `Kylin-512`: `q=2^64, n=64, h=70, d=4, h_vec=[17,17,18,18], a=20, k=27, w=64, len=87`
+  - `Kylin-512`: `q=2^64, n=64, h=66, d=11, h_vec=[6,6,6,6,6,6,6,6,6,6,6], a=13, k=49, w=97, len=79`
   - `Kylin-128-q24`: `q=2^24, n=16, h=22, d=1, h_vec=[22], a=24, k=6, w=4, len=67`
   - `Kylin-256-q24`: `q=2^24, n=32, h=21, d=1, h_vec=[21], a=25, k=12, w=4, len=131`
   - `Kylin-512-q24`: `q=2^24, n=64, h=57, d=3, h_vec=[19,19,19], a=20, k=24, w=64, len=87`

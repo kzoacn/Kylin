@@ -30,7 +30,7 @@ mp.mp.dps = 80
 
 DEFAULT_Q_SIGS = 2**64
 Q_SIGS = DEFAULT_Q_SIGS
-W_CHOICES = tuple(range(8, 88))
+W_CHOICES = tuple(range(8, 129))
 H_CHOICES = tuple(range(60, 71))
 A_CHOICES = tuple(range(8, 31))
 
@@ -165,13 +165,13 @@ FROZEN_Q64_PROFILES: dict[str, dict[str, int | tuple[int, ...]]] = {
         "length": 46,
     },
     "Kylin-512": {
-        "h": 70,
-        "d": 4,
-        "h_vec": (17, 17, 18, 18),
-        "a": 20,
-        "k": 27,
-        "w": 64,
-        "length": 87,
+        "h": 66,
+        "d": 11,
+        "h_vec": (6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6),
+        "a": 13,
+        "k": 49,
+        "w": 97,
+        "length": 79,
     },
 }
 

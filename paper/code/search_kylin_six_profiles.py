@@ -58,6 +58,7 @@ class Scenario:
     require_improvement: bool
     baseline_name: str | None
     make_plot: bool
+    sign_hashcall_cap: int | None = None
 
 
 @dataclass(frozen=True)
@@ -233,8 +234,8 @@ class ScenarioSearcher:
         return None
 
     def _w_values(self) -> list[int]:
-        if self.scenario.require_improvement:
-            # For baseline-constrained scenarios, keep full coverage.
+        if self.scenario.require_improvement or self.scenario.sign_hashcall_cap is not None:
+            # For baseline-constrained or cap-constrained scenarios, keep full coverage.
             return list(range(self.rng.w_min, self.rng.w_max + 1))
         out: list[int] = []
         for w in range(self.rng.w_min, self.rng.w_max + 1):
@@ -439,6 +440,7 @@ def main() -> None:
             require_improvement=True,
             baseline_name="sphincs-a-128s",
             make_plot=True,
+            sign_hashcall_cap=None,
         ),
         Scenario(
             name="Kylin-256",
@@ -458,25 +460,27 @@ def main() -> None:
             require_improvement=True,
             baseline_name="sphincs-a-256s",
             make_plot=True,
+            sign_hashcall_cap=None,
         ),
         Scenario(
             name="Kylin-512",
             q_sigs=2**64,
             n=64,
             target_bits=511.0,
-            h_min=56,
+            h_min=54,
             h_max=72,
             d_min=4,
             d_max=12,
             a_min=10,
             a_max=20,
             w_min=8,
-            w_max=64,
+            w_max=128,
             k_min=8,
             k_max=300,
             require_improvement=False,
             baseline_name=None,
             make_plot=False,
+            sign_hashcall_cap=6_400_000,
         ),
         Scenario(
             name="Kylin-128-q24",
@@ -496,6 +500,7 @@ def main() -> None:
             require_improvement=True,
             baseline_name="SLH-DSA-SHAKE-128-24",
             make_plot=True,
+            sign_hashcall_cap=None,
         ),
         Scenario(
             name="Kylin-256-q24",
@@ -515,6 +520,7 @@ def main() -> None:
             require_improvement=True,
             baseline_name="SLH-DSA-SHAKE-256-24",
             make_plot=True,
+            sign_hashcall_cap=None,
         ),
         Scenario(
             name="Kylin-512-q24",
@@ -534,6 +540,7 @@ def main() -> None:
             require_improvement=False,
             baseline_name=None,
             make_plot=False,
+            sign_hashcall_cap=None,
         ),
     ]
 
@@ -617,13 +624,21 @@ def main() -> None:
                 selected = improve_rows[0]
         else:
             improve_rows = []
-            # For 512 profiles: keep h near n and moderate params, then minimize SIG.
-            moderate_rows = [
-                c
-                for c in all_rows
-                if abs(c.h - sc.n) <= 8 and 10 <= c.a <= 20 and 8 <= c.k <= 120 and 8 <= c.w <= 64
-            ]
-            selected = (moderate_rows or all_rows)[0]
+            if sc.sign_hashcall_cap is not None:
+                capped_rows = [c for c in all_rows if c.sign_hashcalls < sc.sign_hashcall_cap]
+                if capped_rows:
+                    selected = capped_rows[0]
+                else:
+                    stage = "primary-no-cap"
+                    selected = all_rows[0]
+            else:
+                # For unconstrained 512 companion profiles: keep h near n and moderate params.
+                moderate_rows = [
+                    c
+                    for c in all_rows
+                    if abs(c.h - sc.n) <= 8 and 10 <= c.a <= 20 and 8 <= c.k <= 120 and 8 <= c.w <= 64
+                ]
+                selected = (moderate_rows or all_rows)[0]
 
         sig_vals = [c.sig for c in all_rows]
         sign_vals = [c.sign_hashcalls for c in all_rows]
