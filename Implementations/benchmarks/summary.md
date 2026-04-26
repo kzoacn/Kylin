@@ -7,9 +7,9 @@
 
 | Instance | Impl | KeyGen (ms) | Sign (ms) | Verify (ms) | Max frame (bytes) | Max-frame function | .text | .data | .bss |
 | --- | --- | ---: | ---: | ---: | ---: | --- | ---: | ---: | ---: |
-| Kylin-128 | opt | 131.420 | 2308.762 | 5.329 | 896 | `sm3_bit` | 35152 | 688 | 417832 |
-| Kylin-128 | ref | 140.072 | 2425.882 | 5.425 | 880 | `SPX_fors_sign` | 27725 | 688 | 417832 |
-| Kylin-256 | opt | 270.257 | 4166.231 | 10.348 | 2144 | `SPX_merkle_gen_root` | 35240 | 688 | 2609352 |
-| Kylin-256 | ref | 294.484 | 4305.607 | 11.075 | 1904 | `kylin_sign_verify` | 28157 | 688 | 2609352 |
-| Kylin-512 | opt | 1089.656 | 13421.444 | 83.670 | 6048 | `SPX_merkle_gen_root` | 36120 | 688 | 21847912 |
-| Kylin-512 | ref | 1301.560 | 13865.691 | 87.474 | 5648 | `kylin_sign_verify` | 29405 | 688 | 21847912 |
+| Kylin-128 | opt | 74.794 | 589.819 | 4.662 | 2176 | `auxfunc.c:774:6:thash_wots_chain_4x` | 52801 | 648 | 438032 |
+| Kylin-128 | ref | 291.231 | 1809.888 | 5.184 | 704 | `auxfunc.c:50:13:sm3_bit_compress` | 28557 | 688 | 437968 |
+| Kylin-256 | opt | 52.559 | 873.686 | 8.034 | 2176 | `merkle.c:46:6:SPX_merkle_gen_root` | 56252 | 688 | 2293872 |
+| Kylin-256 | ref | 224.785 | 2498.940 | 9.173 | 1904 | `kylin_sign.c:106:5:kylin_sign_verify` | 28981 | 688 | 2293832 |
+| Kylin-512 | opt | 171.275 | 4377.480 | 79.168 | 6048 | `merkle.c:46:6:SPX_merkle_gen_root` | 59836 | 688 | 21847952 |
+| Kylin-512 | ref | 1003.814 | 13993.516 | 87.607 | 5648 | `kylin_sign.c:106:5:kylin_sign_verify` | 30021 | 688 | 21847912 |

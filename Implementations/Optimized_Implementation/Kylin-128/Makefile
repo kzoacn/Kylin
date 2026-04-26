@@ -1,6 +1,7 @@
 CC ?= gcc
 CFLAGS ?= -O3 -march=native -flto -fomit-frame-pointer -funroll-loops -fno-plt -std=c99 -Wall -Wextra -Wpedantic
 LDFLAGS ?= -flto -fno-plt
+STACK_CFLAGS := $(filter-out -flto,$(CFLAGS))
 INSTANCE = Kylin-128
 TOOLS_DIR = ../../tools
 BENCH_SOURCE = $(TOOLS_DIR)/bench_sig.c
@@ -45,7 +46,7 @@ stack_usage:
 	for src in $(COMMON_SOURCES) $(BENCH_SOURCE); do \
 		base=$${src##*/}; \
 		base=$${base%.c}; \
-		$(CC) $(CFLAGS) -I. -fstack-usage -c $$src -o .stack-usage/$$base.o; \
+		$(CC) $(STACK_CFLAGS) -I. -fstack-usage -c $$src -o .stack-usage/$$base.o; \
 	done
 
 kat: KAT_SIG

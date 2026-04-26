@@ -22,10 +22,12 @@ At the design level, Kylin's dominant costs are hash and XOF calls. Key generati
 \end{table}
 
 \paragraph{Benchmark platform.}
-The software implementation is written in ISO C and is compiled with GCC 13.3.0 using the package Makefile defaults \texttt{-O2 -std=c99 -Wall -Wextra -Wpedantic}. The benchmark host is an x86-64 64-bit PC environment: AMD Ryzen 7 7800X3D 8-Core Processor, 8 physical cores and 16 hardware threads, approximately 4.192 GHz as reported by \texttt{/proc/cpuinfo}, 30 GiB RAM, Ubuntu 24.04.3 LTS on Linux 6.6.87.2-microsoft-standard-WSL2. The implementation uses the ICCS auxiliary hash/XOF interfaces \texttt{sm3hash}, \texttt{pseudohash}, and \texttt{pseudoXOF}; no external cryptographic library is required for the reported package benchmarks.
+The software implementation is written in ISO C and is compiled with GCC 13.3.0. The reference implementations keep their default \texttt{-O2} ISO C build with warning checks enabled. The optimized 64-bit PC implementations use per-directory builds centered on \texttt{-O3 -march=native}; \texttt{Kylin-128} additionally enables link-time optimization, omitted frame pointers, loop unrolling, and \texttt{-fno-plt}. The benchmark host is an x86-64 64-bit PC environment: AMD Ryzen 7 7800X3D 8-Core Processor, 8 physical cores and 16 hardware threads, approximately 4.192 GHz as reported by \texttt{/proc/cpuinfo}, 30 GiB RAM, Ubuntu 24.04.3 LTS on Linux 6.6.87.2-microsoft-standard-WSL2. The implementation uses the ICCS auxiliary hash/XOF interfaces \texttt{sm3hash}, \texttt{pseudohash}, and \texttt{pseudoXOF}; no external cryptographic library is required for the reported package benchmarks.
 
 \paragraph{Software performance, transmission, and storage cost.}
-The automated package measurements in \cref{tab:kylin-package-bench} are produced from the current implementation tree by the package benchmark driver. The table reports host-local wall-clock milliseconds on a 32-byte message and includes the public-key, secret-key, and signature sizes in bytes.
+The automated package measurements in \cref{tab:kylin-package-bench} are produced from the current implementation tree by the package benchmark driver. The table reports the median of 9 measured host-local wall-clock timings on a 32-byte message after 3 warm-up iterations, and includes the public-key, secret-key, and signature sizes in bytes. Because these are repository-local wall-clock measurements, the absolute values should be interpreted as host-specific data points rather than cross-platform claims.
+
+In the current rerun, the optimized implementations remain consistently faster than the reference ones. For \texttt{Kylin-128}, \texttt{Kylin-256}, and \texttt{Kylin-512}, the measured signing speedups are approximately $3.07\times$, $2.86\times$, and $3.20\times$, respectively; the key-generation speedups are approximately $3.89\times$, $4.28\times$, and $5.86\times$; and verification improves by roughly 10--12\%.
 
 \begin{table}[H]
     \centering
@@ -40,4 +42,3 @@ The automated package measurements in \cref{tab:kylin-package-bench} are produce
     \vspace{-1em} \\ \bottomrule
     \end{tabular}
 \end{table}
-

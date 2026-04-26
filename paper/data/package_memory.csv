@@ -1,7 +1,7 @@
 name,impl,maxstack,textbytes,databytes,bssbytes,maxstackfn
-Kylin-128,opt,896,35152,688,417832,sm3_bit
-Kylin-128,ref,880,27725,688,417832,SPX_fors_sign
-Kylin-256,opt,2144,35240,688,2609352,SPX_merkle_gen_root
-Kylin-256,ref,1904,28157,688,2609352,kylin_sign_verify
-Kylin-512,opt,6048,36120,688,21847912,SPX_merkle_gen_root
-Kylin-512,ref,5648,29405,688,21847912,kylin_sign_verify
+Kylin-128,opt,2176,52801,648,438032,auxfunc.c:774:6:thash_wots_chain_4x
+Kylin-128,ref,704,28557,688,437968,auxfunc.c:50:13:sm3_bit_compress
+Kylin-256,opt,2176,56252,688,2293872,merkle.c:46:6:SPX_merkle_gen_root
+Kylin-256,ref,1904,28981,688,2293832,kylin_sign.c:106:5:kylin_sign_verify
+Kylin-512,opt,6048,59836,688,21847952,merkle.c:46:6:SPX_merkle_gen_root
+Kylin-512,ref,5648,30021,688,21847912,kylin_sign.c:106:5:kylin_sign_verify

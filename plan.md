@@ -104,6 +104,14 @@
 
 ## 5. 进度日志
 
+### 2026-04-26 - Primary Benchmark Refresh after Optimized Implementation Update (Done)
+
+- 在 `Optimized_Implementation` 更新后，重新执行 `Kylin-128/256/512` 三个主提交优化实现的 `make test`，确认签名/验签流程仍正常。
+- 重新测试六个主提交实例（Ref/Opt）的 package benchmark，刷新 `paper/data/package_bench.csv`，并同步更新英文 `Performance Evaluation` 与中文对应章节中的平台说明、测试方法和加速比结论。
+- 修复 `Implementations/Optimized_Implementation/Kylin-128/Makefile` 的 `stack_usage` 统计路径：在该目标下去掉 `-flto`，避免 `.su` 文件缺失并纠正此前偏低的栈使用结果。
+- 基于同一批次测量刷新 `paper/data/package_memory.csv` 与 `Implementations/benchmarks/summary.md`，使论文数据、仓库指标摘要和内存统计保持一致。
+- 构建验证：`make -C paper/build all` 与 `make -C paper/build zh` 通过；仍保留少量既有的 appendix `hyperref` 提示与局部 overfull box 告警。
+
 ### 2026-04-26 - Chinese Translation Track Initial Build (Done)
 
 - 新增中文入口 `main_zh.tex`，并补齐 `paper/tex-zh/`、`paper/figure-zh/`、`paper/tex/defs_zh.tex` 作为当前英文主文档的完整中文镜像轨道。
