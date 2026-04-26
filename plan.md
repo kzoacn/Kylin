@@ -493,3 +493,17 @@
 - 验证：
   - 编译验证：`latexmk -pdf -shell-escape -interaction=nonstopmode -halt-on-error -outdir=/tmp/kylin-doc-polish main.tex` 通过，输出 `/tmp/kylin-doc-polish/main.pdf`。
   - 成品核对：PDF 文本中已出现 `3.1 Diverse Layer Heights in the Hypertree` 与 `3.2 The WOTS+ Encoding`。
+
+### 2026-04-26 - Draft Polish: Rename `\len` Macro to Avoid CSV Collision (Done)
+
+- 定位到 `\len` 长期渲染异常的根因：
+  - `paper/tex/submission_overview.tex` 使用 `\csvreader[head to column names]` 读取参数表；
+  - CSV 表头中存在 `len` 列，导致 `\len` 被 `csvsimple` 当作列宏占用，后续正文中的 `\len` 发生冲突。
+- 修复方式：
+  - 将论文正文里的长度宏从 `\len` 统一重命名为 `\wotslen`；
+  - `paper/tex/defs.tex` 改为 `\newcommand{\wotslen}{\ensuremath{\mathtt{len}}\xspace}`；
+  - `paper/tex/sphincsp.tex` 中所有正文/公式/复杂度表达里的 `\len` 均同步替换为 `\wotslen`；
+  - 保留 `submission_overview.tex` 表格行模板中的 `\len`，该处继续作为 CSV 列值宏使用。
+- 验证：
+  - 编译验证：`latexmk -pdf -shell-escape -interaction=nonstopmode -halt-on-error main.tex` 通过，并刷新仓库根目录 `main.pdf`。
+  - 成品抽查：PDF 文本中原先异常位置现已正确显示为 `len`，例如 “`CS-WOTS+ uses the parameters n, w and len`” 与 “`the values m and len are computed`”。
