@@ -1,0 +1,27 @@
+% Source mirror: `paper/tex/kylin-appendix.tex`.
+\section{参数评估 Sage 脚本}
+\label{apx:script}
+下面的脚本用于评估满足 $\sum_{i=0}^{d-1} h_i = h$ 的分层超树高度参数候选 $(h_0,\ldots,h_{d-1})$。其中，消息摘要索引拆分使用 $h_0$，HT 哈希调用代理计数使用 $\sum_{i=0}^{d-1} 2^{h_i}$。当前冻结行既包括已打包的 $q=2^{64}$ 参数组 \texttt{Kylin-128/256/512}，也包括 $q=2^{24}$ 的附加参考参数组 \texttt{Kylin-128-q24/256-q24/512-q24}。
+\inputminted[breaklines,tabsize=4,fontsize=\tiny]{python}{paper/code/para.sage}
+
+\section{$q=2^{24}$ 附加参数配置}
+\label{apx:q24-profiles}
+
+本附录汇总了冻结的 $q=2^{24}$ 附加参数配置，它们在仓库中作为额外的参考实现保留。其动机是实践性的：在某些应用场景中，当单密钥签名预算极大时，现有签名尺寸与验证时间行为仍难以令人满意。此外，NIST 于 2026 年 4 月 13 日发布的 SP 800-230 初始公开草案强调了带有显式单密钥使用上界的有状态哈希签名，这也进一步说明了为受限签名次数工作点（包括 $2^{24}$ 这一类限制）保留明确附加参数行的意义~\cite{NIST:SP800-230-IPD}。
+
+在本仓库中，这些 $q=2^{24}$ 配置通过与主线相同的受约束搜索工作流选出，随后被冻结为已打包 NGCC $q=2^{64}$ 参数族的参考性附加配置。
+
+\begin{table}[htbp]
+    \centering
+    \caption{冻结的 $q=2^{24}$ Kylin 附加参数配置（仅供参考的额外实现）。}
+    \label{tab:q24-parameters}
+    \scriptsize
+    \begin{tabular}{l c c c c c c c c c c c c}
+    \toprule
+    参数族 & NGCC 等级 & $n$ & $h$ & $d$ & $\log t$ & $k$ & $w$ & $l$ & bitsec & pk & sk & sig \\ \midrule
+    Kylin-128-q24 & 128/80 & 16 & 22 & 1 & 24 & 6 & 4 & 67 & 127 & 32 & 64 & 3840 \\
+    Kylin-256-q24 & 256/128 & 32 & 21 & 1 & 25 & 12 & 4 & 131 & 255 & 64 & 128 & 14880 \\
+    Kylin-512-q24 & 512/256 & 64 & 57 & 3 & 20 & 24 & 64 & 87 & 511 & 128 & 256 & 52672 \\
+    \bottomrule
+    \end{tabular}
+\end{table}

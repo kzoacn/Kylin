@@ -1,0 +1,56 @@
+% Source mirror: `paper/tex/security_statements_and_analyses.tex`.
+\section{安全性声明与分析}
+\label{sec:security-claims}
+
+本节作为提交草稿中的安全性声明部分。对于 \cref{sec:spx-core} 中规定的数字签名功能，我们在下述假设与实例化条件下声明其满足 EUF-CMA 安全性。推荐的 NGCC 对齐 Kylin 参数族列于 \cref{tab:ngcc-parameters}，打包代码中使用的 ICCS 哈希/XOF 接口说明见 \cref{sec:hashfunctions}。
+
+\paragraph{理论安全性。}
+Kylin 延续了 \SPHINCSP\ 的安全分析框架。因此，该签名方案的 EUF-CMA 安全性应可归约到底层可调哈希函数族的安全性，这些函数族分别用于 \hashmsg、\PRF、\PRFmsg、\hashF、\hashH 和 \Th。在通常的分析模型中，这些原语被视为理想随机预言机或允许量子访问的随机预言机，相应得到的安全界被解释为针对通用经典攻击与通用量子攻击的安全界。
+
+具体来说，签名方案的 EUF-CMA 安全性依赖于以下底层组件的安全性质：
+\begin{itemize}
+    \item \PRF 与 \PRFmsg\ 的伪随机函数安全性；
+    \item \hashmsg\ 的交错目标子集韧性（ITSR）；
+    \item \hashF\ 的单函数多目标不可检测性（SM-UD）、目标碰撞抗性（SM-TCR）以及判定型第二原像抗性（SM-DSPR）；
+    \item \hashH\ 与 $\Th_\ell$ 的 SM-TCR。
+\end{itemize}
+
+\paragraph{具体安全性与失败概率。}
+
+这里的安全分析与 \SPHINCSP\ 完全一致。\SPHINCSA\ 在面对通用攻击时的经典安全级别（即 bit security）可由下式计算：
+$$
+b=-\log\left(
+    \frac{1}{2^{8n}}+
+    \sum_{\gamma}
+        \left(1-\left(1-\frac{1}{t}\right)^{\gamma}\right)^{k}
+        \binom{q}{\gamma}
+        \left(1-\frac{1}{2^{h}}\right)^{q-\gamma}
+        \frac{1}{2^{h\gamma}}
+    \right) \enspace.
+$$
+\SPHINCSA\ 在面对通用攻击时的量子安全级别可由下式计算：
+$$
+b=-\frac{1}{2}\log\left(
+    \frac{1}{2^{8n}}+
+    \sum_{\gamma}
+        \left(1-\left(1-\frac{1}{t}\right)^{\gamma}\right)^{k}
+        \binom{q}{\gamma}
+        \left(1-\frac{1}{2^{h}}\right)^{q-\gamma}
+        \frac{1}{2^{h\gamma}}
+    \right) \enspace.
+$$
+这里忽略了对数内部的小常数因子。
+
+对于 \cref{tab:ngcc-parameters} 中推荐的 NGCC 提交参数族，我们在这些公式中统一取 $q=2^{64}$，以匹配征集要求中“单个密钥对至少支持 $2^{64}$ 次签名”的明确约束。
+
+\paragraph{其他安全属性。}
+本草稿目前不额外声明其他形式化安全性质。尤其是，当前第一阶段文本不声明专门的侧信道抗性、完美前向安全性、量化的多密钥归约，或超出已声明单密钥 $q=2^{64}$ 分析范围之外的临时密钥重复使用安全定理。
+
+\paragraph{ICCS 哈希/XOF 实例化的安全性。}
+
+已打包的 NGCC 实现使用 ICCS 辅助函数
+\texttt{sm3hash}、\texttt{pseudohash} 和 \texttt{pseudoXOF}。在方案层面，
+\hashmsg、\PRF、\PRFmsg、\hashF、\hashH 和 \Th\
+都通过基于 \texttt{pseudoXOF} 的域分离包装函数来实现，并在输入布局中显式区分标签以及 seed/address。
+
+因此，本草稿中的安全性声明是：在选定的参数规模下，这些具体实例化函数能够提供 \SPHINCSA\ 证明框架所需的伪随机性、目标碰撞抗性及相关性质。除这一标准的通用分析解释之外，本文本并未针对 ICCS 辅助函数内部实现单独提出额外的紧致性声明。

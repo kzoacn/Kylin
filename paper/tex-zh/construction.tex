@@ -1,0 +1,249 @@
+% Source mirror: `paper/tex/construction.tex`.
+\section{相较 \SPHINCSP\ 的主要设计差异} \label{sec:balanced wotsp}\label{sec:wots-optimization}
+
+本节重点说明我们相较原始 \SPHINCSP\ 方案的改进，核心在于其一次性签名组件。
+我们的优化方案 \WOTSCS\ 相比原始 \WOTSP\ 方案，能够提供更大的消息空间/签名尺寸比，从而缩小一次性签名的尺寸。由此，整个基于哈希的签名方案可以重新调参，在不显著增加计算时间的前提下进一步减小签名长度。
+此外，Kylin 在超树上采用了更灵活的分层高度布局，使得在 $h$ 不能被 $d$ 整除时，打包参数仍能保持良好平衡。
+
+本节将解释这些优化的细节，并给出若干技术性证明。
+
+\subsection{超树中的分层高度多样化}
+
+以往的参数配置通常要求 $h \bmod d = 0$，从而使每一层都具有相同的高度 $h/d$。在本草稿中，我们允许各层高度 $(h_0,\ldots,h_{d-1})$ 不必完全一致，只要求满足 $\sum_{i=0}^{d-1} h_i = h$。默认情况下，我们假定层高向量按非降序排列，即 $h_0 \le h_1 \le \cdots \le h_{d-1}$。
+
+记 $r = h \bmod d$。我们的默认平衡规则是：
+\begin{itemize}
+    \item 取 $d-r$ 层，其高度为 $\left\lfloor h/d \right\rfloor$；
+    \item 取 $r$ 层，其高度为 $\left\lceil h/d \right\rceil$。
+\end{itemize}
+等价地说，该配置尽可能平衡，任意两层高度之差最多为 1。
+
+\subsection{\WOTSP~编码}
+
+\WOTSP（以及其他 Winternitz 类 OTS）之所以引入校验和，是因为如果没有校验和，攻击者只需得到一组合法的消息-签名对，就能够高效伪造新签名。具体来说，给定 $(\sigma,m)$，他可以对任意满足 $\forall i(m_i\leq m'_i)$ 的消息 $m'$ 进行伪造，因为可以计算
+$\hashF^{m'_i}(sk_i)=\hashF^{m'_i-m_i}\big( \hashF^{m_i}(sk_i)\big)$。
+
+\ignore{
+The adversary has advantages in the \WOTSP (as well as other Winternitz type one time signature scheme) if there is no checksum. It can easily obtain $\hashF^{m'_i}(sk_i)$ forall $m'_i$ such that $ m_i\leq m'_i$ from a valid pair of signature and message $(\sigma,m)$. That means the adversary can forge any $m'$ such that $\forall i,m_i\leq m'_i$.
+}
+校验和正是为了解决这一问题：任一 $m_i$ 的增加都会导致至少一个 $C_i$ 的减小（回忆 $C=\sum_{i=1}^{l_1}(w-1-m_i)$）。因此，攻击者不可能同时伪造满足 $\forall i(m_i\leq m'_i)$ 且 $\forall i(C_i\leq C'_i)$ 的 $(m',C')$。
+
+\subsection{尺寸最优编码}
+
+更形式化地说，一次性签名的构造问题可归约为构造一个高效编码函数
+$\mathsf{Enc}:\mathcal{M}\rightarrow \mathcal{C}\subseteq[w]^{l}$，
+其中 $\mathcal{C}$ 是某个互不可比较的码字集合（见 \cref{incomparable}）。在 \WOTSP\ 中，编码函数 $\mathsf{Enc}$ 只是将校验和附加到原消息之后。注意 \WOTSP\ 固定了消息大小为 $l_1$（即 $\mathcal{M}=[w]^{l_l}$），然后在此基础上尽量减小码字长度（最小化 $l-l_1$）。
+
+\begin{definition}[(不)可比较性]\label{incomparable}
+对于 $a,b\in[w]^l$，若对每个 $i \in [l]$ 都有 $a_{i+1}\leq b_{i+1}$，则记 $a \leq b$。若 $a\leq b$ 或 $b\leq a$，则称 $a$ 与 $b$ 可比较；否则称二者不可比较。
+若集合 $S\subseteq\{a:a\in[w]^l\}$ 中任意两个元素都不可比较，则称 $S$ 为互不可比较集合（在序理论中也称为“反链”）。
+\end{definition}
+
+我们采用了一种稍有不同的消息编码方式。也就是说，我们首先固定码字长度为 $l$，令 $\mathcal{C}\subseteq[w]^{l}$，然后尽可能容纳更大的消息空间 $\mathcal{M}$。由于 {\sf Enc} 是单射，本质上就是要最大化 $\mathcal{C}\subseteq[w]^{l}$ 的大小。一个自然的思路是让每个码字所有元素之和都等于同一个常数，这样就不再需要显式附加校验和。
+Bos 和 Chaum~\cite{C:BosCha92} 在 $w=2$ 的特殊情形下研究了这一思路。Vaudenay~\cite{vaudenay1993one} 将其推广到任意 $w$，但没有给出编码算法。Perin 等人在~\cite{perin2021improved} 中给出了类似的编码算法，但没有证明其尺寸最优性。
+
+\begin{theorem}
+    \label{Eisantichain}
+    对任意 $m\in[l(w-1)+1]$，
+   $\mathcal{C}_m\eqdef\{v\in [w]^l : \sum_{i=1}^l v_i = m \}$ 都是互不可比较的。
+\end{theorem}
+\begin{proof}
+反设某个固定 $m\in[l(w-1)+1]$ 下的 $\mathcal{C}_m$ 不是互不可比较的，则存在不同的 $a,b\in \mathcal{C}_m$ 满足 $a\leq b$。由于 $a\neq b$，必存在某个指标 $j$ 使得 $a_j<b_j$。然而，由于二者元素和相等，即 $\sum_i a_i=\sum_i b_i$，于是有 $\sum_{1\leq i\leq l \wedge i\neq j} (a_i-b_i)>0$，从而至少存在某个 $1\leq k\leq l$ 使得 $a_k>b_k$，这与 $a\leq b$ 矛盾。 \qed
+\end{proof}
+
+每个 $\mathcal{C}_m$ 都对应一种编码方案，但其大小各不相同。当 $m=0$ 或 $m=l(w-1)$ 时，$\mathcal{C}_m$ 只包含一个码字。我们主张，当 $m=\lfloor\frac{l(w-1)}{2}\rfloor$ 时，$\mathcal{C}_m$ 的大小达到最大。在二进制情形（即 $w=2$）下，这一点容易验证，因为此时 $|\mathcal{C}_m|=\binom{l}{m}$。Perin 等人~\cite{perin2021improved} 证明了当 $m=\lfloor\frac{l(w-1)}{2}\rfloor$ 时，$|\mathcal{C}_{m}|$ 取得最大值。我们在定理~\ref{sec:con} 中给出更强的最优性结果：当 $m=\lfloor\frac{l(w-1)}{2}\rfloor$ 时，$\mathcal{C}_{m}$ 的大小不仅在所有 $\mathcal{C}_m$（其中 $m\in[l(w-1)+1]$）中最大，而且在所有合法码字集合中也是最大的。
+
+\begin{theorem}[尺寸最优编码]\label{sec:con}
+对于任意互不可比较的 $\mathcal{C^*}\in P([w]^l)$，都有
+\[
+ |\mathcal{C^*}| \leq |\mathcal{C}_{\lfloor\frac{l(w-1)}{2}\rfloor}|\enspace.
+\]
+\end{theorem}
+其证明将延后到定理~\ref{maximum-antichain} 中，在那里我们会用序理论语言重新表述定理~\ref{sec:con}。在此之前，我们先讨论如何通过递推计算 $|\mathcal{C}_m|$，并给出一个显式构造，将消息编码到 $m=\lfloor\frac{l(w-1)}{2}\rfloor$ 时的 $\mathcal{C}_{m}$ 中。此后，为简洁起见，我们将这一最大规模的 $\mathcal{C}_{m}$ 简记为 $\mathcal{C}$。
+
+\ignore{
+\begin{construction}[Maximum codeset]\label{sec:con} We let
+$$\mathcal{C}\eqdef\{v\in [w]^l : \sum_{i=1}^l v_i = \left\lfloor \frac{l(w-1)}{2} \right\rfloor \} \enspace.$$
+\end{construction}
+\subsubsection{Construction.}
+\label{sec:con}
+Our construction for $E$ is
+
+$$E=\{v\in [w]^l : \sum_i v_i = \left\lfloor \frac{l(w-1)}{2} \right\rfloor \}$$
+}
+
+\paragraph{计数。} 现在我们需要确定 $\mathcal{C}$ 的大小。在特殊情形 $w=2$ 下，有 $|\mathcal{C}|=\binom{l}{\lfloor l/2 \rfloor}$。固定 $w$，记
+$$ D_{n,m}= |\{v\in [w]^n : \sum_{i=1}^{n} v_i = m \}| \enspace , $$
+
+则其初值为
+\begin{align*}
+D_{1,m} &= 1 , \mbox{ for }m\in \{0,1,\dots,w-1\} \\
+D_{n,m} &= 0 , \mbox{ for }2\leq n \in \mathbb{Z}, m \in \mathbb{Z^-} \enspace ,
+\end{align*}
+递推关系为
+\begin{equation} \label{equ:recurrence}
+    D_{n,m} = \sum_{i=0}^{w-1} D_{n-1,m-i} , 2 \leq n \in \mathbb{Z},m\in \{0,1,\dots,l(w-1)\} \enspace .
+\end{equation}
+
+注意当 $w=2$ 时，这一方法等价于二项式系数的递推关系，即 $\binom{n}{m}=\binom{n-1}{m-1}+\binom{n-1}{m}$。
+
+下面解释这一递推关系。为了计算 $D_{n,m}$，考虑最后一个加数的取值，它可以是 $\{0,1,\dots,w-1\}$ 中的任意值。若该值为 $i$，则前 $n-1$ 个元素之和必须为 $m-i$。因此，“$n$ 个元素求和为 $m$” 的问题可以分解为若干个“$n-1$ 个元素求和为 $m-i$” 的子问题。于是只需将所有 $D_{n-1,m-i}$ 累加即可得到 $D_{n,m}$。按照这一方法，$D_{l,\lfloor l(w-1)/2 \rfloor}$ 就给出了 $\mathcal{C}$ 的大小。
+
+\paragraph{相关工作。} $D_{n,m}$ 也是多项式 $(1+x+x^2+\dots+x^{w-1})^n$ 的第 $m$ 项系数。Euler~\cite{euler1801evolutione} 研究了 $w=3,4,5$ 的情形，分别对应三项式、四项式和五项式系数。更一般的形式在文献中也有所研究，例如~\cite{andre1876memoire,warnaar1997andrews,belbachir2020congruence}。实际上，我们还可以通过容斥原理将其表示为二项式系数的函数~\cite{28861}
+$$ D_{n,m} = \sum_{s=0}^{\lfloor{m/w}\rfloor} (-1)^s \binom{n}{s} \binom{m+n-sw-1}{n-1} \enspace .$$
+
+\paragraph{编码算法。} 下面给出显式构造：一个高效的编码算法，它将消息 $x\in [|\mathcal{C}|]$ 映射到 $\mathcal{C}$ 中的一个元素。
+该编码算法的伪代码见 \cref{alg:encode}。
+\begin{algorithm}
+\SetKwProg{func}{函数}{}{end}
+\caption{Encode:$[|\mathcal{C}|]\rightarrow\mathcal{C}$.} \label{alg:encode}
+\func{{\rm Encode}(x)}{
+    令 $v$ 为长度为 $l$ 的数组\;
+    $m\gets\lfloor l(w-1)/2 \rfloor$\;
+    \For{$i\gets l$~\dots~$1$}{
+        \For{$j\gets 0$~\dots~$\min(w-1,m)$}{
+            \If{$x\geq D_{i-1,s-j}$}{
+                $x\gets x-D_{i-1,s-j}$\;
+            }\Else{
+                $v_{l-i}\gets j$\;
+                {\bf break}\;
+            }
+        }
+        $m\gets m-v_{l-i}$\;
+    }
+    \Return $v$\;
+}
+\end{algorithm}
+
+下面解释这一编码算法。正如前文所述，问题可以通过考虑首个元素 $v_{l-i}$ 的取值划分为多个子问题。为了对自然数 $x\in [0,D_{i,m})$ 进行编码，我们只需寻找满足
+$x\in [\sum_{k<j}D_{i-1,m-k},\sum_{k\leq j}D_{i-1,m-k})$
+的 $j$，从而确定 $v_{l-i}=j$。一旦 $v_{l-i}$ 的值确定，就继续处理后续各项，直到所有元素都被确定。
+
+为了证明该编码的最优性，我们还需要一些序理论方面的预备知识。一次性签名与序理论之间的关系已经在 \cite{C:BleMau94} 中得到研究。
+
+\paragraph{序理论预备知识}
+
+\begin{definition}[偏序集]
+偏序集 $(\mathcal{S},\leq)$ 是一个集合 $\mathcal{S}$ 以及其上的一个二元关系 `$\leq$'，该关系满足反对称性、传递性与自反性，其中某些元素对 $(x,y)\in\mathcal{S}$ 是可比较的（即 $x\leq y$ 或 $y\leq x$）。
+\end{definition}
+需要注意的是，偏序集并不要求 $\mathcal{S}$ 中所有元素对都可比较，因此它也被称为“部分有序集”。
+
+\begin{definition}[(反)链与分解]
+链（chain）是偏序集中任意两元素都可比较的一个子集；反链（antichain）则是任意两元素都不可比较的一个子集。链分解是将一个偏序集划分为若干互不相交链的分割方式。
+\end{definition}
+
+\ignore{
+A partially ordered set (poset) is defined as a set with an antisymmetric, transitive and reflexive order relation, denoted by $\leq$.  Two elements $x,y$ of a poset $S=(X,\leq)$ are comparable if and only if $x\leq y$ or $y\leq x$, otherwise they are incomparable. }
+
+\begin{theorem}[Dilworth 定理~\cite{dilworth2009decomposition}]
+     对任意有限偏序集 $P$，其最大反链的大小等于其最小链分解的大小。
+\end{theorem}
+
+令 $P=([w]^l,\leq )$ 为一个有限偏序集。根据 Dilworth 定理，我们可以通过以下两点证明 $\mathcal{C}$ 是 $P$ 的最大反链：(1) $\mathcal{C}$ 本身是一个反链；(2) 存在一个链分解，其大小恰好等于 $|\mathcal{C}|$。
+
+\begin{theorem}\label{maximum-antichain}
+    $\mathcal{C}$ 是最大反链，即它在尺寸上最优。
+\end{theorem}
+
+\begin{proof}
+    我们已经在定理~\ref{Eisantichain} 中证明了 $\mathcal{C}$ 是反链。接下来只需构造一个大小为 $|\mathcal{C}|$ 的链分解。我们的证明可以看作 Sperner 定理~\cite{sperner1928satz} 证明的一种推广，后者处理的是 $w=2$ 的特殊情形。
+
+    考虑偏序集 $S_n=([w]^n,\leq)$。我们有时将 $S_n$ 中的元素表示为 $(a_1, ..., a_n)\in [w]^n$，或记为 $c_i\in [w]^n$。 \ignore{We also apply the binary operator ``$\le$'' of $S_n$ on those representations.} 我们略微滥用记号，令 $|(a_1, ..., a_n)| \eqdef a_1 + ... + a_n$。
+
+    我们通过归纳法构造 $S_n$ 的链分解，其中每条链 $\{c_1,\ldots, c_{m}\}$ 都满足以下两个性质：
+    \begin{itemize}
+        \item $|c_{i+1}| = |c_i| + 1, \forall i \in \{1,2,\dots,m-1\}$；
+        \item $|c_1| + |c_{m}| = n \cdot (w-1)$。
+    \end{itemize}
+
+    当 $n=1$ 时情形显然：$D_{1, \lfloor{(w-1)/2}\rfloor} = 1$，对应于
+    $S_1=\{(0), (1), \ldots,  (w-1)\}$ 这一条链。
+
+    假设我们已经构造出满足上述两个性质的 $S_{n-1}$ 链分解，现在来构造 $S_{n}$ 的链分解。对于 $S_{n-1}$ 链分解中的每条链
+    $c=\{c_{1}, c_{2}, \ldots, c_{m}\}$，我们构造 $k+1$ 条属于 $S_n$ 的链，其中
+    $k = \min(w-1, m - 1)$。
+    也就是说，对每个 $j\in\{0,...,k\}$，第 $j$ 条链由下列元素组成：
+$$ (c_{1}, j) \le \ldots \le (c_{m - j}, j) \le (c_{m - j}, j+1) \le ... \le (c_{m - j}, w-1) \enspace .$$
+    从而得到如下图 \cref{fig:induction} 所示的 $k+1$ 条链：
+
+\begin{figure}[ht]
+\centering
+    $$
+    \begin{matrix}
+    (c_{1},0) & \ldots & \ldots  & \ldots & (c_{m},0) & \ldots & (c_{m},w-1) &  \\
+   \vdots  & \ldots & \ldots & \iddots & \ldots & \ldots &  \vdots & \\
+     (c_{1},k) & \ldots &  (c_{m-k},k) & \ldots & \ldots & \ldots &  (c_{m-k},w-1)  &\\
+    \end{matrix}
+    $$
+\caption{展示如何将来自 $S_{n-1}$ 的一条链扩展为 $S_n$ 中的 $k+1$ 条链，其中每一行都是一条扩展后的链。注意该图并非矩形矩阵，因为每一行都比上一行少两个元素。}
+\label{fig:induction}
+\end{figure}
+
+容易验证，
+$|(c_{1}, j)| + |(c_{m - j}, w-1)| = |(c_{1}, 0)|+j + |(c_{m}, 0)|- j+(w-1) = n(w-1)$，
+并且链中每个后继元素的和都比前驱元素增加 1。也就是说，这两个性质在 $S_n$ 中构造出的所有链上都得到保持。
+
+接下来还需证明，由 $S_{n-1}$ 各条分解链扩展得到的所有链共同构成 $[w]^n$ 的一个划分。也就是说，对每个 $c_i \in S_{n-1}$，其增广元素 $(c_i,0),...,(c_i,w-1)$ 在构造出的链中恰好各出现一次。注意每个 $c_i$ 必且只能属于 $S_{n-1}$ 链分解中的一条链，例如
+$c=\{c_1,\ldots, c_m\}$。我们分情况讨论。
+
+情形 $m\leq w$：此时 $k=m-1\leq w-1$。序列
+$[(c_i,0),\ldots, (c_i,k+1-i)]$
+出现在 \cref{fig:induction} 的第 $i$ 列前 $(k+2-i)$ 个元素中，而
+$[(c_i,k+1-i),\ldots, (c_i,w-1)]^T$
+则出现在第 $(k+2-i)$ 行最后的 $(w+i-k-1)$ 个元素中。
+
+情形 $m> w$：此时 $k=w-1 < m-1$。若 $1\leq i\leq m-w+1$，则
+$[(c_i,0),(c_i,w-1)]$
+正好构成 \cref{fig:induction} 的第 $i$ 列。否则，若
+$m-w+1<i\leq m$，则
+$[(c_i,0),\ldots, (c_i,m-i)]$ 与
+$[(c_i,m-i),\ldots, (c_i,w-1)]^T$
+分别是第 $i$ 列前 $m-i+1$ 个元素，以及第 $(m-i+1)$ 行最后 $(w+i-m)$ 个元素。
+
+因此，我们已经证明：对于任意 $a \in [w]^{n-1}$，$(a, 0)$、$\ldots$、$(a,w-1)$ 都在新构造出的链中恰好出现一次，即这些链确实构成 $S_n$ 的一个链分解。最后，还需计算该分解中的链数。
+上述两个性质保证每条链中恰好存在一个元素 $c_{\sf mid}$，满足
+$|c_{\sf mid}|=\lfloor l(w-1)/2 \rfloor$（即 $c_{\sf mid} \in \mathcal{C}$）。因此，链分解的大小就是
+$|\mathcal{C}| = D_{l, \lfloor{l(w-1)/2}\rfloor}$。这就完成了 $\mathcal{C}$ 为最大反链的证明。
+
+\end{proof}
+
+\iffalse
+\begin{proof}
+    We have proved $E$ is an antichain in Theorem~\ref{Eisantichain}.
+    As a second part of the proof, we construct the chain decomposition of size $|E|$ as follows:
+
+    We divide $S$ into $l(w-1)+1$ layer. Each layer $L_i$ consists of all elements which sum is $i$, i.e. $L_i=\{v : \sum_j v_j=i\}$. The size of $L_i$ is $D_{l,i}$.
+    We are looking for a ``next'' function, where ${\sf next}(v)$ is the next element in a chain of the chain decomposition. The $\nxt$ function of an endpoint $t$ is defined by $\nxt(t)=\varnothing$. From a start point $s$, a chain can be represented by ${\rm chain}(s)=\{s,\nxt(s),\nxt(\nxt(s)),\dots\}$ until $\varnothing$ is reached.  A chain decomposition can be obtained from the $\nxt$ function directly by $\{{\rm chain}(s) : s {\text{ is a start point}}\}$. To meet the requirements of chain decomposition, the outcome of the $\nxt$ function must be distinct except from $\varnothing$.
+
+    For any $v\in L_i$, we can always assign value $\nxt(v)$ with distinct element $u\in L_{i+1}$ , for $i\in \{0,1,\dots,\lfloor l(w-1)/2 \rfloor -1\}$, because $|L_i|\leq |L_{i+1}|$ according to Theorem \ref{the:non-dec}. In the other side, we can assign values for $L_i$ such that $\{ \nxt(v) : v\in L_{i} \}=L_{i+1}$ , for $i\in \{\lfloor l(w-1)/2 \rfloor,\lfloor l(w-1)/2 \rfloor +1 ,\dots , l(w-1)\}$, because $|L_i|\geq |L_{i+1}|$ according to Theorem \ref{the:non-dec}.
+
+    Now we count the number of chains, which is equivalent to the number of start points. Start point means no point point to it. $L_0$ contains one element, and is the first layer. It has one start point. $L_1$ is pointed by $L_0$. Thus it has $|L_1|-|L_0|$ start points. And so on, $L_i$ has $|L_i|-|L_{i-1}|$ start points for $i\leq \lfloor l(w-1)/2 \rfloor$. For $i>0\lfloor l(w-1)/2 \rfloor$, $L_i$ has no start point. Therefore, the total number of start point is $|L_0|+(|L_1|-|L_0|)+\dots+(L_{\lfloor l(w-1)/2 \rfloor}-L_{\lfloor l(w-1)/2 \rfloor-1})=|L_{\lfloor l(w-1)/2 \rfloor}|=|E|$. \qed
+\end{proof}
+\fi
+
+\subsection{理论性能}
+常和 \WOTSP\ 相比 \WOTSP\ 有两个优点。
+\begin{itemize}
+    \item 计算时间稳定。我们的构造中哈希函数调用次数是固定的，而 \WOTSP\ 的签名与验证算法则可能具有可变调用次数。尽管当前并未发现针对本构造或 \WOTSP\ 实现的计时攻击，但稳定的计算时间始终更可取，尤其是对于涉及私钥的签名算法。
+    \item 更小的签名尺寸与更少的哈希调用。例如，在一个典型的 256-bit classical 参数选择中，通常会取 $w=16$ 且 $l=67$。而在我们的构造中，当 $w=16$ 时只需 $l=66$，这会在运行时间（以预期哈希调用次数计）和尺寸上都带来约 1.5\% 的降低。更多细节见 \cref{tab:ots}。
+\end{itemize}
+
+\begin{table}[t]
+    \centering
+    \caption{不同 Winternitz 参数 $w$ 与安全参数 $\secpara$ 下，\WOTSP\ 与 \WOTSCS\ 的长度 $l$ 对比。}
+    \label{tab:ots}
+    \begin{tabular}{c cc cc cc}%
+    \toprule
+      & \multicolumn{2}{c}{128bit} & \multicolumn{2}{c}{192bit}  &\multicolumn{2}{c}{256bit} \\
+     $w$  & \WOTSP & Ours & \WOTSP & Ours & \WOTSP & Ours \\ \midrule
+     8  & 46 & 45 & 67 & 66 & 90 & 88 \\
+     16  & 35& 34 & 51 & 50 & 67 & 66 \\
+     24  & 31& 30 & 45& 44 & 59& 58\\
+     32  & 28& 27 & 42& 40 & 55&  53\\
+     40  & 27& 26 & 39& 38 & 52& 50\\
+     48  & 25& 25 & 37& 36 & 48&  48\\
+     \bottomrule
+    \end{tabular}
+\end{table}
+
+尽管我们的编码算法相较校验和方法会带来略高的额外开销，但相对于整个签名方案中的哈希函数调用次数而言，这部分开销并不占主导地位；这一点会在后续与 \SPHINCSP\ 的性能比较中得到印证。

@@ -1,0 +1,142 @@
+% Chinese wrapper for the current English submission entrypoint `main.tex`.
+\def\draft{1}
+
+\ifnum\draft=0
+
+\documentclass[sigconf,anonymous]{paper/build/acmart}
+\settopmatter{printacmref=false}
+
+\else
+
+\documentclass[UTF8,a4paper,fontset=none]{ctexart}
+\usepackage[margin=1in]{geometry}
+
+\fi
+
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\DeclareGraphicsExtensions{%
+    .png,.PNG,%
+    .pdf,.PDF,%
+    .jpg,.mps,.jpeg,.jbig2,.jb2,.JPG,.JPEG,.JBIG2,.JB2}
+\usepackage{textcomp,amssymb,latexsym}
+\usepackage{fancyhdr}
+\usepackage{enumerate}
+\usepackage[ruled,vlined]{algorithm2e}
+\usepackage{xparse}
+\usepackage{xspace}
+\usepackage{multirow}
+\usepackage{csvsimple}
+\usepackage{balance}
+\usepackage{diagbox}
+\usepackage{amsmath,amsthm}
+\usepackage{longtable}
+\usepackage{mathdots}
+\usepackage{bytefield}
+\usepackage{minted}
+\usepackage{tabularx}
+\usepackage{
+  tikz,
+  pgfplots,
+  pgfplotstable
+}
+\usepgfplotslibrary{statistics}
+\usetikzlibrary{
+  shapes.geometric,
+  shapes.misc,
+  arrows,
+  external,
+  pgfplots.groupplots,
+  matrix,
+  positioning,
+  fit,
+  calc,
+  decorations.text
+}
+\pgfplotsset{compat=1.9}
+
+\usepackage{hyperref}
+\usepackage[capitalize]{cleveref}
+
+\newcommand*{\email}[1]{\href{mailto:#1}{\nolinkurl{#1}}}
+\usepackage{authblk}
+\usepackage{blindtext}
+
+\providecommand{\keywords}[1]
+{
+  \small
+  \textbf{\textit{关键词---}} #1
+}
+
+\setCJKmainfont[AutoFakeSlant=.2]{Noto Serif CJK SC}
+\setCJKsansfont[AutoFakeSlant=.2]{Noto Sans CJK SC}
+\setCJKmonofont{Noto Sans Mono CJK SC}
+
+\input{paper/tex/defs_zh}
+
+\newtheorem{construction}{构造}[section]
+
+\newcommand{\authnote}[2]{\textcolor{red}{\textsf{#1 }\textcolor{blue}{ #2}}}
+\newcommand{\yu}[1]{{\authnote{Yu}{#1}}}
+
+\SetAlgorithmName{算法}{算法}{算法目录}
+\SetAlgoProcName{过程}{过程}
+\SetAlgoFuncName{函数}{函数}
+
+\crefname{table}{表}{表}
+\Crefname{table}{表}{表}
+\crefname{figure}{图}{图}
+\Crefname{figure}{图}{图}
+\crefname{algorithm}{算法}{算法}
+\Crefname{algorithm}{算法}{算法}
+\crefname{theorem}{定理}{定理}
+\Crefname{theorem}{定理}{定理}
+\crefname{lemma}{引理}{引理}
+\Crefname{lemma}{引理}{引理}
+\crefname{corollary}{推论}{推论}
+\Crefname{corollary}{推论}{推论}
+\crefname{definition}{定义}{定义}
+\Crefname{definition}{定义}{定义}
+\crefname{proposition}{命题}{命题}
+\Crefname{proposition}{命题}{命题}
+\crefformat{section}{第#2#1#3节}
+\Crefformat{section}{第#2#1#3节}
+\crefformat{subsection}{第#2#1#3小节}
+\Crefformat{subsection}{第#2#1#3小节}
+\crefformat{subsubsection}{第#2#1#3小小节}
+\Crefformat{subsubsection}{第#2#1#3小小节}
+\crefformat{equation}{式~(#2#1#3)}
+\Crefformat{equation}{式~(#2#1#3)}
+
+\begin{document}
+\fancyhead{}
+\def\thetitle{Kylin \\ NGCC 数字签名第一阶段提交包}
+\title{\thetitle}
+\date{\today}
+\author{Kylin Team}
+
+\maketitle
+
+\clearpage
+
+\tableofcontents
+
+\clearpage
+
+\input{paper/tex-zh/intro}
+\input{paper/tex-zh/construction}
+\input{paper/tex-zh/kylin}
+\input{paper/tex-zh/design_rationale}
+\input{paper/tex-zh/security_statements_and_analyses}
+\input{paper/tex-zh/performance_evaluation}
+\input{paper/tex-zh/feature_statements}
+
+\bibliographystyle{plain}
+\bibliography{paper/bib/abbrev0,paper/bib/crypto,paper/bib/extra}
+
+\appendix
+\input{paper/tex-zh/kylin-appendix}
+
+\end{document}

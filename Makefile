@@ -4,7 +4,7 @@ ADD_DIRS := $(sort $(dir $(wildcard Implementations/Additional_Implementation/Ky
 ALL_DIRS := $(REF_DIRS) $(OPT_DIRS) $(ADD_DIRS)
 KAT_DIRS := $(REF_DIRS) $(ADD_DIRS)
 
-.PHONY: all build test kat metrics clean params verify
+.PHONY: all build test kat metrics clean params verify paper-zh
 
 all: build
 
@@ -35,3 +35,6 @@ clean:
 	done
 
 verify: clean params build test kat metrics
+
+paper-zh:
+	$(MAKE) -C paper/build zh

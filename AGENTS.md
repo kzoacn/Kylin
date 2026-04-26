@@ -4,6 +4,15 @@
 - `.SPHINCS-ALPHA-NIST/` is a historical archive. Keep it read-only, and do not read it unless necessary.
 - `docs/` contains NGCC requirements, evaluation criteria, and ICCS API templates.
 - `main.tex` and `paper/` are the current English submission document source.
+- The planned Chinese submission-document track should be rooted at `main_zh.tex` and generate `main_zh.pdf`.
+- For documentation work, English remains the sole source of truth; Chinese should mirror the English document structure, data, formulas, and reference semantics.
+- Preferred English-to-Chinese maintenance model: mirrored Chinese chapter files plus shared formulas/data/bibliography/code snippets, supported by a terminology glossary and an EN->ZH sync guide.
+- The current glossary and sync guide live at `docs/en-zh-glossary.md` and `docs/en-zh-sync-guide.md`.
+- In Chinese translation work, translate titles, section names, prose, figure/table captions, algorithm captions, theorem-like headings, TOC/list labels, and cross-reference names.
+- Do not translate or rename mathematical formulas, LaTeX labels, `\cite` keys, code identifiers, file paths, CSV sources, or instance names such as `Kylin-128`, `Kylin-256`, and `Kylin-512`.
+- Chinese document builds should use a XeLaTeX-based workflow with Chinese TeX packages and Chinese fonts as environment dependencies; do not vendor third-party fonts or TeX packages into the repository unless explicitly requested.
+- If English document structure or natural-language content changes, update the Chinese mirrored files, terminology glossary, and EN->ZH sync guide together.
+- The bilingual NGCC materials under `docs/` may be used as terminology and phrasing references, but they do not replace the current submission document as the source of truth.
 - The NGCC code package is under `Implementations/`.
 - Primary submission profiles are fixed as three variants: `Kylin-128`, `Kylin-256`, and `Kylin-512`.
 - Companion `q=2^24` variants (`Kylin-128-q24`, `Kylin-256-q24`, `Kylin-512-q24`) are maintained as reference-only additional implementations under `Implementations/Additional_Implementation/`.

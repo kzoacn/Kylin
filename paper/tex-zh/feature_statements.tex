@@ -1,0 +1,23 @@
+% Source mirror: `paper/tex/feature_statements.tex`.
+\section{特性说明}
+\label{sec:feature-statement}
+
+本节按照征集要求，对 \SPHINCSA\ 的主要特性进行归纳说明。
+
+\paragraph{创新性。}
+Kylin 引入了 \WOTSCS，这是一种适用于 Winternitz 类一次性签名的常和、尺寸最优编码方式，并将其与超树参数搜索中的 Diverse Layer Heights 结合使用。这两项改动在保持保守的哈希签名设计路线的同时，改进了签名尺寸与哈希调用之间的折中关系。
+
+\paragraph{简洁性。}
+该方案仍然完全处于研究充分的无状态哈希签名家族之内。其核心组成包括可调哈希函数、一次性签名层、FORS 与超树，不涉及格、码或多变量代数结构。
+
+\paragraph{灵活性。}
+参数 $(n,w,h,d,k,t)$ 允许构造在签名尺寸、签名时间与验证时间之间进行折中。本次主提交固定为 \texttt{Kylin-128}、\texttt{Kylin-256} 与 \texttt{Kylin-512} 三个配置，而附录中记录了仅供参考的 $q=2^{24}$ 配置，用于更低签名预算场景。
+
+\paragraph{兼容性。}
+已打包代码遵循 NGCC SIG API，并通过 ICCS 辅助函数路由哈希/XOF 调用。对外工作流保持为常规的密钥生成、签名与验证接口。由于 Kylin 用 \WOTSCS\ 替换了 \WOTSP，因此它与原始 \SPHINCSP\ 的字节级格式并不完全兼容。
+
+\paragraph{可扩展性。}
+该构造具有模块化特征：替换哈希/XOF 实例化或重新调整参数集，都不会改变顶层签名工作流。不过，当前提交仅声明数字签名这一种功能。
+
+\paragraph{实现性能优势。}
+仓库同时提供三组主实例的 ISO C 参考实现与优化后的 64 位 PC 实现。由 \cref{tab:kylin-package-bench} 可见，在当前 64 位 PC 基准平台上，优化实现相较参考实现提升了密钥生成、签名与验证的实测性能。

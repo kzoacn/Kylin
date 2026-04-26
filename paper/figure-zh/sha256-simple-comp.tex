@@ -1,0 +1,33 @@
+% Source mirror: `paper/figure/sha256-simple-comp.tex`.
+\ifnum\draft=0
+
+\begin{table*}[ht]
+    \centering
+    \caption{三组已打包 Kylin 家族的哈希调用与尺寸指标。密钥生成、签名和验证以哈希调用代理计数表示；公钥、私钥和签名大小以字节计。}
+    \label{tab:comp tiny}
+    \begin{tabular}{l r r r r r r}%
+    \toprule
+      实例 & 密钥生成 & 签名 & 验证 & 公钥 & 私钥 & 签名 \\ \midrule
+      Kylin-128 & 417279 & 2442880 & 7357 & 32 & 64 & 6688 \\
+      Kylin-256 & 324095 & 3223168 & 12577 & 64 & 128 & 26784 \\
+      Kylin-512 & 495615 & 6198272 & 42476 & 128 & 256 & 103808 \\
+     \vspace{-1em} \\ \bottomrule
+    \end{tabular}
+\end{table*}
+
+\else
+\begin{table}[th]
+    \centering
+    \caption{三组已打包 Kylin 家族的哈希调用与尺寸指标。密钥生成、签名和验证以哈希调用代理计数表示；公钥、私钥和签名大小以字节计。}
+    \label{tab:comp tiny}
+    \begin{tabular}{l r r r r r r}%
+    \toprule
+      实例 & 密钥生成 & 签名 & 验证 & 公钥 & 私钥 & 签名 \\ \midrule
+      Kylin-128 & 417279 & 2442880 & 7357 & 32 & 64 & 6688 \\
+      Kylin-256 & 324095 & 3223168 & 12577 & 64 & 128 & 26784 \\
+      Kylin-512 & 495615 & 6198272 & 42476 & 128 & 256 & 103808 \\
+     \vspace{-1em} \\ \bottomrule
+    \end{tabular}
+\end{table}
+
+\fi

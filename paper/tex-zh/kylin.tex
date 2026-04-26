@@ -1,0 +1,844 @@
+% Source mirror: `paper/tex/kylin.tex`.
+
+\section{记号与支撑性定义}
+\label{sec:notation}
+
+下面我们首先定义整数与比特串上的基本数学操作，再逐步引入后续规范中会用到的更具体的基础方法。
+
+\subsection{数据类型}
+
+字节与字节串是最基础的数据类型。字节是由八个比特组成的序列，所有字节的集合记为 $\byte$。单个字节记为带有前缀 ``\texttt{0x}'' 的两个十六进制数字。字节串是由零个或多个字节组成的有序序列，记为带前缀 ``\texttt{0x}'' 的有序十六进制字符序列。例如，\texttt{0xe534f0} 是一个长度为 3 的字节串。字节串数组是一个带下标、从 0 开始的有序集合，其中所有字节串长度相同。本文默认任何数据类型或结构均采用大端表示。
+
+\subsection{函数}
+
+我们定义以下函数：
+\begin{description}
+    \item[]$\lceil x \rceil$（或 $\funcfont{ceil}(x)$）在 $x$ 为实数时返回大于等于 $x$ 的最小整数。
+    \item[]$\lfloor x \rfloor$（或 $\funcfont{floor}(x)$）在 $x$ 为实数时返回小于等于 $x$ 的最大整数。
+    \item[]$\log(x)$ 在 $x$ 为非负实数时返回以 2 为底的对数。在伪代码中，这个函数写作 $\funcfont{lg}$。
+    \item[]$\funcfont{Trunc}_\ell(x)$ 将比特串 $x$ 截断为前 $\ell$ 个比特。
+\end{description}
+
+\subsection{运算}
+
+当 $a$ 与 $b$ 为整数时，数学运算符定义如下：
+
+\begin{itemize}
+    \item \^\ : $a^b$ 表示 $a$ 的 $b$ 次幂。
+
+    \item $\cdot$ : $a\cdot b$ 表示 $a$ 与 $b$ 的乘积。在无歧义时，该运算符可以按通常数学记号省略。
+
+    \item $/$ : $a/b$ 表示 $a$ 被非零 $b$ 除的商。
+
+    \item $\%$ : $a \% b$ 表示整数除法的非负余数。
+
+    \item $+$ : $a+b$ 表示 $a$ 与 $b$ 的和。
+
+    \item $-$ : $a-b$ 表示 $a$ 与 $b$ 的差。
+
+    \item $++$ : $a++$ 表示将 $a$ 增加 1，即 $a = a + 1$。
+
+    \item $<<$ : $a << b$ 表示将 $a$ 逻辑左移 $b$ 位（其中 $b$ 非负），即 $a \cdot 2^b$。
+
+    \item $>>$ : $a >> b$ 表示将 $a$ 逻辑右移 $b$ 位（其中 $b$ 非负），即 $\funcfont{floor}(a/2^b)$。
+\end{itemize}
+
+在计算算术表达式时，遵循标准运算优先级。
+
+数组按通常方式使用，其中数组 $A$ 的第 $i$ 个元素记为 $A[i]$。在需要时，字节串也被视为字节数组：若 $X$ 是一个字节串，则 $X[i]$ 表示其第 $i$ 个字节，其中 $X[0]$ 为最左侧、最高位字节。
+
+若 $A$ 与 $B$ 是等长字节串，则：
+
+\begin{itemize}
+    \item $A$ AND $B$ 表示按位逻辑与。
+
+    \item $A$ XOR $B$（或 $A \oplus B$）表示按位逻辑异或。
+\end{itemize}
+
+当 $B$ 是一个字节、$i$ 是一个整数时，$B >> i$ 表示将其逻辑右移 $i$ 位。
+
+若 $X$ 是一个长度为 $x$ 字节的字节串、$Y$ 是一个长度为 $y$ 字节的字节串，则 $X \| Y$ 表示二者拼接，其中 $X\|Y = X[0]...X[x-1] Y[0]...Y[y-1]$。
+
+\subsection{整数到字节的转换（函数 \texttt{toByte}）}
+
+对于非负整数 $x$ 与 $y$，定义 $Z = {\tt toByte}(x,y)$ 为一个长度为 $y$ 字节的字节串，它以大端字节序存放整数 $x$ 的二进制表示。
+
+\subsection{成员函数（函数 \texttt{set, get}）}
+
+为了简化算法描述，我们假定存在成员函数。如果一个复杂数据结构（例如公钥 $\pk$）中包含变量 \texttt{X}，则 \pk.\texttt{getX()} 返回该公钥中的 \texttt{X} 值。相应地，\pk.\texttt{setX(Y)} 将 \pk\ 中的变量 \texttt{X} 设为 \texttt{Y} 所持有的值。由于成员函数名采用 camelCase 风格，因此数值 \texttt{z} 在函数名中可能写作 \texttt{Z}，例如 \texttt{getZ}。
+
+\subsection{密码学（哈希）函数族}
+
+\subsubsection{可调哈希函数（函数 \texttt{T, F, H}）}
+
+与 \SPHINCSP\ 一样，一个可调哈希函数除消息输入外，还接受一个公有种子 $\pk.\seed$ 和一个地址 \ADRS。这样做可使每个密钥对及虚拟树中每个位置上的哈希调用彼此独立。地址方案将在 \cref{sec:addr} 中说明。
+
+本规范中描述的方案建立在以下形式的若干可调哈希函数实例之上：
+\begin{align*}
+    \Th_\ell : \byte^n \times \byte^{32} \times \byte^{\ell n} \to \byte^n \\
+    \md \gets \Th_\ell (\pk.\seed, \ADRS, M) \enspace,
+\end{align*}
+它使用 $n$ 字节种子 \pk.\seed、32 字节地址 $\ADRS$ 以及长度为 $\ell n$ 字节的消息 $M$，输出一个 $n$ 字节哈希值 $md$。在伪代码中，函数 $\Th_\ell$ 记为 \texttt{T\_l}。
+
+其中有两个特例，我们沿用以往哈希签名方案中的命名方式：
+\begin{align*}
+    \hashF& : \byte^{n}\times \byte^{32}\times \byte^{n}\rightarrow \byte^{n} \\
+    \hashF& \eqdef \mathbf{T}_1\\
+    \hashH& : \byte^{n}\times \byte^{32}\times \byte^{2n}\rightarrow \byte^{n} \\
+    \hashH& \eqdef \mathbf{T}_2
+\end{align*}
+
+\subsubsection{PRF 与消息摘要（函数 \texttt{PRF, PRF\_msg, H\_msg}）}
+
+\SPHINCSA\ 使用伪随机函数 \PRF\ 来完成伪随机密钥生成：
+
+\[\PRF : \byte^{n}\times \byte^{32}\rightarrow \byte^{n} \enspace.\]
+
+此外，\SPHINCSA\ 使用伪随机函数 $\PRFmsg$ 为消息压缩生成随机性：
+
+\[\PRFmsg : \byte^{n}\times \byte^{n}\times \byte^{*}\rightarrow \byte^{n} \enspace.\]
+
+为了压缩待签消息，\SPHINCSA\ 还使用一个能够处理任意长度消息的带密钥哈希函数 $\hashmsg$：
+\[ \hashmsg : \byte^{n}\times \byte^{n}\times \byte^{n}\times \byte^{*}\rightarrow \byte^{m} \enspace.\]
+
+\subsubsection{哈希函数地址方案（{\ADRS} 的结构）} \label{sec:addr}
+
+地址 \ADRS 是一个 32 字节值，具有规定的结构，并配套提供若干 set 方法来操作地址。后续各节在使用这些地址时会说明具体生成方式。其本质是：所有函数都必须跟踪当前上下文，并在每次哈希调用之后更新地址。
+
+针对不同用途，一共定义了七种不同类型的地址。其中一种用于 \WOTSCS\ 中的哈希，一种用于 \WOTSCS\ 公钥压缩，第三种用于主 Merkle 树中的哈希，第四种用于 FORS 中 Merkle 树内的哈希，第五种用于 FORS 树根压缩，最后两种分别用于 \WOTSCS\ 与 FORS 的私钥值生成。这些地址大多共享相同的总体格式，下面将详细说明。
+
+地址结构遵循字边界；在这里，一个字宽为 32 位。只有 tree address（即主树中特定子树的索引）长度过长，无法放入单个字，因此我们为它保留三个字。总体而言，地址结构如下：最高位开始是一个字的 layer address，后接三个字的 tree address。这两个字段描述了一棵树在超树中的位置。layer address 描述该树在超树中的层高位置，自底层树开始记为第 0 层；tree address 描述该层中具体是哪一棵树，从最左边的树开始编号为 0。其后一个字表示地址类型：\WOTSCS\ 哈希地址取 0，\WOTSCS\ 公钥压缩取 1，哈希树地址取 2，FORS 地址取 3，FORS 树根压缩取 4。
+
+我们先介绍 \WOTSCS\ 地址（\cref{fig:spx2}）。在这种情况下，类型字之后是 key pair address，用来编码指定树内 \WOTSCS\ 密钥对的索引。再下一个字编码 chain address（即 \WOTSCS\ 内链的索引），最后一个字编码该链内部哈希函数调用的位置。需要注意的是，基于 \sk.\seed\ 生成私钥时使用的是另一种地址类型（见后文）。
+
+\begin{figure}[ht]
+    \centering
+    \begin{bytefield}[bitwidth=1.1em,bitheight=2em]{32}
+        \bitbox[lrt]{8}{Layer Address} &
+        \bitbox[lrt]{24}{Tree Address} \\
+        \bitbox{8}{type = 0} &
+        \bitbox{8}{Key Pair Address} &
+        \bitbox{8}{Chain Address} &
+        \bitbox{8}{Hash Address}
+    \end{bytefield}
+    \caption{\WOTSCS\ 哈希地址。}
+    \label{fig:spx2}
+\end{figure}
+
+第二种类型（\cref{fig:spx3}）用于压缩 \WOTSCS\ 公钥。其类型字取 1。与 \WOTSCS\ 内部使用的地址类似，下一字编码 key pair address。剩余两个字不需要，因此保持为 0。我们用 0 将地址补齐到固定的 32 字节长度。
+
+\begin{figure}[ht]
+    \centering
+    \begin{bytefield}[bitwidth=1.1em,bitheight=2em]{32}
+        \bitbox[lrt]{8}{Layer Address} &
+        \bitbox[lrt]{24}{Tree Address} \\
+        \bitbox{8}{type = 1} &
+        \bitbox{8}{Key Pair Address} &
+        \bitbox{16}{Padding = 0}
+    \end{bytefield}
+    \caption{\WOTSCS\ 公钥压缩地址。}
+    \label{fig:spx3}
+\end{figure}
+
+第三种类型（\cref{fig:spx4}）用于主树中的哈希函数调用。此时类型字取 2，其后是一个字的 0 填充。再后一个字编码当前正在计算的树节点高度，最后一个字编码该高度处节点的索引。
+
+\begin{figure}[ht]
+    \centering
+    \begin{bytefield}[bitwidth=1.1em,bitheight=2em]{32}
+        \bitbox[lrt]{8}{Layer Address} &
+        \bitbox[lrt]{24}{Tree Address} \\
+        \bitbox{8}{type = 2} &
+        \bitbox{8}{Padding = 0} &
+        \bitbox{8}{Tree Height} &
+        \bitbox{8}{Tree Index}
+    \end{bytefield}
+    \caption{哈希树地址。}
+    \label{fig:spx4}
+\end{figure}
+
+下一种类型（\cref{fig:spx5}）格式相似，用于描述 FORS 树中的哈希函数。其类型字取 3。key pair address 用于标识使用的是哪一个 FORS 密钥对，其含义与 \WOTSCS\ 哈希地址中的 key pair address 相同；它的值等于用于认证该 FORS 密钥对的 \WOTSCS\ 密钥对的索引，即其在指定树中的叶子编号。tree height 与 tree index 字段则用于定位 FORS 树内的哈希调用，方式与主树中的哈希类似，只是这里的 tree index 在不同 FORS 树之间连续编号。基于 \sk.\seed\ 生成叶节点时，使用另一种地址类型（见后文）。
+
+\begin{figure}[ht]
+    \centering
+    \begin{bytefield}[bitwidth=1.1em,bitheight=2em]{32}
+        \bitbox[lrt]{8}{Layer Address} &
+        \bitbox[lrt]{24}{Tree Address} \\
+        \bitbox{8}{type = 3} &
+        \bitbox{8}{Key Pair Address} &
+        \bitbox{8}{Tree Height} &
+        \bitbox{8}{Tree Index}
+    \end{bytefield}
+    \caption{FORS 树地址。}
+    \label{fig:spx5}
+\end{figure}
+
+再下一种类型（\cref{fig:spx6}）用于压缩 FORS 树根。其类型字取 4。与 \WOTSCS\ 公钥压缩地址类似，它只包含 FORS 密钥对地址，其余部分补零至完整长度。
+
+\begin{figure}[ht]
+    \centering
+    \begin{bytefield}[bitwidth=1.1em,bitheight=2em]{32}
+        \bitbox[lrt]{8}{Layer Address} &
+        \bitbox[lrt]{24}{Tree Address} \\
+        \bitbox{8}{type = 4} &
+        \bitbox{8}{Key Pair Address} &
+        \bitbox{16}{Padding = 0}
+    \end{bytefield}
+    \caption{FORS 树根压缩地址。}
+    \label{fig:spx6}
+\end{figure}
+
+最后两种类型分别用于 \WOTSCS\ 和 FORS 的私钥值生成。\WOTSCS\ 私钥生成地址（\cref{fig:spx7}）与 \WOTSCS\ 哈希地址相同，仅有两点不同：其一，类型字取 5；其二，hash address 字恒设为 $0$。当为某条链生成私钥值时，其余各字段必须与该链对应的 \WOTSCS\ 哈希地址保持一致。
+
+\begin{figure}[ht]
+    \centering
+    \begin{bytefield}[bitwidth=1.1em,bitheight=2em]{32}
+        \bitbox[lrt]{8}{Layer Address} &
+        \bitbox[lrt]{24}{Tree Address} \\
+        \bitbox{8}{type = 5} &
+        \bitbox{8}{Key Pair Address} &
+        \bitbox{8}{Chain Address} &
+        \bitbox{8}{Hash Address = 0}
+    \end{bytefield}
+    \caption{\WOTSCS\ 私钥生成地址。}
+    \label{fig:spx7}
+\end{figure}
+
+类似地，FORS 私钥生成类型（\cref{fig:spx8}）与 FORS 树地址类型相同，只是类型字取 6，且 tree height 字恒设为 $0$。和 \WOTSCS\ 私钥生成地址一样，其余字段必须与处理该值时所用 FORS 树地址保持一致。
+
+地址中的所有字段都编码无符号整数。描述地址生成时，我们使用 set 方法：它接受正整数，并将某一字段的比特设置为该整数的大端二进制表示。本文统一采用如下约定：当改变地址的类型字（即调用 \texttt{setType()} 方法）时，后续三个字会被初始化为 0。
+
+为了便于在后续伪代码中跟踪这些地址类型，我们分别用常量 \verb|WOTS_HASH|、\verb|WOTS_PK|、\verb|TREE|、\verb|FORS_TREE|、\verb|FORS_ROOTS|、\verb|WOTS_PRF| 和 \verb|FORS_PRF| 来引用它们。
+
+\begin{figure}[ht]
+    \centering
+    \begin{bytefield}[bitwidth=1.1em,bitheight=2em]{32}
+        \bitbox[lrt]{8}{Layer Address} &
+        \bitbox[lrt]{24}{Tree Address} \\
+        \bitbox{8}{type = 6} &
+        \bitbox{8}{Key Pair Address} &
+        \bitbox{8}{Tree Height = 0} &
+        \bitbox{8}{Tree Index}
+    \end{bytefield}
+    \caption{FORS 私钥生成地址。}
+    \label{fig:spx8}
+\end{figure}
+
+\section{\WOTSCS\ 一次性签名} \label{sec:ots}
+
+本节描述 \WOTSCS\ 方案。虽然一个私钥理论上能够对任意消息进行签名，但每个私钥 \textbf{绝不能} 用于签名多于一条消息。
+
+\subsection{\WOTSCS\ 参数}
+\label{sec:wotspara}
+\WOTSCS\ 使用参数 $n,w$ 和 $\wotslen$；它们均为正整数。参数含义如下：
+\begin{itemize}
+    \item $n$：安全参数，同时也是消息长度以及私钥、公钥、签名元素的字节长度；
+    \item $w$：Winternitz 参数；
+    \item $\wotslen$：\WOTSCS\ 私钥、公钥与签名中 $n$ 字节元素的个数。
+\end{itemize}
+
+\subsection{\WOTSCS\ 链函数（函数 {\tt chain}）}
+
+链函数（算法 \ref{alg:chain}）在一个 $n$ 字节输入上迭代计算 $\hashF$，并使用 \WOTSCS\ 哈希地址 \ADRS 和公有种子 $\pk.\seed$。地址 \ADRS 的前七个 32 位字 \textbf{必须} 编码该链的地址。在每次迭代中，\ADRS 在用于调用 $\hashF$ 处理输入前，都会先被更新为当前链内位置。
+
+下面，\ADRS 是 \cref{sec:addr} 中定义的一个 32 字节 \WOTSCS\ 哈希地址，$\pk.\seed$ 是一个 $n$ 字节字符串。链函数的输入包括：一个 $n$ 字节字符串 $X$、起始索引 $i$、迭代步数 $s$，以及 \ADRS 和 $\pk.\seed$。输出则是在输入 $X$ 上迭代 $s$ 次 $\hashF$ 后得到的值。
+
+\begin{algorithm}
+\inputminted[breaklines,linenos,tabsize=2,mathescape,escapeinside=||]{C}{paper/code/chain.cs}
+\caption{{\tt chain} --- \WOTSCS\ 中使用的链函数。}
+\label{alg:chain}
+\end{algorithm}
+
+\subsection{\WOTSCS\ 私钥（函数 \texttt{wots\_SKgen})}
+
+\WOTSCS\ 私钥记为 \sk，是一个长度为 $\wotslen$ 的 $n$ 字节串数组。该私钥 \textbf{绝不能} 用于签名多于一条消息。这个私钥仅在逻辑上被使用，因此下面的内容主要是为了帮助理解后续算法。 \WOTSCS\ 私钥中的每个 $n$ 字节串都由秘密种子 \sk.\seed\ 和一个 \WOTSCS\ 私钥生成地址 \texttt{skADRS} 通过 \PRF\ 推导而来；其中 \sk.\seed\ 是 \SPHINCSA\ 私钥的一部分。同一个秘密种子会用于生成 \SPHINCSA\ 内部所有私钥值。用于生成 \sk\ 中第 $i$ 个 $n$ 字节串的地址，\textbf{必须} 编码该 \WOTSCS\ 实例在 \SPHINCSA\ 结构中的第 $i$ 条哈希链位置。
+
+下面的伪代码（算法 \ref{alg:wotsskgen}）描述了 \WOTSCS\ 私钥的生成过程。
+
+\begin{algorithm}
+\inputminted[breaklines,linenos,tabsize=2,mathescape,escapeinside=||]{C}{paper/code/wots_SKgen.cs}
+\caption{\texttt{wots\_SKgen} --- 生成 \WOTSCS\ 私钥。}
+\label{alg:wotsskgen}
+\end{algorithm}
+
+\subsection{\WOTSCS\ 公钥生成（函数 \texttt{wots\_PKgen})}
+
+\WOTSCS\ 密钥对定义了一个虚拟结构，它由 $\wotslen$ 条长度为 $w$ 的哈希链组成。私钥中每个 $n$ 字节串都对应一条哈希链的起始节点。公钥则是这些哈希链终止节点的可调哈希压缩值。计算这些哈希链时使用链函数（算法 \ref{alg:chain}）。调用方需要提供 \WOTSCS\ 哈希地址 \ADRS、公有种子 $\pk.\seed$ 以及秘密种子 \sk.\seed。地址 \ADRS \textbf{必须} 编码该 \WOTSCS\ 密钥对在 \SPHINCSA\ 结构中的位置。因此，\WOTSCS\ 算法 \textbf{不得} 操作 \ADRS 除最后三个 32 位字以外的任何部分。需要注意的是，这里使用的 $\pk.\seed$ 是公开信息，验证者同样可以获得。
+
+下面的伪代码（算法 \ref{alg:wotspkgen}）描述了公钥 $\pk$ 的生成过程。
+
+\begin{algorithm}
+\inputminted[breaklines,linenos,tabsize=2,mathescape,escapeinside=||]{C}{paper/code/wots_PKgen.cs}
+\caption{\texttt{wots\_PKgen} --- 生成 \WOTSCS\ 公钥。}
+\label{alg:wotspkgen}
+\end{algorithm}
+
+\subsection{\WOTSCS\ 编码（函数 \texttt{wots\_encode})}
+
+下面解释编码算法（\cref{alg:wotsencode}）。该问题可以通过考察首个元素 $c_{l-i}$ 的取值被划分为若干子问题。为了对一个自然数 $x\in [0,D_{i,m})$ 编码，我们只需寻找满足
+$x\in [\sum_{k<j}D_{i-1,m-k},\sum_{k\leq j}D_{i-1,m-k})$
+的 $j$，并据此确定 $c_{l-i}=j$。当 $v_{l-i}$ 的值确定后，就继续处理后续元素，直到所有元素都确定。所有算术运算 \textbf{必须} 在无符号 256 位整数上完成。数组 $D$ 可以预计算，从而避免每次调用编码函数时都重复计算。
+
+\begin{algorithm}
+\inputminted[breaklines,linenos,tabsize=2,mathescape,escapeinside=||]{C}{paper/code/wots_encode.cs}
+\caption{\texttt{wots\_encode} --- 将消息编码为常和表示。}
+\label{alg:wotsencode}
+\end{algorithm}
+
+\subsection{\WOTSCS\ 签名生成（函数 \texttt{wots\_sign})}
+
+\WOTSCS\ 签名是一个长度为 $\wotslen$ 的 $n$ 字节串数组。生成过程首先将消息 $M$ 映射为 $\wotslen$ 个介于 $0$ 与 $w-1$ 之间的整数，并要求这些整数之和等于 $\lfloor {\wotslen}\cdot (w-1)/2 \rfloor$。调用方需要提供 \WOTSCS\ 哈希地址 \ADRS、公有种子 $\pk.\seed$ 和秘密种子 \sk.\seed。该地址会编码此 \WOTSCS\ 密钥对在更大结构中的位置，因此 \WOTSCS\ 算法 \textbf{不得} 修改 \ADRS 除最后三个 32 位字以外的任何部分。需要注意的是，这里使用的 $\pk.\seed$ 对验证者也是公开信息，而秘密种子 \sk.\seed\ 则是私有信息。生成 \WOTSCS\ 签名 \sig\ 的伪代码见下（算法 \ref{alg:wotssign}）。
+
+\begin{algorithm}
+\inputminted[breaklines,linenos,tabsize=2,mathescape,escapeinside=||]{C}{paper/code/wots_sign.cs}
+\caption{\texttt{wots\_sign} --- 对消息 $M$ 生成 \WOTSCS\ 签名。}
+\label{alg:wotssign}
+\end{algorithm}
+
+签名数据格式见 \cref{fig:spx9}。
+
+\begin{figure}[ht]
+    \centering
+    \begin{bytefield}[bitwidth=1.1em,bitheight=2em]{16}
+        \wordbox{1}{$\sigots[0]$} \\
+        \wordbox[lrt]{1}{...} \\
+        \skippedwords \\
+        \wordbox[lrb]{1}{...} \\
+        \wordbox{1}{$\sigots[\wotslen-1]$}
+    \end{bytefield}
+    \caption{\WOTSCS\ 签名数据格式。}
+    \label{fig:spx9}
+\end{figure}
+
+\subsection{\WOTSCS\ 由签名恢复公钥（函数 \texttt{wots\_pkFromSig})}
+
+\SPHINCSA\ 对 \WOTSCS\ 使用隐式签名验证。为了验证消息 $M$ 上的 \WOTSCS\ 签名 \sig，验证者需要从签名恢复一个 \WOTSCS\ 公钥值。这可以通过从签名值继续“补全”链计算来完成，其中使用的步数由消息哈希及其校验和的 base-$w$ 表示决定。这个步骤称为 \texttt{wots\_pkFromSig}，其过程见算法 \ref{alg:wotspkfromsig}。随后还需要对 \texttt{wots\_pkFromSig} 的结果进行验证。若该方案单独使用，则可直接通过比较完成；而在 \SPHINCSA\ 中，则通过利用该结果继续计算 \SPHINCSA\ 公钥来实现隐式验证。
+
+调用方需要提供 \WOTSCS\ 哈希地址 \ADRS 和公有种子 $\pk.\seed$。地址将编码该 \WOTSCS\ 密钥对在 \SPHINCSA\ 结构中的位置。因此，\WOTSCS\ 算法 \textbf{不得} 操作 \ADRS 除最后三个 32 位字之外的部分。这里使用的 $\pk.\seed$ 对验证者同样是公开信息。
+
+\begin{algorithm}
+\inputminted[breaklines,linenos,tabsize=2,mathescape,escapeinside=||]{C}{paper/code/wots_pkFromSig.cs}
+\caption{\texttt{wots\_pkFromSig} --- 由消息及其签名恢复 \WOTSCS\ 公钥。}
+\label{alg:wotspkfromsig}
+\end{algorithm}
+
+\section{\SPHINCSA\ 超树}
+\label{sec:hypertree}
+
+本节解释 \SPHINCSA\ 超树的构造方式。我们首先说明如何将 \WOTSCS\ 与二叉哈希树结合，从而得到一个固定输入长度版本的 XMSS。随后再说明如何在此基础上扩展为超树。超树可以被视作固定输入长度版的多树 XMSS（\XMSSMT）。
+
+\subsection{（固定输入长度）XMSS} \label{sec:xmss}
+
+XMSS 用于对一个可能很大但固定数量的消息集合进行签名。它建立在 Merkle 签名方案之上，通过一棵高度为 $h_{\mathrm{XMSS}}$ 的二叉树来认证 $2^{h_{\mathrm{XMSS}}}$ 个 \WOTSCS\ 公钥。因此，高度为 $h_{\mathrm{XMSS}}$ 的 XMSS 密钥对可用于签名 $2^{h_{\mathrm{XMSS}}}$ 条不同消息。二叉树中的每个节点都是一个 $n$ 字节值，由其两个子节点拼接后的可调哈希得到。叶子节点即 \WOTSCS\ 公钥。XMSS 公钥就是整棵树的根节点。在 \SPHINCSA\ 中，XMSS 私钥表现为单一秘密种子，它被用于生成所有 \WOTSCS\ 私钥。
+
+在 \SPHINCSA\ 上下文中，XMSS 签名由两部分组成：消息上的 \WOTSCS\ 签名，以及所谓的认证路径。后者是一个树节点向量，使验证者能够从 \WOTSCS\ 签名出发计算出树根值。验证者据此恢复根节点并验证其正确性。一个独立的 XMSS 签名通常还包含所使用 \WOTSCS\ 密钥对的索引；但在 \SPHINCSA\ 中，这不是必须的，因为整个 \SPHINCSA\ 签名已经足以恢复其中每个 XMSS 签名对应的索引。
+
+\subsubsection{XMSS 参数}
+\label{sec:xmsspara}
+XMSS 具有以下参数：
+
+\begin{itemize}
+    \item $h_{\mathrm{XMSS}}$：树的高度（即“层数减 1”）。
+
+    \item $n$：消息以及每个节点的字节长度。
+
+    \item $w$：Winternitz 参数，其定义与前一节中的 \WOTSCS\ 相同。
+\end{itemize}
+
+树中共有 $2^{h_{\mathrm{XMSS}}}$ 个叶子。XMSS 签名记为 \sigxmss（伪代码中为 \texttt{SIG\_XMSS}）。 \WOTSCS\ 签名记为 \sig。
+
+XMSS 参数在需要时隐式包含于算法输入中。
+
+\subsubsection{XMSS 私钥}
+
+在 \SPHINCSA\ 的上下文中，XMSS 私钥就是 \SPHINCSA\ 私钥中包含的单一秘密种子 \sk.\seed。它用于按 \cref{sec:ots} 所述方式生成 XMSS 密钥对结构中的 \WOTSCS\ 私钥。
+
+\subsubsection{TreeHash（函数 \texttt{treehash}）}
+
+为了计算 Merkle 树内部的 $n$ 字节节点，子程序 \texttt{treehash}（\cref{alg:treehash}）接受以下输入：秘密种子 \sk.\seed、公有种子 $\pk.\seed$、无符号整数 $s$（起始索引）、无符号整数 $z$（目标节点高度），以及编码包含该子树地址的 \ADRS。树中节点高度从叶子层开始记为 0。\texttt{treehash} 算法返回一棵高度为 $z$ 的子树根节点，其中最左侧叶子对应索引 $s$ 上的 \WOTSCS\ 公钥。这里 \textbf{要求} $s$ \% $2^{z}=0$，也就是说，索引为 $s$ 的叶子必须是某棵高度为 $z$ 的子树的最左叶；否则算法会失败，因为它将试图计算并不存在的节点。这里描述的 \texttt{treehash} 算法使用一个至多保存 $(z-1)$ 个节点的栈，并假定存在标准栈操作 \texttt{push()} 与 \texttt{pop()}。此外，我们默认节点的高度（无符号整数）与节点值（$n$ 字节串）一同存储在栈中。
+
+\begin{algorithm}
+\inputminted[breaklines,linenos,tabsize=2,mathescape,escapeinside=||]{C}{paper/code/treehash.cs}
+\caption{\texttt{treehash} --- TreeHash 算法。}
+\label{alg:treehash}
+\end{algorithm}
+
+\subsubsection{XMSS 公钥生成（函数 \texttt{xmss\_PKgen})}
+
+XMSS 公钥按 \texttt{xmss\_PKgen}（\cref{alg:xmsspkgen}）中的方式计算。在 \SPHINCSA\ 中，XMSS 公钥 PK 即为二叉哈希树的根节点。根节点通过 \texttt{treehash} 计算得到。公钥生成算法输入为秘密种子 \sk.\seed、公有种子 \pk.\seed\ 以及地址 \ADRS，后者编码该 XMSS 实例在 \SPHINCSA\ 结构中的位置。
+
+\begin{algorithm}
+    \inputminted[breaklines,linenos,tabsize=2,mathescape,escapeinside=||]{C}{paper/code/xmss_PKgen.cs}
+    \caption{\texttt{xmss\_PKgen} --- 生成 XMSS 公钥。}
+    \label{alg:xmsspkgen}
+\end{algorithm}
+
+\subsubsection{XMSS 签名}
+
+XMSS 签名是一个长度为 $((\wotslen+h_{\mathrm{XMSS}})\cdot n)$ 字节的字符串，由以下两部分组成：
+\begin{itemize}
+    \item 一个 \WOTSCS\ 签名 \sigots，占用 $\wotslen\cdot n$ 字节；
+
+    \item 与所用 \WOTSCS\ 密钥对对应叶子相关联的认证路径 \texttt{AUTH}，占用 $h_{\mathrm{XMSS}}\cdot n$ 字节。
+\end{itemize}
+
+认证路径是一个由 $h_{\mathrm{XMSS}}$ 个 $n$ 字节串构成的数组。它包含了从所用叶子到根路径上各节点的兄弟节点，但不包含路径上的节点本身。验证者正是利用这些 \texttt{AUTH} 中的节点，从 \WOTSCS\ 公钥出发恢复树根节点。一个节点 $N$ 由其在树中的位置来表示：$N(x, y)$ 表示第 $x$ 层上的第 $y$ 个节点，其中 $y=0$ 表示该层最左节点。叶子位于第 $0$ 层，根位于第 $h_{\mathrm{XMSS}}$ 层。认证路径在每个层 $0\leq x\leq(h_{\mathrm{XMSS}}-1)$ 上恰好包含一个节点。对于从 0 开始计数的第 $i$ 个 \WOTSCS\ 密钥对，其第 $j$ 个认证路径节点为
+\[ \mathtt{AUTH}[j]=N\left(j, \lfloor\frac{i}{2^{j}}\rfloor\oplus 1\right) \enspace.\]
+
+认证路径的计算方法见 \cref{sec:xmsssign}。签名数据格式见 \cref{fig:spx10}。
+
+\begin{figure}[ht]
+    \centering
+    \begin{bytefield}[bitwidth=1.1em,bitheight=2em]{16}
+        \wordbox{2}{$\mathbf{sig}$} \\
+        \wordbox{1}{$\mathbf{AUTH}[0]$} \\
+        \wordbox[lrt]{1}{...} \\
+        \skippedwords \\
+        \wordbox[lrb]{1}{...} \\
+        \wordbox{1}{$\mathbf{AUTH}[h_{\mathrm{XMSS}}-1]$}
+    \end{bytefield}
+    \caption{XMSS 签名。} \label{fig:spx10}
+\end{figure}
+
+\subsubsection{XMSS 签名生成（函数 \texttt{xmss\_sign})}
+\label{sec:xmsssign}
+
+在 \SPHINCSA\ 的上下文中，为消息 $M$ 计算 XMSS 签名需要以下输入：秘密种子 \sk.\seed、公有种子 $\pk.\seed$、待使用的 \WOTSCS\ 密钥对索引 \texttt{idx}，以及 XMSS 实例地址 \ADRS。首先，使用索引为 \texttt{idx} 的 \WOTSCS\ 实例对消息摘要进行签名；随后再计算认证路径。
+
+认证路径中的节点值 \textit{可以} 通过任意方式计算。最节省内存的方法是使用 \texttt{treehash} 算法（\cref{alg:treehash}）逐个计算所有节点，这也是这里的描述方式。需要注意的是，这一步具体如何实现与互操作性无关；为了执行签名验证，实际上不必了解这些实现细节。
+
+\begin{algorithm}
+\inputminted[breaklines,linenos,tabsize=2,mathescape,escapeinside=||]{C}{paper/code/xmss_sign.cs}
+\caption{\texttt{xmss\_sign} --- 生成 XMSS 签名。}
+\label{alg:xmsssign}
+\end{algorithm}
+
+\subsubsection{由签名恢复 XMSS 公钥（函数 \texttt{xmss\_pkFromSig})}
+
+\SPHINCSA\ 使用 XMSS 签名的隐式验证方式。一个 XMSS 签名会被用来计算一个候选 XMSS 公钥，也就是树的根节点。这个根值会继续参与后续计算（例如更上一层树对它的签名），并在该后续计算的结果中被隐式验证。因此，本规范不包含独立的 \texttt{xmss\_verify} 方法，而是提供 \texttt{xmss\_pkFromSig} 方法。
+
+\texttt{xmss\_pkFromSig} 的输入包括：一个 $n$ 字节消息 $M$、一个 XMSS 签名 \sigxmss、签名索引 \texttt{idx}、公有种子 $\pk.\seed$ 以及地址 $\ADRS$。其中 \ADRS 编码了当前 XMSS 实例在 \SPHINCSA\ 密钥对虚拟结构中的位置。算法首先调用 \texttt{wots\_pkFromSig} 恢复候选 \WOTSCS\ 公钥，再结合认证路径计算出根节点，并将其返回。 \texttt{xmss\_pkFromSig} 算法见 \cref{alg:xmsspkfromsig}。
+
+\begin{algorithm}
+\inputminted[breaklines,linenos,tabsize=2,mathescape,escapeinside=||]{C}{paper/code/xmss_pkFromSig.cs}
+\caption{\texttt{xmss\_pkFromSig} --- 由 XMSS 签名恢复 XMSS 公钥。}
+\label{alg:xmsspkfromsig}
+\end{algorithm}
+
+\subsection{HT：超树}
+
+\SPHINCSA\ 的超树 HT 是 \XMSSMT\ 的一个变体。本质上，它是一棵由 XMSS 实例构成的认证树。HT 由多层 XMSS 树组成：顶层和中间层的树用来签名其下一层 XMSS 树的公钥（即根节点），而最底层的树则用于签名实际消息；在 \SPHINCSA\ 中，这里的“实际消息”具体是 FORS 公钥。
+
+考虑一棵总高度为 $h$ 的 HT，其包含 $d$ 层 XMSS 树，自底向上的层高分别为 $(h_0,\ldots,h_{d-1})$，满足 $\sum_{i=0}^{d-1} h_i = h$。那么第 $d-1$ 层包含一棵 XMSS 树。一般地，第 $i$ 层包含 $2^{\sum_{j=i+1}^{d-1} h_j}$ 棵 XMSS 树。最后，第 $0$ 层包含 $2^{h-h_0}$ 棵 XMSS 树。
+
+\subsubsection{HT 参数}
+\label{sec:htpara}
+除 XMSS 的全部参数外，HT 还需要超树总高度 $h$、树层数 $d$，以及满足 $\sum_{i=0}^{d-1} h_i = h$ 的各层 XMSS 高度 $(h_0,\ldots,h_{d-1})$。所有层都使用相同的 Winternitz 参数 $w$。
+
+\subsubsection{HT 密钥生成（函数 \texttt{ht\_PKgen})}
+
+HT 私钥就是秘密种子 \sk.\seed，它被用来生成 HT 虚拟结构中所有 \WOTSCS\ 私钥。
+
+HT 公钥则是顶层唯一那棵 XMSS 树的公钥（根节点）。其计算过程如下。公钥生成算法以私有种子和公有种子为输入。
+
+\begin{algorithm}
+\inputminted[breaklines,linenos,tabsize=2,mathescape,escapeinside=||]{C}{paper/code/ht_PKgen.cs}
+\caption{\texttt{ht\_PKgen} --- 生成 HT 公钥。}
+\label{alg:htpkgen}
+\end{algorithm}
+
+\subsubsection{HT 签名}
+
+HT 签名 $\sight$ 是一个长度为 $(h+d\cdot\wotslen)\cdot n$ 的字节串。它由 $d$ 个 XMSS 签名组成，其中第 $i$ 层贡献一个长度为 $(h_i+\wotslen)\cdot n$ 字节的 XMSS 签名。
+
+签名数据格式见 \cref{fig:spx11}。
+
+\begin{figure}[ht]
+    \centering
+    \begin{bytefield}[bitwidth=1.1em,bitheight=2em]{16}
+        \wordbox{1}{XMSS Signature $\mathbf{sig}_{\XMSS}$} \\
+        \wordbox{1}{$\mathbf{AUTH}[0]$} \\
+        \wordbox[lrt]{1}{...} \\
+        \skippedwords \\
+        \wordbox[lrb]{1}{...} \\
+        \wordbox{1}{$\mathbf{AUTH}[h_i-1]$}
+    \end{bytefield}
+    \caption{HT 签名。} \label{fig:spx11}
+\end{figure}
+
+\subsubsection{HT 签名生成（函数 \texttt{ht\_sign})}
+
+为了对消息 $M$ 计算 HT 签名 $\sight$，下面的 \texttt{ht\_sign}（\cref{alg:htsign}）会使用 \cref{sec:xmsssign} 中定义的 \texttt{xmss\_sign}。该算法输入为消息 $M$、秘密种子 \sk.\seed、公有种子 $\pk.\seed$ 以及索引 \texttt{idx}。这个索引标识超树中将用于对消息签名的叶子。最终的 HT 签名由一叠 XMSS 签名组成，覆盖从索引为 idx 的叶子一路到顶层树路径上的 XMSS 树。需要注意，idx 实际上传递时被拆分为两个独立参数：一个用于定位具体树的 tree index，另一个用于该树内部的 leaf index。这样可以支持更高的超树，因为参数允许在 $h<64+h_0$ 的范围内使用 64 位整数表示 \texttt{tree\_idx}。这与本文规范中的参数一致。若使用允许更大 $h$ 的其他参数集，则 \texttt{tree\_idx} 的数据类型 \textbf{必须} 相应调整。
+
+算法 \texttt{ht\_sign} 会在某个 XMSS 实例完成签名后，使用 \texttt{xmss\_pkFromSig} 来恢复该实例的根节点。另一种方式是使用 \texttt{xmss\_PKgen}。不过，\texttt{xmss\_PKgen} 会重建整棵树，而 \texttt{xmss\_pkFromSig} 在第 $i$ 层只需一次 \texttt{wots\_pkFromSig} 调用和 $(h_i-1)$ 次 $\hashH$ 调用。因此，下面给出的 \texttt{ht\_sign} 只是生成 HT 签名的一种方式；只要输出相同，\textit{也可以} 使用其他方法。
+
+\begin{algorithm}
+    \inputminted[breaklines,linenos,tabsize=2,mathescape,escapeinside=||]{C}{paper/code/ht_sign.cs}
+    \caption{\texttt{ht\_sign} --- 生成 HT 签名。}
+    \label{alg:htsign}
+\end{algorithm}
+
+\subsubsection{HT 签名验证（函数 \texttt{ht\_verify})}
+
+HT 签名验证（\cref{alg:htverify}）可以概括为：调用 $d$ 次 \texttt{xmss\_pkFromSig}，再与给定值进行一次比较。HT 签名验证的输入包括：消息 $M$、签名 $\sight$、公有种子 $\pk.\seed$、索引 \texttt{idx}（同样拆分为 tree index 与 leaf index），以及 HT 公钥 $\pk_{\mathtt{HT}}$。
+
+\begin{algorithm}
+    \inputminted[breaklines,linenos,tabsize=2,mathescape,escapeinside=||]{C}{paper/code/ht_verify.cs}
+    \caption{\texttt{ht\_verify} --- 使用 HT 公钥 ${\bf PK}_{HT}$ 验证消息 $M$ 上的 HT 签名 $\bf {SIG}_{HT}$。}
+    \label{alg:htverify}
+\end{algorithm}
+\section{FORS：随机子集森林}
+\label{sec:fors}
+
+\SPHINCSA\ 的超树 HT 并不直接签名原始消息，而是签名 FORS 实例的公钥；而 FORS 公钥又用于签名消息摘要。FORS（forest of random subsets，随机子集森林）是一种少次签名方案（FTS）。FORS 改进自 HORST \cite{EC:BHHLNP15}，而 HORST 本身又是 HORS \cite{EPRINT:ReyRey02} 的一个变体。从安全性角度看，FORS 的输入必须是哈希函数的输出。下文将 FORS 描述为作用在比特串上的签名方案。
+
+FORS 使用参数 $k$ 和 $t=2^{a}$（例如可取 $t=2^{15}, k=10$）。FORS 对长度为 $ka$ 比特的字符串进行签名。这里我们不再统一使用字节作为长度单位，因为消息长度的比特数未必是 8 的倍数。私钥由 $kt$ 个随机的 $n$ 字节串构成，并分成 $k$ 组，每组包含 $t$ 个 $n$ 字节串。私钥值通过 \SPHINCSA\ 私钥中的主秘密种子 \sk.\seed\ 伪随机生成。在 \SPHINCSA\ 中，FORS 私钥值仅作为计算公钥或签名时的中间结果被临时生成。
+
+FORS 公钥是一个单独的 $n$ 字节哈希值。它通过对 $k$ 棵二叉哈希树的根节点做可调哈希压缩得到。这 $k$ 棵二叉哈希树的高度均为 $a$，每棵树用于认证一组中的 $t$ 个私钥值。因此，树的叶子就是其私钥组中各值的（可调）哈希。
+
+一个对字符串 $M$ 的签名由 $k$ 个私钥值及其对应的认证路径组成，每组私钥元素恰取一个。为生成签名，首先将 $\md$ 划分为 $k$ 个长度为 $a$ 比特的字符串。由于 \md\ 是字节序列，我们先按字节枚举，再在每个字节内部按从低位到高位的顺序将其展开为比特串。随后，将这些比特串分别解释为介于 $0$ 与 $t-1$ 之间的整数。每个整数都用于在对应私钥组中选择一个私钥值。也就是说，若第一个整数是 $i$，则选取第一组中的第 $i$ 个私钥元素，依此类推。最终签名由这些被选中的私钥元素及其认证路径组成。
+
+\SPHINCSA\ 对 FORS 使用隐式验证：它只提供一个根据签名恢复候选公钥的方法。恢复过程是：利用输入字符串计算得到的索引、签名中的私钥值以及认证路径，计算出 $k$ 棵树的根节点；再对这些根节点做可调哈希，得到候选公钥并返回。
+
+下面开始描述 FORS 的参数与算法。
+
+\subsection{FORS 参数}
+\label{sec:forspara}
+FORS 使用参数 $n, k$ 和 $t$；它们均为正整数。参数含义如下：
+
+\begin{itemize}
+    \item $ n$：安全参数，即私钥、公钥或签名元素的字节长度。
+
+    \item $ k$：私钥集合的个数、树的个数，以及从输入字符串中计算出的索引个数。
+
+    \item $ t$：每个私钥集合中的元素个数、每棵哈希树的叶子个数，以及索引值的上界。参数 $t$ \textbf{必须} 是 2 的幂。若 $t=2^{a}$，则对应树高为 $a$，输入字符串会被切分成长度为 $a$ 的比特串。
+\end{itemize}
+
+FORS 的输入是长度为 $k\log t$ 的比特串。
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=.8\linewidth]{paper/figure/fors.eps}
+    \caption{FORS 树与公钥。} \label{fig:spx12}
+\end{figure}
+
+\subsection{FORS 私钥（函数 \texttt{fors\_SKgen})}
+
+在 \SPHINCSA\ 的上下文中，FORS 私钥就是 \SPHINCSA\ 私钥中的单一秘密种子 \sk.\seed。利用 FORS 私钥生成地址和 \PRF，可以由该种子生成 $kt$ 个 $n$ 字节私钥值。虽然从逻辑上看这些值应当分组为一个二维数组，但在实现时通常可以将其视为一个长度为 $kt$ 的一维数组。此时，第 $i$ 组中的第 $j$ 个元素存放在 $\sk[it+j]$。为了生成其中某个元素，需要使用一个 FORS 私钥生成地址 \texttt{skADRS}，该地址编码了 FORS 密钥对在 \SPHINCSA\ 中的位置，并将 tree height 设为 $0$，leaf index 设为 $it+j$：
+
+\begin{algorithm}
+    \inputminted[breaklines,linenos,tabsize=2,mathescape,escapeinside=||]{C}{paper/code/fors_SKgen.cs}
+    \caption{\texttt{fors\_SKgen} --- 计算 FORS 私钥值。}
+    \label{alg:forsskgen}
+\end{algorithm}
+
+\subsection{FORS TreeHash（函数 \texttt{fors\_treehash})}
+
+在讨论 FORS 公钥之前，我们先说明树的计算方式。为了计算 FORS 哈希树中的 $n$ 字节节点，使用子程序 \texttt{fors\_treehash}。它本质上与 \cref{sec:xmss} 中的 \texttt{treehash}（\cref{alg:treehash}）是同一个算法，区别只在于叶节点如何计算以及地址如何处理。不过由于地址结构非常相似，实现时完全可以较容易地将两者合并为一个通用例程。
+
+算法 \texttt{fors\_treehash} 接受以下输入：秘密种子 \sk.\seed、公有种子 $\pk.\seed$、无符号整数 $s$（起始索引）、无符号整数 $z$（目标节点高度），以及编码 FORS 密钥对地址的 \ADRS。与 \texttt{treehash} 类似，\texttt{fors\_treehash} 返回一棵高度为 $z$ 的树的根节点，其中最左叶子对应索引 $s$ 的私钥元素经哈希后的值。这里的 $s$ 是在整个 $kt$ 个私钥元素上连续编号的。并且 \textbf{要求} $s$ \% $2^{z}=0$，即索引为 $s$ 的叶子必须是某棵高度为 $z$ 子树的最左叶；否则算法会失败，因为它将尝试计算并不存在的节点。
+
+\begin{algorithm}
+    \inputminted[breaklines,linenos,tabsize=2,mathescape,escapeinside=||]{C}{paper/code/fors_treehash.cs}
+    \caption{\texttt{fors\_treehash} 算法。}
+    \label{alg:forstreehash}
+\end{algorithm}
+
+\subsection{FORS 公钥（函数 \texttt{fors\_PKgen})}
+
+在 \SPHINCSA\ 的上下文中，FORS 公钥从不会被单独生成；它只会与签名一起出现。我们在此保留 \texttt{fors\_PKgen}，主要是为了完整性、便于理解以及测试。算法 \texttt{fors\_PKgen} 输入秘密种子 \sk.\seed、公有种子 $\pk.\seed$ 和一个 FORS 地址 \ADRS；后者编码该 FORS 实例在 \SPHINCSA\ 中的位置。算法输出一个 FORS 公钥。
+
+\begin{algorithm}
+    \inputminted[breaklines,linenos,tabsize=2,mathescape,escapeinside=||]{C}{paper/code/fors_PKgen.cs}
+    \caption{\texttt{ fors\_PKgen } --- 生成 FORS 公钥。}
+    \label{alg:forspkgen}
+\end{algorithm}
+
+\subsection{FORS 签名生成（函数 \texttt{fors\_sign})}
+
+FORS 签名是一个长度为 $k(\log t+1)$ 的 $n$ 字节串数组。它包含 $k$ 个私钥值（每个 $n$ 字节），以及与之对应的认证路径（每条路径包含 $\log t$ 个 $n$ 字节值）。
+
+算法 \texttt{fors\_sign} 的输入是一个长度为 $(k\log t)$ 比特的字符串 $M$、秘密种子 \sk.\seed、公有种子 $\pk.\seed$ 和地址 \ADRS。该地址编码了 FORS 实例在 \SPHINCSA\ 中的位置。算法输出一个 FORS 签名 $\sigfors$。
+
+\begin{algorithm}
+    \inputminted[breaklines,linenos,tabsize=2,mathescape,escapeinside=||]{C}{paper/code/fors_sign.cs}
+    \caption{\texttt{ fors\_sign } --- 对字符串 $M$ 生成 FORS 签名。}
+    \label{alg:forssign}
+\end{algorithm}
+
+签名数据格式见 \cref{fig:spx13}。
+
+\begin{figure}[ht]
+    \centering
+    \begin{bytefield}[bitwidth=1.1em,bitheight=2em]{16}
+        \wordbox{1}{Private Key Value (Tree 0)} \\
+        \wordbox{1}{$\mathbf{AUTH}$ (Tree 0)} \\
+        \wordbox[lrt]{1}{...} \\
+        \skippedwords \\
+        \wordbox[lrb]{1}{...} \\
+        \wordbox{1}{Private Key Value (Tree $k-1$)} \\
+        \wordbox{1}{$\mathbf{AUTH}$ (Tree $k-1$)} \\
+    \end{bytefield}
+    \caption{FORS 签名。} \label{fig:spx13}
+\end{figure}
+
+\subsection{由签名恢复 FORS 公钥（函数 \texttt{fors\_pkFromSig})}
+
+\SPHINCSA\ 对 FORS 签名采用隐式验证方式。一个 FORS 签名会被用来恢复一个候选 FORS 公钥。该公钥将继续参与后续计算（作为上层 XMSS 树签名的消息），并在后续计算结果中被隐式验证。因此，本规范不包含 \texttt{fors\_verify} 方法，而是提供 \texttt{fors\_pkFromSig} 方法。
+
+\texttt{fors\_pkFromSig} 的输入包括：一个长度为 $ k\log t$ 比特的字符串 $M$、一个 FORS 签名 $\sigfors$、公有种子 \pk.\seed\ 以及地址 \ADRS。该地址编码了 FORS 实例在 \SPHINCSA\ 密钥对虚拟结构中的位置。算法首先利用 \texttt{fors\_treehash} 计算出 $k$ 棵二叉哈希树的根节点，随后再用可调哈希函数 $\mathrm{T}_{k}$ 对这些根节点做压缩。 \texttt{fors\_pkFromSig} 算法见 \cref{alg:forspkfromsig}。该方法会调用 \sigfors.\texttt{getSK(i)} 与 \sigfors.\texttt{getAUTH(i)}：前者返回签名中存储的第 $i$ 个私钥元素，后者返回签名中存储的第 $i$ 条认证路径。
+
+\begin{algorithm}
+    \inputminted[breaklines,linenos,tabsize=2,mathescape,escapeinside=||]{C}{paper/code/fors_pkFromSig.cs}
+    \caption{\texttt{ fors\_pkFromSig } --- 由 FORS 签名恢复 FORS 公钥。}
+    \label{alg:forspkfromsig}
+\end{algorithm}
+
+\section{完整的 Kylin 签名方案}
+\label{sec:spx-core}
+到这里，我们已经具备描述主构造 \SPHINCSA\ 所需的全部组件。本质上，\SPHINCSA\ 沿用了 \SPHINCSA\ 的基础结构，唯一的差异在于其一次性签名组件。
+
+\subsection{\SPHINCSA\ 参数}
+
+\SPHINCSA\ 具有以下参数：
+
+\begin{itemize}
+
+    \item $n$：以字节计的安全参数。
+
+    \item $w$：\cref{sec:wotspara} 中定义的 Winternitz 参数。
+
+    \item $h$：\cref{sec:htpara} 中定义的超树高度。
+
+    \item $d$：\cref{sec:htpara} 中定义的超树层数。
+
+    \item $k$：\cref{sec:forspara} 中定义的 FORS 树数量。
+
+    \item $t$：\cref{sec:forspara} 中定义的 FORS 树叶子数量。
+
+\end{itemize}
+
+前文给出的全部限制在这里都同样适用。回忆我们记 $a=\log t$。此外，由这些参数还可导出 $m$ 和 \wotslen：
+
+\begin{itemize}
+    \item $m$：消息摘要长度（单位：字节），其计算公式为
+    $$
+    m=\lfloor(k\log t+7)/8\rfloor+\lfloor(h-h_0+7)/8\rfloor+\lfloor(h_0+7)/8\rfloor.
+    $$
+    虽然理论上只需要 $h+k\log t$ 个比特，但采用这里定义的更长 $m$ 能显著简化实现。
+
+    \item $\wotslen$：\WOTSCS\ 私钥、公钥与签名中 $n$ 字节字符串元素的个数。选择 $\wotslen$ 时，需要保证下列偏序集的大小大于目标消息空间 $\bool^n$（参见 \cref{sec:balanced wotsp}）：
+    \[\left| D_{ \wotslen, \lfloor \frac{\wotslen \cdot (w-1)}{2} \rfloor } \right| \geq 2^n \enspace. \]
+
+\end{itemize}
+下文假设所有算法都可访问这些参数。
+
+\subsection{\SPHINCSA\ 密钥生成（函数 \texttt{kylin\_keygen})}
+
+\SPHINCSA\ 私钥包含两个元素。第一，$n$ 字节秘密种子 $\sk.\seed$，用于生成所有 \WOTSCS\ 与 FORS 私钥元素。第二，$n$ 字节 PRF 密钥 $\sk.\prf$，用于确定性地产生随机化消息哈希所需的随机值。
+
+\SPHINCSA\ 公钥同样包含两个元素。第一，HT 公钥，即顶层树的根节点。第二，一个均匀随机采样得到的 $n$ 字节公有种子值 $\pk.\seed$。
+
+由于 \texttt{kylin\_sign} 并不直接接收公钥，但又需要访问 $\pk.\seed$（以及在缓解故障攻击时可能还需要 $\pk.\root$），因此 \SPHINCSA\ 私钥内部还包含了一份公钥副本。
+
+算法 \texttt{kylin\_keygen} 的描述假定存在一个函数 \texttt{sec\_rand}，其输入为整数 $i$，输出为 $i$ 字节的高强度密码学随机数。
+
+\begin{algorithm}
+    \inputminted[breaklines,linenos,tabsize=2,mathescape,escapeinside=||]{C}{paper/code/kylin_keygen.cs}
+    \caption{\texttt{kylin\_keygen} --- 生成 \SPHINCSA\ 密钥对。}
+    \label{alg:spxkeygen}
+\end{algorithm}
+
+\SPHINCSA\ 私钥与公钥的格式见 \cref{fig:spx14}。
+
+\begin{figure}[ht]
+    \centering
+    \begin{bytefield}[bitwidth=1.1em,bitheight=2em]{8}
+        \wordbox{1}{$\sk.\mathtt{seed}$} \\
+        \wordbox{1}{$\sk.\mathtt{prf}$} \\
+        \wordbox{1}{$\pk.\mathtt{seed}$} \\
+        \wordbox{1}{$\pk.\mathtt{root}$}
+    \end{bytefield}
+    \qquad
+    \begin{bytefield}[bitwidth=1.1em,bitheight=2em]{8}
+        \wordbox{1}{$\pk.\mathtt{seed}$} \\
+        \wordbox{1}{$\pk.\mathtt{root}$}
+    \end{bytefield}
+
+    \caption{左：\SPHINCSA\ 私钥；右：\SPHINCSA\ 公钥。} \label{fig:spx14}
+\end{figure}
+
+\subsection{\SPHINCSA\ 签名}
+
+\SPHINCSA\ 签名 $\sight$ 是一个长度为 $(1 + k \cdot (a+1) + h + d \cdot \wotslen)n$ 的字节串。它由一个 $n$ 字节随机化字符串 \randstr、一个由 $k(a+1)n$ 字节组成的 FORS 签名 $\sigfors$，以及一个长度为 $(h + d \cdot \wotslen)n$ 字节的 HT 签名 $\sight$ 组成。
+
+签名数据格式见 \cref{fig:spx15}。
+
+\begin{figure}[ht]
+    \centering
+    \begin{bytefield}[bitwidth=1.1em,bitheight=2em]{16}
+        \wordbox{1}{Randomness $\randstr$} \\
+        \wordbox{1}{FORS Signature $\sigfors$} \\
+        \wordbox{1}{HT Signature $\sight$}
+    \end{bytefield}
+    \caption{\SPHINCSA\ 签名。} \label{fig:spx15}
+\end{figure}
+
+\subsection{\SPHINCSA\ 签名生成（函数 \texttt{kylin\_sign})}
+
+生成 \SPHINCSA\ 签名分为四步。第一步，伪随机生成随机值 $\randstr$。第二步，利用该随机值计算一个长度为 $m$ 字节的消息摘要，并将其拆分为三部分：长度为 $\lfloor(k\log t+7)/8\rfloor$ 字节的部分消息摘要 \texttt{tmp\_md}、长度为 $\lfloor(h-h_0+7)/8\rfloor$ 字节的树索引 \texttt{tmp\_idx\_tree}，以及长度为 $\lfloor(h_0+7)/8\rfloor$ 字节的叶索引 \texttt{tmp\_idx\_leaf}。第三步，通过抽取所需比特数，进一步得到实际值 $\md$、\texttt{idx\_tree} 和 \texttt{idx\_leaf}。随后，使用最低 HT 层中第 \texttt{idx\_tree} 棵 XMSS 树上的第 \texttt{idx\_leaf} 个 FORS 密钥对对部分消息摘要 \md\ 进行签名。最后，再使用 HT 对该 FORS 公钥进行签名。需要注意的是，完整索引并不会被整体使用，而是在实现中会立刻拆分成 tree index 与 leaf index。
+
+在计算 $\tt{R}$ 时，PRF 接受一个 $n$ 字节字符串 \texttt{opt}。它默认初始化为 $\pk.\seed$，但若全局变量 \texttt{RANDOMIZE} 被设置，也可以改为使用外部随机性。保留这一选项的原因在于，否则 \SPHINCSA\ 签名将始终是确定性的。
+
+\begin{algorithm}[ht]
+    \inputminted[breaklines,linenos,tabsize=2,mathescape,escapeinside=||]{C}{paper/code/kylin_sign.cs}
+    \caption{\texttt{kylin\_sign} --- 生成 \SPHINCSA\ 签名。}
+    \label{alg:spxsign}
+\end{algorithm}
+
+\subsection{\SPHINCSA\ 签名验证（函数 \texttt{kylin\_verify})}
+
+\SPHINCSA\ 的签名验证（算法 \ref{alg:spxvrfy}）可以概括为：重新计算消息摘要与索引、恢复一个候选 FORS 公钥，并验证该公钥上的 HT 签名。注意，若该候选 FORS 公钥与真实公钥不一致，则 HT 签名验证将在压倒性概率下失败。 \SPHINCSA\ 签名验证的输入包括：消息 $M$、签名 \sig\ 以及 \SPHINCSA\ 公钥 $\pk$。
+
+\begin{algorithm}[ht]
+    \inputminted[breaklines,linenos,tabsize=2,mathescape,escapeinside=||]{C}{paper/code/kylin_verify.cs}
+    \caption{\texttt{kylin\_verify} --- 使用 \SPHINCSA\ 公钥 $\bf PK$ 验证消息 $M$ 上的 \SPHINCSA\ 签名 $\bf SIG$。}
+    \label{alg:spxvrfy}
+\end{algorithm}
+
+\section{参数集与哈希/XOF 实例化}
+\label{sec:instantiations}
+
+本节讨论 \SPHINCSA\ 的实例化方式。 \SPHINCSA\ 可被视为一种签名模板：通过对所使用的密码学函数族进行实例化，就可得到具体的签名系统。我们将密码函数族的不同实现方式视为不同签名系统。与函数族实例化正交的是参数集问题：参数集为 \SPHINCSA\ 的各项参数赋予具体数值。
+
+本节首先给出参数所需满足的条件，并讨论不同参数在安全性、尺寸与速度之间所带来的权衡；随后再汇总面向 NGCC 的冻结参数集，以及已打包实现所使用的哈希/XOF 实例化。
+
+\subsection{\SPHINCSA\ 参数集}
+
+\SPHINCSA\ 由前文已经描述过的以下参数刻画；所有参数均为正整数。
+
+\begin{itemize}
+
+\item $n$：以字节计的安全参数。
+
+\item $w$：Winternitz 参数。
+
+\item $h$：超树高度。
+
+\item $d$：超树层数。
+
+\item $k$：FORS 中树的数量。
+
+\item $t$：FORS 树的叶子数。
+
+\end{itemize}
+
+回忆我们记 $a=\log t$。此外，由这些参数可以导出 $m$ 和 $\wotslen$：
+\begin{itemize}
+    \item $ m $：消息摘要长度（字节），其计算公式为
+    $$m=\lfloor(k\log t+7)/8\rfloor+\lfloor(h-h_0+7)/8\rfloor+\lfloor(h_0+7)/8\rfloor.$$
+    \item $\wotslen$：\WOTSCS\ 私钥、公钥与签名中 $n$ 字节字符串元素的个数。
+    $$
+    \wotslen = \min \left\{ \ell : \left| D_{\ell, \lfloor \frac{\ell \cdot (w-1)}{2} \rfloor} \right| \geq 2^n \right\} \enspace,
+    $$
+    其中 $D_{\ell, \lfloor \frac{\ell \cdot (w-1)}{2} \rfloor}$ 的大小通过 \cref{equ:recurrence} 中的递推关系来计算。
+\end{itemize}
+
+下面我们重新总结这些参数的作用、要求及性质，并给出若干公式，精确说明它们对性能与安全性的影响。安全参数 $n$ 也是除 $\hashmsg$ 之外所有密码函数族的输出长度。因此，它在很大程度上决定一个参数集能够达到的安全级别。同时，它也是 \SPHINCSA\ 结构中几乎所有节点的大小，因此所有签名元素的长度都是 $n$ 的整数倍。
+
+Winternitz 参数 $w$ 决定了每个 \WOTSCS\ 实例中哈希链的条数与长度。增大 $w$ 会线性增加哈希链长度，但对链条数量的减少只带来对数级影响。哈希链条数正好对应于 \WOTSCS\ 签名中 $n$ 字节值的个数，因此它对 \SPHINCSA\ 签名尺寸有显著影响。哈希链数量与长度的乘积又与签名速度直接相关，因为 HT 签名生成的主要时间几乎都花在计算 \WOTSCS\ 公钥上。因此，较大的 $w$ 意味着更短的签名，但更慢的签名过程。不过要注意其中的指数差异：$w$ 越大，进一步缩短签名所付出的代价就越高。Winternitz 参数本身不影响 \SPHINCSA\ 的安全性。
+
+超树高度 $h$ 决定了 FORS 实例的数量，因此也决定了在给定 \SPHINCSA\ 密钥对签名次数下，某个 FORS 密钥对被重复使用多次的概率。所以，高度 $h$ 直接影响安全性：超树越高，安全性越强；但另一方面，树越高，签名也越大。
+
+层数 $d$ 是一个纯粹的性能折中参数，并不直接影响安全性。它决定了超树中 XMSS 树的层数。各层高度 $(h_0,\ldots,h_{d-1})$ 则决定每层 XMSS 的高度，并必须满足 $\sum_{i=0}^{d-1} h_i = h$。增大 $d$ 往往有利于缩小子树规模并加快签名；但 $d$ 同时也控制层数，从而控制 HT 中 \WOTSCS\ 签名的数量，进而影响整个 \SPHINCSA\ 签名长度。
+
+参数 $k$ 与 $t$ 决定 FORS 的性能与安全性。FORS 树的叶子数 $t$ 必须是 2 的幂，而 $k$ 可以自由选择。通常较小的 $t$ 会带来更小、更快的签名；但在给定安全级别下，较小的 $t$ 往往需要较大的 $k$，这又会增大签名尺寸并拖慢签名速度。因此，这两个参数之间需要平衡，而最佳平衡通常应依赖下文给出的公式。
+
+消息摘要长度 $m$ 是 $\hashmsg$ 的输出字节长度，其值为 $\lfloor(k\log t+7)/8\rfloor+ \lfloor(h-h_0+7)/8\rfloor+\lfloor(h_0+7)/8\rfloor$ 字节。
+
+\WOTSCS\ 密钥对中链条数量 $\wotslen$ 决定了 \WOTSCS\ 签名的尺寸。
+
+\subsubsection{参数对安全性与性能的影响} \label{sec:securityandperformance}
+
+下面我们给出用于计算给定 \SPHINCSA\ 参数集在速度、尺寸和安全性方面表现的公式，以支持参数选择。附录 \ref{apx:script} 中还提供了一个 SAGE 脚本。
+
+\paragraph{密钥生成。}
+生成 \SPHINCSA\ 私钥和 $\pk.\seed$ 需要调用三次安全随机数生成器。随后需要生成顶层树（第 $d-1$ 层）。叶节点部分需要进行 $2^{h_{d-1}}$ 次 \WOTSCS\ 密钥生成（生成 $\sk$ 需要 $\wotslen$ 次 PRF 调用，生成 $\pk$ 需要 $w \wotslen$ 次 $\hashF$ 调用），并对 \WOTSCS\ 公钥进行压缩（一次 $\Th_{\wotslen}$ 调用）。计算顶层树根则还需要 $(2^{h_{d-1}}-1)$ 次 $\hashH$ 调用。
+
+\paragraph{签名。}
+随机化和消息压缩分别需要一次 $\PRFmsg$ 和一次 $\hashmsg$ 调用。FORS 签名需要 $kt$ 次 \PRF\ 和 $\hashF$ 调用；此外还需计算 $k$ 棵高度为 $\log t$ 的二叉树的根，这会增加 $k(t-1)$ 次 $\hashH$ 调用，最后还需要一次 $\Th_{k}$ 调用。接着，需要计算一次 HT 签名，而 HT 签名由 $d$ 层树组成，其结构与密钥生成中的树类似。因此，总共需要 $\sum_{i=0}^{d-1} 2^{h_i}$ 次 $\wotslen$ 次 PRF 调用与 $w \wotslen$ 次 $\hashF$ 调用，以及 $\sum_{i=0}^{d-1} 2^{h_i}$ 次 $\Th_{\wotslen}$ 调用。计算每棵树的根还会额外带来 $\sum_{i=0}^{d-1} (2^{h_i}-1)$ 次 $\hashH$ 调用。
+
+\paragraph{验证。}
+首先需要用 $\hashmsg$ 计算消息哈希。随后执行一次 FORS 验证：其中需要 $k$ 次 $\hashF$ 调用（由签名元素恢复叶节点），$k\log t$ 次 $\hashH$ 调用（结合叶节点和认证路径恢复根节点），以及一次 $\Th_{k}$ 调用来压缩这些根。接着，需要验证 $d$ 个 XMSS 签名；每个签名在 \WOTSCS\ 验证阶段需要少于 $w \wotslen$ 次 $\hashF$ 调用以及一次 $\Th_{\wotslen}$ 调用\footnotemark。除此之外，$d$ 个根恢复总共还需要 $\sum_{i=0}^{d-1} h_i = h$ 次 $\hashH$ 调用。
+
+\footnotetext{需要说明的是，$w \wotslen$ 次 $\hashF$ 调用是一个最坏情况上界，它对应 \WOTSCS\ 签名验证的最坏开销。由于待签消息本身是哈希值，可视为接近均匀分布，因此在实际测量中，这一数值通常更接近平均情况上界 $(w/2)\cdot \wotslen$。}
+
+\SPHINCSA\ 的私钥、公钥与签名大小分别为 $4n$、$2n$ 和 $(h + k(a + 1) + d \cdot {\wotslen} + 1)n$。
+
+\SPHINCSA\ 在面对通用攻击时的经典安全级别（bit security）可由下式计算：
+$$
+\mathtt{bitsec} = -\log\left(
+    \frac{1}{2^{8n}}+
+    \sum_{\gamma}
+        \left(1-\left(1-\frac{1}{t}\right)^{\gamma}\right)^{k}
+        \binom{q}{\gamma}
+        \left(1-\frac{1}{2^{h}}\right)^{q-\gamma}
+        \frac{1}{2^{h\gamma}}
+    \right) \enspace.
+$$
+\SPHINCSA\ 在面对通用攻击时的量子安全级别可由下式计算：
+$$
+\mathtt{bitsec} = -\frac{1}{2}\log\left(
+    \frac{1}{2^{8n}}+
+    \sum_{\gamma}
+        \left(1-\left(1-\frac{1}{t}\right)^{\gamma}\right)^{k}
+        \binom{q}{\gamma}
+        \left(1-\frac{1}{2^{h}}\right)^{q-\gamma}
+        \frac{1}{2^{h\gamma}}
+    \right) \enspace.
+$$
+这里同样忽略了对数内部的小常数因子。
+
+\subsubsection{建议参数集与安全级别}
+
+正如上一小节所述，即便在固定安全级别下，\SPHINCSA\ 的设计也支持在签名尺寸与速度之间作出不同折中。对于本提交包，我们采用 \cref{tab:ngcc-parameters} 中列出的三组 NGCC 对齐 Kylin 实例。这些实例由仓库中的参数脚本生成，并针对征集要求中的 128/256/512 bit 经典安全级别以及相应的量子安全目标进行了调优。
+
+\begin{table}[H]
+    \centering
+    \caption{用于已打包主实现的冻结 NGCC 对齐 Kylin 参数族。}
+    \label{tab:ngcc-parameters}
+    \scriptsize
+    \resizebox{\linewidth}{!}{%
+    \begin{tabular}{l c c c c l c c c c c c c c}
+    \toprule
+    参数族 & NGCC 等级 & $q$ & $n$ & $h/d$ & $(h_0,\ldots,h_{d-1})$ & $a$ & $k$ & $w$ & $\wotslen$ & bitsec & pk & sk & sig \\ \midrule
+    Kylin-128 & 128/80 & $2^{64}$ & 16 & 65/9 & $(7,7,7,7,7,7,7,8,8)$ & 13 & 11 & 73 & 22 & 127 & 32 & 64 & 6688 \\
+    Kylin-256 & 256/128 & $2^{64}$ & 32 & 68/10 & $(6,6,7,7,7,7,7,7,7,7)$ & 13 & 22 & 54 & 46 & 256 & 64 & 128 & 26784 \\
+    Kylin-512 & 512/256 & $2^{64}$ & 64 & 66/11 & $(6,6,6,6,6,6,6,6,6,6,6)$ & 13 & 49 & 97 & 79 & 511 & 128 & 256 & 103808 \\
+    \bottomrule
+    \end{tabular}%
+    }
+\end{table}
+
+\subsection{哈希函数的实例化} \label{sec:hashfunctions}
+
+在 NGCC 提交包中，哈希与 XOF 调用遵循打包实现所使用的 ICCS 辅助接口。具体而言，当前包使用 \texttt{sm3hash}、\texttt{pseudohash} 与 \texttt{pseudoXOF}，并在 \texttt{hash\_iccs.c} 与 \texttt{thash\_iccs.c} 模块中基于 \texttt{pseudoXOF} 构建带域分离的包装函数。
+
+回忆 $n$ 和 $m$ 分别表示安全参数以及消息摘要长度（单位：字节）。
+
+在实现层面，其映射关系如下：
+\begin{align*}
+    \hashmsg (\randstr, \pk.\seed, \pk.\root, M)
+        &= \mathrm{pseudoXOF}(\mathtt{tag}_{H\_msg} \| \randstr \| \pk.\seed \| \pk.\root \| M, m),\\
+    \PRF(\pk.\seed, \sk.\seed, \ADRS)
+        &= \mathrm{pseudoXOF}(\mathtt{tag}_{PRF} \| \pk.\seed \| \ADRS \| \sk.\seed, n),\\
+    \PRFmsg(\sk.\prf, \mathtt{OptRand}, M)
+        &= \mathrm{pseudoXOF}(\mathtt{tag}_{PRFmsg} \| \sk.\prf \| \mathtt{OptRand} \| M, n),\\
+    \hashF(\pk.\seed, \ADRS, M_1)
+        &= \mathrm{pseudoXOF}(\mathtt{tag}_{F} \| \pk.\seed \| \ADRS \| M_1, n),\\
+    \hashH(\pk.\seed, \ADRS, M_1 \| M_2)
+        &= \mathrm{pseudoXOF}(\mathtt{tag}_{H} \| \pk.\seed \| \ADRS \| M_1 \| M_2, n),\\
+    \Th_\ell(\pk.\seed, \ADRS, M)
+        &= \mathrm{pseudoXOF}(\mathtt{tag}_{T} \| \pk.\seed \| \ADRS \| M, n).
+\end{align*}
+
+其中，\texttt{sm3hash} 是固定输出长度的 SM3 接口，而 \texttt{pseudohash}/\texttt{pseudoXOF} 提供 NGCC API 所需的可变长度哈希与 XOF 行为。当前对外打包实现对这些调用使用显式域分离标签，并保持 address/seed 的输入布局与 ICCS 辅助函数一致。
