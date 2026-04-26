@@ -571,3 +571,26 @@
 - 验证：
   - 关键词复扫：仓库受管文件中已不再出现旧的 `sphincsp*.tex` 论文文件路径。
   - 编译验证：`latexmk -pdf -shell-escape -interaction=nonstopmode -halt-on-error main.tex` 通过，并刷新仓库根目录 `main.pdf`。
+
+### 2026-04-26 - Spec Scope Cleanup + Chapter Split + Citation Updates (Done)
+
+- 规范范围收敛（specification only）：
+  - 从 `main.tex` 移除不属于 specification 正文的章节输入：`Implementation Codes`、`Test Vectors`、`Intellectual Property Statements` 与 `Packaging Checklist`。
+- 章节结构重组：
+  - 将第 9--12 章拆分为独立文件并接入主文档：
+    - `paper/tex/design_rationale.tex`
+    - `paper/tex/security_statements_and_analyses.tex`
+    - `paper/tex/performance_evaluation.tex`
+    - `paper/tex/feature_statements.tex`
+  - `paper/tex/kylin.tex` 截断为前置章节；`main.tex` 改为分文件输入上述四章。
+- 文本与内容清理：
+  - 删除安全章节中的两条 TODO（formal model / additional security-property analyses）。
+  - 删除安全章节中 `Concrete generic-security figures` 表（Table 4）。
+  - 在 `2.1 Diverse Layer Heights in the Hypertree` 增加默认有序约束：`h_0 <= h_1 <= ... <= h_{d-1}`。
+  - 将 Table 1 表头 `KeyGen/Sign/Verify (Hashcall)` 改为不带括号后缀。
+- 相关工作与附录引用补充：
+  - 在 `Stateless signatures` 段落加入并整合引用：`SP:HKRY23`、`C:KhoKudWag25`、`EPRINT:QinSun25`、`optimalwots`，并加入 NIST FIPS 205 引用。
+  - 在 Appendix B (`q=2^24 Companion Parameter Profiles`) 加入 NIST 2026-04-13（SP 800-230 IPD）引用说明。
+  - `paper/bib/extra.bib` 新增 `NIST:FIPS205` 与 `NIST:SP800-230-IPD` 条目。
+- 验证：
+  - 使用 `latexmk -pdf -shell-escape -interaction=nonstopmode -halt-on-error main.tex` 编译通过，`main.pdf` 更新。

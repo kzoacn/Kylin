@@ -16,9 +16,10 @@ This appendix summarizes the frozen companion $q=2^{24}$ profiles that are
 kept as additional reference implementations. The motivation is practical:
 some application settings remain dissatisfied with large signature sizes and
 verification-time behavior under very large per-key signing budgets. In
-addition, NIST released a new draft on April 13 that highlights limited-signature
-regimes (including $2^{24}$-style usage limits), which further motivates keeping
-explicit companion rows for this operating point.
+addition, NIST's April 13, 2026 initial public draft SP 800-230 highlights
+stateful hash-based signatures with explicit per-key usage bounds, which
+further motivates keeping explicit companion rows for limited-signature
+operating points (including $2^{24}$-style limits)~\cite{NIST:SP800-230-IPD}.
 
 In this repository, the $q=2^{24}$ rows are selected from the same constrained
 search workflow and then frozen as reference-only companions to the packaged

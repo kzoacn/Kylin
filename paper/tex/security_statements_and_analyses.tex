@@ -1,0 +1,62 @@
+\section{Security Statements and Analyses}
+\label{sec:security-claims}
+
+This section serves as the security-claim section of the submission draft. For the digital-signature functionality specified in \cref{sec:spx-core}, we claim EUF-CMA security under the assumptions and instantiations discussed below. The recommended NGCC-aligned families are recorded in \cref{tab:ngcc-parameters}, and the packaged ICCS hash/XOF interface is described in \cref{sec:hashfunctions}.
+
+\paragraph{Theoretical security.}
+Kylin follows the security-analysis framework of \SPHINCSP. As a result, the EUF-CMA security of the signature scheme is intended to reduce to the security of the tweakable hash-function families used for \hashmsg, \PRF, \PRFmsg, \hashF, \hashH, and \Th. In the usual analysis model, these primitives are treated as idealized random oracles or quantum-access random oracles, and the resulting bounds are interpreted against generic classical and quantum attacks.
+
+In particular, the EUF-CMA security of the signature scheme relies on the following security properties of the underlying components:
+\begin{itemize}
+    \item The PRF security of \PRF and \PRFmsg,
+    \item The interleaved target subset resilience (ITSR) of \hashmsg,
+    \item The single function, multi-target undetectability (SM-UD), target-collision (SM-TCR), and decisional second-preimage resistance (SM-DSPR) of \hashF,
+    \item The SM-TCR of \hashH and $\Th_\ell$.
+\end{itemize}
+
+\paragraph{Concrete security and failure probability.}
+
+The security analysis is identical to \SPHINCSP. The classical security level, or bit security of \SPHINCSA\ against generic attacks can be computed as
+$$
+b=-\log\left(
+    \frac{1}{2^{8n}}+
+    \sum_{\gamma}
+        \left(1-\left(1-\frac{1}{t}\right)^{\gamma}\right)^{k}
+        \binom{q}{\gamma}
+        \left(1-\frac{1}{2^{h}}\right)^{q-\gamma}
+        \frac{1}{2^{h\gamma}}
+    \right) \enspace.
+$$
+The quantum security level, or bit security of \SPHINCSA\ against generic attacks can be computed as
+$$
+b=-\frac{1}{2}\log\left(
+    \frac{1}{2^{8n}}+
+    \sum_{\gamma}
+        \left(1-\left(1-\frac{1}{t}\right)^{\gamma}\right)^{k}
+        \binom{q}{\gamma}
+        \left(1-\frac{1}{2^{h}}\right)^{q-\gamma}
+        \frac{1}{2^{h\gamma}}
+    \right) \enspace.
+$$
+Here, we are neglecting the small constant factors inside the logarithm. 
+
+For the recommended NGCC submission families in \cref{tab:ngcc-parameters}, we instantiate these formulas with $q=2^{64}$ in order to match the call's explicit requirement that one key pair support at least $2^{64}$ signed messages.
+
+\paragraph{Other security properties.}
+No additional formal security claims are made in this draft. In particular, the current first-stage text does not claim dedicated side-channel resistance, perfect forward security, a quantified multi-key reduction, or a separate security theorem for temporary key reuse beyond the stated single-key $q=2^{64}$ analysis.
+
+\paragraph{Security of the ICCS hash/XOF instantiation.}
+
+The packaged NGCC implementation uses ICCS auxiliary functions
+\texttt{sm3hash}, \texttt{pseudohash}, and \texttt{pseudoXOF}. At the scheme
+level, \hashmsg, \PRF, \PRFmsg, \hashF, \hashH, and \Th\ are realized through
+domain-separated wrappers over \texttt{pseudoXOF} with explicit tags and
+seed/address separation in the input layout.
+
+Accordingly, the security claim in this draft is that the concrete instantiated
+functions provide the pseudorandomness, target-collision resistance, and related
+properties required by the \SPHINCSA\ proof framework at the selected parameter
+sizes. This submission text does not introduce an additional independent
+tightness claim specific to the ICCS helper internals beyond that standard
+generic-analysis interpretation.
+
