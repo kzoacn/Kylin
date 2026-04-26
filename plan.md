@@ -104,6 +104,12 @@
 
 ## 5. 进度日志
 
+### 2026-04-27 - Implementation README File Inventory Completion (Done)
+
+- 按 NGCC 提交要求补全 `Implementations/README`：新增顶层文件清单、三类实现目录清单、每个实例目录的通用文件清单与逐文件职责说明。
+- 明确 `Additional_Implementation/Kylin-128-q24/timing_probe` 为额外保留的本地计时探针，并说明 `KAT_SIG`、`test_sig`、`bench_sig`、`output/`、`.stack-usage/` 属于生成物，不作为源文件清单的一部分。
+- 验证：`git diff --check` 通过。
+
 ### 2026-04-26 - Optimized Implementation Performance Rerun without Additional Profiles (Done)
 
 - 按 `Optimized_Implementation` 最新代码重新执行主提交三档 `Kylin-128/256/512` 的 Ref/Opt package benchmark 与 stack/code-size 统计，不测量 reference-only Additional `q=2^24` 实例。
