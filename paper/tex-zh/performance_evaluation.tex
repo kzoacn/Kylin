@@ -28,7 +28,7 @@
 \paragraph{软件性能、传输与存储开销。}
 \cref{tab:kylin-package-bench} 中的自动化打包测量结果由当前实现树上的 package benchmark 驱动脚本生成。该表给出在 32 字节消息上、经过 3 次预热后的 9 次实测主机本地墙钟时间中位数（毫秒），并同时列出公钥、私钥和签名大小（字节）。由于这些数据是仓库本地环境中的墙钟测量值，其绝对数值应理解为当前主机上的实测点，而不是跨平台的统一性能声明。
 
-在本次重新测试中，优化实现相较参考实现仍保持一致优势。对于 \texttt{Kylin-128}、\texttt{Kylin-256} 和 \texttt{Kylin-512}，签名阶段的实测加速比分别约为 $3.07\times$、$2.86\times$ 和 $3.20\times$；密钥生成阶段分别约为 $3.89\times$、$4.28\times$ 和 $5.86\times$；验证阶段则约提升 10--12\%。
+在本次重新测试中，优化实现相较参考实现仍保持一致优势。对于 \texttt{Kylin-128}、\texttt{Kylin-256} 和 \texttt{Kylin-512}，签名阶段的实测加速比分别约为 $3.06\times$、$2.84\times$ 和 $3.16\times$；密钥生成阶段分别约为 $3.85\times$、$4.28\times$ 和 $5.89\times$；验证阶段分别约为 $2.58\times$、$2.75\times$ 和 $3.77\times$。
 
 \begin{table}[H]
     \centering

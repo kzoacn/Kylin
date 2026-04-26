@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import csv
 import platform
 import re
@@ -78,12 +79,14 @@ def implementation_label(instance_dir: Path) -> str:
     return "opt"
 
 
-def discover_instance_dirs() -> list[Path]:
-    roots = (
+def discover_instance_dirs(include_additional: bool = False) -> list[Path]:
+    roots = [
         REPO_ROOT / "Implementations" / "Reference_Implementation",
         REPO_ROOT / "Implementations" / "Optimized_Implementation",
-        REPO_ROOT / "Implementations" / "Additional_Implementation",
-    )
+    ]
+    if include_additional:
+        roots.append(REPO_ROOT / "Implementations" / "Additional_Implementation")
+
     directories: list[Path] = []
     for root in roots:
         if not root.is_dir():
@@ -97,10 +100,10 @@ def discover_instance_dirs() -> list[Path]:
     return directories
 
 
-def collect() -> tuple[list[dict[str, str]], list[dict[str, str]]]:
+def collect(include_additional: bool = False) -> tuple[list[dict[str, str]], list[dict[str, str]]]:
     bench_rows: list[dict[str, str]] = []
     memory_rows: list[dict[str, str]] = []
-    instance_dirs = discover_instance_dirs()
+    instance_dirs = discover_instance_dirs(include_additional=include_additional)
 
     if not instance_dirs:
         raise RuntimeError("no Kylin instance directories found")
@@ -152,7 +155,7 @@ def collect() -> tuple[list[dict[str, str]], list[dict[str, str]]]:
 def write_csv(path: Path, fieldnames: list[str], rows: list[dict[str, str]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer = csv.DictWriter(handle, fieldnames=fieldnames, lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
 
@@ -203,8 +206,18 @@ def write_summary(bench_rows: list[dict[str, str]], memory_rows: list[dict[str, 
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(
+        description="Collect Kylin package benchmark and memory metrics."
+    )
+    parser.add_argument(
+        "--include-additional",
+        action="store_true",
+        help="also collect reference-only q=2^24 Additional_Implementation instances",
+    )
+    args = parser.parse_args()
+
     try:
-        bench_rows, memory_rows = collect()
+        bench_rows, memory_rows = collect(include_additional=args.include_additional)
         write_csv(
             BENCH_CSV,
             ["name", "impl", "keygenms", "signms", "verifyms", "pkbytes", "skbytes", "sigbytes"],

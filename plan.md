@@ -104,6 +104,14 @@
 
 ## 5. 进度日志
 
+### 2026-04-26 - Optimized Implementation Performance Rerun without Additional Profiles (Done)
+
+- 按 `Optimized_Implementation` 最新代码重新执行主提交三档 `Kylin-128/256/512` 的 Ref/Opt package benchmark 与 stack/code-size 统计，不测量 reference-only Additional `q=2^24` 实例。
+- 刷新 `paper/data/package_bench.csv`、`paper/data/package_memory.csv` 与 `Implementations/benchmarks/summary.md`。本轮主表仍仅包含三组主提交实例的 Ref/Opt 六行。
+- 将 `Implementations/tools/collect_metrics.py` 的默认收集范围收紧为主提交 Ref/Opt，并新增 `--include-additional` 作为显式开关；同步更新 `Implementations/README`。
+- 同步更新英文 `paper/tex/performance_evaluation.tex` 与中文镜像 `paper/tex-zh/performance_evaluation.tex` 中的实测加速比结论。
+- 验证：三组优化实现 `make test` 通过；`make metrics` 通过；`make -C paper/build all` 与 `make -C paper/build zh` 通过，仍仅有既有的 overfull/underfull 与 appendix `hyperref` 提示。
+
 ### 2026-04-26 - Primary Benchmark Refresh after Optimized Implementation Update (Done)
 
 - 在 `Optimized_Implementation` 更新后，重新执行 `Kylin-128/256/512` 三个主提交优化实现的 `make test`，确认签名/验签流程仍正常。

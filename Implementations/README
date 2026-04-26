@@ -56,6 +56,12 @@ Refresh the package-level benchmark and memory summaries only:
 
     make metrics
 
+By default this refreshes the primary submission profiles in
+`Reference_Implementation/` and `Optimized_Implementation/`. To also include
+the reference-only `q=2^24` companion profiles, run:
+
+    python3 Implementations/tools/collect_metrics.py --include-additional
+
 This updates:
 
 - `paper/data/package_bench.csv`
