@@ -1,8 +1,11 @@
 Implementations/**/KAT_SIG
 Implementations/**/test_sig
 Implementations/**/bench_sig
+Implementations/**/bench_sig_1iter
 Implementations/**/output/
 Implementations/**/.stack-usage/
+__pycache__/
+*.py[cod]
 _minted-main/
 _minted-main_zh/
 main.aux
@@ -14,6 +17,8 @@ main.log
 main.out
 main.toc
 main_zh.aux
+main_zh.bbl
+main_zh.blg
 main_zh.log
 main_zh.out
 main_zh.toc

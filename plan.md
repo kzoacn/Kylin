@@ -104,6 +104,13 @@
 
 ## 5. 进度日志
 
+### 2026-04-27 - Clean Tracked Generated Files (Done)
+
+- 统计当前仓库文件：清理前 Git 受管文件为 631 个，工作区排除 `.git` 后为 726 个文件。
+- 从 Git 中移除 6 个 `bench_sig_1iter` ELF 可执行产物和 3 个 `paper/code/__pycache__/*.pyc` Python 缓存文件；清理后 Git 受管文件为 622 个。
+- 补充 `.gitignore`：忽略 `Implementations/**/bench_sig_1iter`、`__pycache__/`、`*.py[cod]` 以及中文 LaTeX 的 `main_zh.bbl`/`main_zh.blg` 生成物。
+- 验证：受管文件中不再包含 `bench_sig_1iter`、`__pycache__` 或 `.pyc` 产物。
+
 ### 2026-04-27 - Merge Second Overleaf PR Conservatively (Done)
 
 - 处理远端分支 `overleaf-2026-04-27-0441`：该分支同样来自较早 Overleaf 同步轨道，会删除当前 Kylin NGCC 实现、中文文档、数据文件与维护记录，并把论文入口回退到旧 SPHINCS-alpha 结构。
