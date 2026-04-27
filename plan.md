@@ -104,6 +104,12 @@
 
 ## 5. 进度日志
 
+### 2026-04-27 - Merge Second Overleaf PR Conservatively (Done)
+
+- 处理远端分支 `overleaf-2026-04-27-0441`：该分支同样来自较早 Overleaf 同步轨道，会删除当前 Kylin NGCC 实现、中文文档、数据文件与维护记录，并把论文入口回退到旧 SPHINCS-alpha 结构。
+- 继续采用 `ours` merge 策略将该 PR 作为已合并历史记录到 `main`，同时保留当前 Kylin/NGCC 文件树。
+- 验证：合并后没有引入 PR 的破坏性文件树变更；仅本计划记录发生内容变化。
+
 ### 2026-04-27 - Merge Overleaf PR Conservatively (Done)
 
 - 处理远端分支 `overleaf-2026-04-27-0433`：该分支来自较早基点，Overleaf 同步内容会删除当前 Kylin NGCC 提交包中的实现、中文文档、数据文件与维护记录，并回退到旧 SPHINCS-alpha 文档轨道。
