@@ -11,7 +11,7 @@
 
 参数定版文件：`paper/data/para_kylin_final_6profiles.csv`。
 
-历史目录 `.SPHINCS-ALPHA-NIST/` 仅作为归档材料，非必要不读取。
+历史归档目录已从当前提交包中移除，不再作为本仓库材料维护。
 
 ## 2. 已有基础（已完成）
 
@@ -98,11 +98,17 @@
 ## 4. 执行原则
 
 - 每个中等规模任务完成后：更新 `plan.md` 进度日志，并执行 `git add`、`git commit`、`git push`。
-- 默认优先读取 `Implementations/`、`docs/`、`paper/`、`main.tex`；归档目录仅在必要时查阅。
+- 默认优先读取 `Implementations/`、`docs/`、`paper/`、`main.tex`；历史归档目录已移除，不再作为读取来源。
 - 任何参数变更必须同步：实现常量、文档表格、测试向量、说明文字。
 - 任何影响英文文档结构或自然语言内容的任务，都要同步评估中文镜像章节、术语表和 EN->ZH 同步指引是否需要更新。
 
 ## 5. 进度日志
+
+### 2026-04-27 - Remove Historical Archive Directory (Done)
+
+- 按清理请求删除历史归档目录，当前提交包只保留 Kylin NGCC 相关实现、文档、数据与构建材料。
+- 同步更新 `AGENTS.md` 与本计划中的归档目录说明，避免继续把已删除目录描述为可用材料。
+- 验证：目录已不存在；剩余受管文本中不再引用该历史归档路径。
 
 ### 2026-04-27 - Sync q24 Package Benchmarks into Appendix B (Done)
 

@@ -1,1 +1,0 @@
-KAT files are too large. Removed.

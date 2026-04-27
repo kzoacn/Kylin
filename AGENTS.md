@@ -1,7 +1,7 @@
 # Agent Notes
 
 - This repository targets a complete NGCC digital-signature submission package for **Kylin**.
-- `.SPHINCS-ALPHA-NIST/` is a historical archive. Keep it read-only, and do not read it unless necessary.
+- The historical SPHINCS-alpha archive has been removed from the current submission package.
 - `docs/` contains NGCC requirements, evaluation criteria, and ICCS API templates.
 - `main.tex` and `paper/` are the current English submission document source.
 - The planned Chinese submission-document track should be rooted at `main_zh.tex` and generate `main_zh.pdf`.
