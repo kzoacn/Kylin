@@ -17,9 +17,3 @@
 - 按原文结构重建标题层级、列表、代码块和表单表格。
 - 将 PDF 文本抽取中丢失的上标整理为 `2^n`、`2^63`、`2^64`、`2^80` 等写法。
 - `API_PKC.zip` 及其解压出的示例接口文件保持原样。
-
-## 仓库实现布局更新（2026-04-26）
-
-- `q=2^24` 的三组实现（`Kylin-128-q24`、`Kylin-256-q24`、`Kylin-512-q24`）已从主实现目录转入 `Implementations/Additional_Implementation/`。
-- `Additional_Implementation` 不再区分 `Reference_Implementation` 与 `Optimized_Implementation` 子目录，当前仅保留 Ref 版本目录：`Implementations/Additional_Implementation/Kylin-*-q24`。
-- 主提交实现目录保留 `q=2^64` 的三组：`Kylin-128`、`Kylin-256`、`Kylin-512`。

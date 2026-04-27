@@ -90,12 +90,14 @@
 \begin{document}
 %\fontfamily{lmr}\selectfont
 \fancyhead{}
-\def\thetitle{Kylin \\ First-Stage NGCC Digital-Signature Submission Package}
+\def\thetitle{SPHINCS-alpha \\ Submission to the NGCC Project}
 \title{\thetitle}
 \date{\today}
-\author{Kylin Team}
+\author{SPHINCS-alpha Team}
 
 \maketitle
+
+\input{paper/tex/abstract}
 
 \clearpage
 
@@ -103,15 +105,16 @@
 
 \clearpage
 
+\input{paper/tex/submission_overview}
+
 % Section I
 \input{paper/tex/intro}    % basic introduction
+\input{paper/tex/preliminary}
+\input{paper/tex/revisit}
 \input{paper/tex/construction}
+\input{paper/tex/results}
 
-\input{paper/tex/kylin}
-\input{paper/tex/design_rationale}
-\input{paper/tex/security_statements_and_analyses}
-\input{paper/tex/performance_evaluation}
-\input{paper/tex/feature_statements}
+\input{paper/tex/sphincsp}
 
 
 
@@ -121,7 +124,8 @@
 
 % % --- Appendix ---%
 \appendix
-\input{paper/tex/kylin-appendix}
+\input{paper/tex/submission_checklist}
+\input{paper/tex/sphincsp-appendix}
 
 \end{document}
 

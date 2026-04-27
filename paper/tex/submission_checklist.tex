@@ -1,4 +1,4 @@
-\section{Packaging Checklist and Remaining External Deliverables}
+\section{Submission Package Checklist and Outstanding TODOs}
 \label{apx:submission-checklist}
 
 This appendix records the items that are still missing or still need to be reformatted for a complete NGCC submission package.
@@ -6,12 +6,12 @@ This appendix records the items that are still missing or still need to be refor
 \subsection{Algorithm Text TODOs}
 
 \begin{itemize}
-    \item A submission-style security-claim table for the selected NGCC 128/256/512-bit families has now been added in \cref{tab:ngcc-parameters}, with a single-key $q=2^{64}$ concrete-security setting aligned with the packaged instances.
-    \item The recommended families now use $h\in\{65,68,66\}$ and are tuned with $q=2^{64}$, which supports the call's requirement of at least $2^{64}$ signatures under one key pair in the intended single-key model. The packaged NGCC SIG wrapper explicitly accepts messages up to $2^{60}$ bytes, i.e.\ $2^{63}$ bits.
-    \item A submission-style correctness statement for the packaged instances now appears in \cref{sec:security-claims}.
-    \item The security section now states the current scope of the side-channel, multi-key, and repeated-key claims explicitly: the first-stage software package makes no dedicated side-channel-hardening claim, uses single-key analysis by default, and targets $q=2^{64}$ repeated-key usage for one long-term key pair.
-    \item Repository-local benchmark summaries for the packaged implementations are generated automatically and included in the repository materials.
+    \item A submission-style security-claim table for the selected NGCC 128/256/512-bit families has now been added in \cref{tab:ngcc-parameters}. \todo{If desired, add a supplementary note explaining how the single-key $q=2^{64}$ tuning used for parameter selection relates to the evaluation document's broader ``at most $2^{80}$ queries'' convention.}
+    \item The recommended families now use $h=70$ and are tuned with $q=2^{64}$, which supports the call's requirement of at least $2^{64}$ signatures under one key pair in the intended single-key model. \todo{State explicitly the supported message-length bound and mirror the final signing-capacity wording in the finalized submission forms.}
+    \item \todo{Add a short, explicit correctness statement in the exact notation and wording preferred for the submission package.}
+    \item \todo{Expand the discussion of side-channel resistance, multi-key security, and repeated-key usage with either concrete evidence or a clearly scoped limitation statement.}
     \item \todo{Add optional benchmark data for 32-bit embedded platforms and hardware platforms if these results become available.}
+    \item \todo{Add quantitative memory-consumption measurements instead of the current qualitative remark on low stack usage.}
 \end{itemize}
 
 \subsection{Required Forms and Statements}
@@ -26,19 +26,18 @@ This appendix records the items that are still missing or still need to be refor
 \subsection{Implementation Package}
 
 \begin{itemize}
-    \item First-stage ISO C reference implementations are now present for \texttt{Kylin-128}, \texttt{Kylin-256}, and \texttt{Kylin-512}.
-    \item First-stage optimized 64-bit PC implementations are now present for all three instances; they currently share the portable code path with an optimized build profile. \todo{Replace or supplement this with deeper architecture-specific optimization before final submission, if desired.}
-    \item The implementations use the NGCC SIG API helper package provided for the call.
-    \item A repository-local \texttt{README} for the implementation package has been added.
-    \item The three $q=2^{24}$ companion implementations are now organized as additional (non-primary), reference-only submission artifacts.
-    \item Automated package-level benchmark generation is now part of the repository workflow and feeds the table in \cref{tab:kylin-package-bench}.
-    \item The main document now summarizes the implementation package, test-vector package, and intellectual-property package explicitly in \cref{sec:implementation-codes,sec:test-vectors,sec:ip-statements}.
+    \item \todo{Produce an ISO C reference implementation for every submitted algorithm instance.}
+    \item \todo{Produce an optimized implementation for mainstream 64-bit PC processors for every submitted algorithm instance.}
+    \item \todo{Adapt the implementations to the NGCC API provided in \texttt{API\_PKC.zip}.}
+    \item A repository-local packaging skeleton has now been prepared with per-instance reference and optimized directories plus placeholder build scripts. \todo{Replace the placeholder wrapper code with the real implementation.}
+    \item A repository-local \texttt{README} for the implementation package has now been prepared. \todo{Update it once the final file inventory is fixed.}
+    \item The current repository includes algorithm-oriented \texttt{.cs} listings and scripts, but these are not yet a submission-ready NGCC implementation package.
 \end{itemize}
 
 \subsection{Test Vectors}
 
 \begin{itemize}
-    \item Known-answer test vectors for all three submitted instances have been generated using the standard NGCC KAT driver.
-    \item The generated test-vector outputs for the three submitted instances are now included with the repository materials.
-    \item The reference build scripts regenerate and copy the published test vectors with \texttt{make kat}.
+    \item \todo{Generate known-answer test vectors for every submitted instance using the NGCC auxiliary programs and data.}
+    \item Placeholder files with the required \texttt{KAT\_SIG\_[AlgorithmInstance].txt} names have now been prepared. \todo{Replace all placeholders with real generated vectors.}
+    \item \todo{Verify that the build scripts regenerate the published test vectors automatically from the completed reference implementation.}
 \end{itemize}
