@@ -1,7 +1,0 @@
-name,impl,maxstack,textbytes,databytes,bssbytes,maxstackfn
-Kylin-128,opt,2176,55041,648,438032,thash_wots_chain_4x
-Kylin-128,ref,704,28557,688,437968,sm3_bit_compress
-Kylin-256,opt,2176,57364,688,2293872,SPX_merkle_gen_root
-Kylin-256,ref,1904,28981,688,2293832,kylin_sign_verify
-Kylin-512,opt,6048,60996,688,21847952,SPX_merkle_gen_root
-Kylin-512,ref,5648,30021,688,21847912,kylin_sign_verify

@@ -1,21 +1,9 @@
-\section{Main Design Differences from \SPHINCSP} \label{sec:balanced wotsp}\label{sec:wots-optimization}
+\section{\SPHINCSA\ vs. \SPHINCSP} \label{sec:balanced wotsp}\label{sec:wots-optimization}
 
 In this section we highlight our improvement upon the original \SPHINCSP\ scheme, namely, the one-time signature component.
 Our optimized scheme, \WOTSCS, allows a larger message space / signature size ratio as compared to the original \WOTSP\ scheme, allowing a smaller one-time signature size. As a result, the parameters of the hash-based signature scheme can thus be re-tuned to reduce the signature size without exacerbating the computation time.
-In addition, Kylin uses a more flexible hypertree layout with diverse per-layer heights, which lets the packaged parameter sets remain well balanced even when $h$ is not divisible by $d$.
 
 We explain the details of our optimization as well as some technical proofs in this section.
-
-\subsection{Diverse Layer Heights in the Hypertree}
-
-Earlier parameter profiles often imposed the divisibility condition $h \bmod d = 0$ so that every layer had the same height $h/d$. In this draft, we allow per-layer heights $(h_0,\ldots,h_{d-1})$ to be non-uniform as long as $\sum_{i=0}^{d-1} h_i = h$. By default, we assume the layer-height vector is ordered, i.e., $h_0 \le h_1 \le \cdots \le h_{d-1}$.
-
-Let $r = h \bmod d$. Our default balancing rule is:
-\begin{itemize}
-    \item choose $d-r$ layers with height $\left\lfloor h/d \right\rfloor$,
-    \item choose $r$ layers with height $\left\lceil h/d \right\rceil$.
-\end{itemize}
-Equivalently, the profile is as balanced as possible and differs by at most one between any two layer heights.
 
 \subsection{The \WOTSP~Encoding}
 
@@ -235,7 +223,7 @@ The two properties guarantee  that every chain contains exactly one element $c_{
 Constant Sum \WOTSP~has two advantages over \WOTSP.
 \begin{itemize}
     \item Stable computing time.  The number of hash function calls is fixed in our construction, in contrast to possibly variable numbers for the signing and verification algorithm of \WOTSP. While no timing attacks are identified against the implementations of our construction and \WOTSP, stable computing time is always preferable (especially for signing algorithms whose computation involves a private key). 
-    \item Reduced signature size and number of hash calls. For instance, a baseline 256-bit-classical parameter choice suggests $w=16$ and $l=67$. In our construction, for $w=16$ we require $l=66$, which reduces 1.5\% in both running time (in terms of the expected number of hash function calls) and size. We refer to \cref{tab:ots} for more details.
+    \item Reduced signature size and number of hash calls. For instance, the \SPHINCSP-256s parameter set suggests $w=16$ and $l=67$. In our construction, for $w=16$ we require $l=66$, which reduces 1.5\% in both running time (in terms of the expected number of hash function calls) and size. We refer to  \cref{tab:ots} for more details.
 \end{itemize}
 
 \begin{table}[t]

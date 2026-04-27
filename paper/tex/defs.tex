@@ -44,12 +44,12 @@
 \newcommand{\BW}{{\rm BW}}
 \newcommand{\RBW}{{\rm RBW}}
 
-\DeclareRobustCommand{\pk}{\ifmmode\mathtt{PK}\else\texttt{PK}\xspace\fi}
-\DeclareRobustCommand{\sk}{\ifmmode\mathtt{SK}\else\texttt{SK}\xspace\fi}
+\newcommand{\pk}{\ensuremath{\mathbf{PK}}\xspace}
+\newcommand{\sk}{\ensuremath{\mathbf{SK}}\xspace}
 
 
 \newcommand{\SPHINCSP}{\texorpdfstring{\ensuremath{\text{SPHINCS}^{+}}\xspace}{SPHINCS+}}
-\newcommand{\SPHINCSA}{\texorpdfstring{\ensuremath{\text{Kylin}\xspace}}{Kylin}}
+\newcommand{\SPHINCSA}{\texorpdfstring{\ensuremath{\text{SPHINCS-}{\alpha}\xspace}}{SPHINCS-Alpha}}
 \newcommand{\WOTSP}{\texorpdfstring{\ensuremath{\text{WOTS}^{+}\xspace}}{WOTS+}}
 \newcommand{\WOTSCS}{\texorpdfstring{\ensuremath{\text{CS-WOTS}^{+}}\xspace}{CS-WOTS+}}
 \newcommand{\XMSS}{\texorpdfstring{\ensuremath{\text{XMSS}}\xspace}{XMSS}}
@@ -66,7 +66,7 @@
 \newcommand{\ADRS}{\ensuremath{\mathtt{ADRS}}\xspace}
 \newcommand{\md}{\ensuremath{\mathtt{md}}\xspace}
 \newcommand{\seed}{\ensuremath{\mathtt{seed}}\xspace}
-\newcommand{\wotslen}{\ensuremath{\mathtt{len}}\xspace}
+\newcommand{\len}{\ensuremath{\mathtt{len}}\xspace}
 \newcommand{\prf}{\ensuremath{\mathtt{prf}}\xspace}
 \renewcommand{\root}{\ensuremath{\mathtt{root}}\xspace}
 \newcommand{\sig}{\ensuremath{\mathtt{SIG}}\xspace}
