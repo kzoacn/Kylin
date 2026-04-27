@@ -1,5 +1,0 @@
-name,q,n,h,d,h_prime_inferred,log_t_inferred,a_inferred,k,w_inferred,l_inferred,lgw_inferred,m_inferred,sec_level_inferred,category_inferred,bytes_pk_ref_2n,bitsec_claimed,bitsec_verified,bitsec_delta,bitsec_meets_claim
-sphincs-a-128s,2^64,16,63,9,7,13,13,12,73,22,,28,I,1,32,128.000000,126.990060,-1.009940,False
-sphincs-a-256s,2^64,32,66,11,6,13,13,23,79,42,,47,V,5,64,255.000000,255.871964,0.871964,True
-SLH-DSA-SHAKE-128-24,2^24,16,22,1,22,24,24,6,4,67,2,21,I,1,32,,127.280773,,
-SLH-DSA-SHAKE-256-24,2^24,32,21,1,21,25,25,12,4,131,2,41,V,5,64,,255.359352,,

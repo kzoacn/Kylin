@@ -2,14 +2,14 @@
 
 \begin{table*}[ht]
     \centering
-    \caption{Hash-call and size metrics for the three packaged Kylin families. Key generation, signing, and verification are reported in hash-call proxies; key and signature sizes are in bytes.}
+    \caption{Performance comparison between \SPHINCSP\ and \SPHINCSA, with simple tweakable hash function instantiated with \textsf{sha256}. Key generation, signing and verification time are in terms of CPU cycles; public key, secret key and signature size are in bytes. All cycle counts are the median of 100 runs.}
     \label{tab:comp tiny}
-    \begin{tabular}{l r r r r r r}%
+    \begin{tabular}{c rrrr rrrr rrrr}%
     \toprule
-      Instance & KeyGen & Sign & Verify & Pk & Sk & Sig \\ \midrule
-      Kylin-128 & 417279 & 2442880 & 7357 & 32 & 64 & 6688 \\
-      Kylin-256 & 324095 & 3223168 & 12577 & 64 & 128 & 26784 \\
-      Kylin-512 & 495615 & 6198272 & 42476 & 128 & 256 & 103808 \\
+       & \multicolumn{4}{c}{\SPHINCSP}  & \multicolumn{4}{c}{\SPHINCSA}  &\multicolumn{4}{c}{Relative Change} \\ %\cmidrule{2-5} \cmidrule{6-9} \cmidrule{10-13} 
+      Param. &  KeyGen & Sign & Verify & Size &  KeyGen & Sign & Verify & Size &  KeyGen & Sign & Verify & Size\\ \midrule
+      \csvreader[head to column names]{paper/data/compare-mini.csv}{}% use head of csv as column names
+      { \nameone  & $\keygenone$ & $\signone$ &$\verifyone$ & \signatureone & $\keygentwo$ & $\signtwo$ &$\verifytwo$ & \signaturetwo & \keygenratio & \signratio &\verifyratio & \signatureratio \\}%
      \vspace{-1em} \\ \bottomrule
     \end{tabular}
 \end{table*}
@@ -17,16 +17,18 @@
 \else
 \begin{table}[th]
     \centering
-    \caption{Hash-call and size metrics for the three packaged Kylin families. Key generation, signing, and verification are reported in hash-call proxies; key and signature sizes are in bytes.}
+    \caption{Performance comparison between \SPHINCSP\ and \SPHINCSA, with simple tweakable hash function instantiated with \textsf{shake}. Key generation, signing and verification time are in terms of CPU cycles; public key, secret key and signature size are in bytes. All cycle counts are the median of 100 runs.}
     \label{tab:comp tiny}
-    \begin{tabular}{l r r r r r r}%
+    \resizebox{\columnwidth}{!}{%
+    \begin{tabular}{c rrrr rrrr rrrr}%
     \toprule
-      Instance & KeyGen & Sign & Verify & Pk & Sk & Sig \\ \midrule
-      Kylin-128 & 417279 & 2442880 & 7357 & 32 & 64 & 6688 \\
-      Kylin-256 & 324095 & 3223168 & 12577 & 64 & 128 & 26784 \\
-      Kylin-512 & 495615 & 6198272 & 42476 & 128 & 256 & 103808 \\
+       & \multicolumn{4}{c}{\SPHINCSP}  & \multicolumn{4}{c}{\SPHINCSA}  &\multicolumn{4}{c}{Relative Change} \\ %\cmidrule{2-5} \cmidrule{6-9} \cmidrule{10-13} 
+      Param. &  KeyGen & Sign & Verify & Size &  KeyGen & Sign & Verify & Size &  KeyGen & Sign & Verify & Size\\ \midrule
+      \csvreader[head to column names]{paper/data/compare-mini.csv}{}% use head of csv as column names
+      { \nameone  & $\keygenone$ & $\signone$ &$\verifyone$ & \signatureone & $\keygentwo$ & $\signtwo$ &$\verifytwo$ & \signaturetwo & \keygenratio & \signratio &\verifyratio & \signatureratio \\}%
      \vspace{-1em} \\ \bottomrule
-    \end{tabular}
+    \end{tabular}%
+    }
 \end{table}
 
 \fi
