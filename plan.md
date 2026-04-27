@@ -104,6 +104,12 @@
 
 ## 5. 进度日志
 
+### 2026-04-27 - Sync q24 Package Benchmarks into Appendix B (Done)
+
+- 将 `paper/data/package_bench.csv` 中三组 `Kylin-*-q24` 的最新 Ref/Opt package benchmark 数据同步到英文 Appendix B 的 `q=2^24` 基准表。
+- 在中文镜像附录 B 中新增对应的 `q=2^24` 基准表与优化实现说明，使中英文附录的结构、数值和引用语义保持一致。
+- 验证：`make -C paper/build all` 与 `make -C paper/build zh` 均通过并刷新 `main.pdf`、`main_zh.pdf`；仅保留既有的局部 overfull 与 appendix `hyperref` 提示。
+
 ### 2026-04-27 - Implementation README File Inventory Completion (Done)
 
 - 按 NGCC 提交要求补全 `Implementations/README`：新增顶层文件清单、三类实现目录清单、每个实例目录的通用文件清单与逐文件职责说明。

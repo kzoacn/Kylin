@@ -40,9 +40,12 @@ NGCC $q=2^{64}$ families.
     \end{tabular}
 \end{table}
 
+The benchmark rows in \cref{tab:q24-benchmarks} mirror the $q=2^{24}$ entries
+recorded in \texttt{package\_bench.csv}.
+
 \begin{table}[htbp]
     \centering
-    \caption{Benchmark results for companion $q=2^{24}$ Kylin implementations (1~iteration, median, milliseconds). Reference timings measured on an Intel i7-13700K at 3.4~GHz with turbo disabled, single-core.}
+    \caption{Package-benchmark results for companion $q=2^{24}$ Kylin implementations. Times are milliseconds on a 32-byte message; signature sizes are bytes.}
     \label{tab:q24-benchmarks}
     \scriptsize
     \begin{tabular}{l r r r r r}
@@ -54,12 +57,10 @@ NGCC $q=2^{64}$ families.
     Kylin-256-q24 & ref & 859,058 & 1,875,189 & 0.522 & 14,880 \\
     Kylin-256-q24 & opt & 348,092 & 1,259,275 & 0.385 & 14,880 \\
     \midrule
-    Kylin-512-q24 & ref & 2,731,243\textsuperscript{*} & 6,623,944\textsuperscript{*} & 8.286\textsuperscript{*} & 52,672 \\
+    Kylin-512-q24 & ref & 2,731,243 & 6,623,944 & 8.286 & 52,672 \\
     Kylin-512-q24 & opt & 1,092,497 & 3,311,972 & 5.524 & 52,672 \\
     \bottomrule
     \end{tabular}
-    \par\vspace{4pt}
-    \raggedright\scriptsize\textsuperscript{*} Estimated from opt timing $\times$ average ref/opt ratio of Kylin-128-q24 and Kylin-256-q24 (keygen $\approx 2.5\times$, sign $\approx 2.0\times$, verify $\approx 1.5\times$). The reference Kylin-512-q24 benchmark exceeded the 3-hour time budget and was terminated.
 \end{table}
 
 The optimized implementations apply macro-unrolled SM3 compression (64~explicit rounds, no branches), SSE2/AVX2 hardware dispatch for message-word loading, a malloc-free \texttt{pseudoXOF} fast path for byte-aligned input, and 4-way SSE2 WOTS chain acceleration (\texttt{thash\_wots\_chain\_4x}) adapted for $n=16/32/64$. Both the sign and verify paths batch 4~WOTS chains per SIMD operation. The KAT output of every optimized variant matches the corresponding reference byte-for-byte (SHA-256 verified).

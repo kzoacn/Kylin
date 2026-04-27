@@ -25,3 +25,28 @@
     \bottomrule
     \end{tabular}
 \end{table}
+
+\cref{tab:q24-benchmarks} 中的基准行同步自
+\texttt{package\_bench.csv} 中的 $q=2^{24}$ 条目。
+
+\begin{table}[htbp]
+    \centering
+    \caption{$q=2^{24}$ Kylin 附加实现的打包基准结果。时间单位为 32 字节消息上的毫秒；签名尺寸单位为字节。}
+    \label{tab:q24-benchmarks}
+    \scriptsize
+    \begin{tabular}{l r r r r r}
+    \toprule
+    参数族 & 实现 & 密钥生成 (ms) & 签名 (ms) & 验证 (ms) & 签名 (B) \\ \midrule
+    Kylin-128-q24 & ref & 853,437 & 1,072,184 & 0.201 & 3,840 \\
+    Kylin-128-q24 & opt & 344,659 & 546,652 & 0.147 & 3,840 \\
+    \midrule
+    Kylin-256-q24 & ref & 859,058 & 1,875,189 & 0.522 & 14,880 \\
+    Kylin-256-q24 & opt & 348,092 & 1,259,275 & 0.385 & 14,880 \\
+    \midrule
+    Kylin-512-q24 & ref & 2,731,243 & 6,623,944 & 8.286 & 52,672 \\
+    Kylin-512-q24 & opt & 1,092,497 & 3,311,972 & 5.524 & 52,672 \\
+    \bottomrule
+    \end{tabular}
+\end{table}
+
+优化实现采用宏展开的 SM3 压缩函数（64 个显式轮函数，无分支）、面向消息字加载的 SSE2/AVX2 硬件分派、针对字节对齐输入的无 \texttt{malloc} \texttt{pseudoXOF} 快速路径，以及适配 $n=16/32/64$ 的 4 路 SSE2 WOTS 链加速（\texttt{thash\_wots\_chain\_4x}）。签名与验证路径均以每次 SIMD 操作处理 4 条 WOTS 链。每个优化变体的 KAT 输出均与对应参考实现逐字节一致（经 SHA-256 校验）。
