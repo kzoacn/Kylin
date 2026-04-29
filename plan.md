@@ -7,15 +7,17 @@
 当前实现布局如下：
 
 - 主提交实现（`q=2^64`）：`Kylin-128`、`Kylin-256`、`Kylin-512`
-- Additional 实现（`q=2^24`，仅 Ref）：`Kylin-128-q24`、`Kylin-256-q24`、`Kylin-512-q24`
+- Additional 源码实现（`q=2^24`）：`Kylin-128-q24`、`Kylin-256-q24`、`Kylin-512-q24`，当前源码树位于 `Implementations/Additional_Implementation/{Reference_Implementation,Optimized_Implementation}/`；最终打包时采用扁平的 `Additional_Implementation/Kylin-*-q24` 结构。
 
 参数定版文件：`paper/data/para_kylin_final_6profiles.csv`。
 
 历史归档目录已从当前提交包中移除，不再作为本仓库材料维护。
 
+最终电子提交包目标：新建仓库根目录 `build/` 作为暂存区，按 `docs/公钥密码算法提交要求.md` 组织材料，并在 `build/` 内生成日期命名的 `Kylin-{mmdd}.zip`，例如 `Kylin-0429.zip`。
+
 ## 2. 已有基础（已完成）
 
-- 当前三组基线实例（128/256/512）的参考实现与优化实现目录已建立；`q=2^24` 三组已作为 Additional（仅 Ref）实现维护；六组最终参数已导出并冻结。
+- 当前三组基线实例（128/256/512）的参考实现与优化实现目录已建立；`q=2^24` 三组已作为 Additional 源码实现维护，并在最终提交包中按扁平 Additional 布局打包；六组最终参数已导出并冻结。
 - NGCC SIG API 封装、KAT 生成链路、顶层自动化构建流程已可运行。
 - 文档已移除历史家族对比内容，主叙事聚焦 Kylin 提交包。
 - `make verify` 与论文多轮编译流程已通过，主文档引用已修复。
@@ -84,15 +86,24 @@
 
 任务：
 
-- 对照 `docs/` 要求整理最终目录结构与必需文件。
-- 固化打包脚本/命令（构建、测试、KAT、文档、向量）。
-- 生成提交前 checklist（接口、文件完整性、可重复构建、版本标识）。
-- 补齐外部表单与声明项（如需人工签署则明确状态与责任人）。
+- 新建或刷新仓库根目录 `build/`，只把待提交材料复制到该暂存目录。
+- 编译当前英文算法文本 `main.pdf`，并复制到 `build/算法文本.pdf`。
+- 在 `build/` 根目录放置 `算法基本信息.pdf` 与 `知识产权声明.pdf`；二者应是签字扫描 PDF，若尚未取得则在 checklist 中标为人工阻塞项。
+- 复制 `Test_Vectors/` 到 `build/Test_Vectors/`，保留所有 KAT 文件。
+- 复制 `Implementations/` 到 `build/Implementations/` 时只保留提交所需结构：`Reference_Implementation/`、`Optimized_Implementation/`、`Additional_Implementation/` 和 `README`。
+- 主提交三档 `Kylin-128`、`Kylin-256`、`Kylin-512` 保留在 `build/Implementations/Reference_Implementation/` 与 `build/Implementations/Optimized_Implementation/`。
+- 将源码树中的 `Implementations/Additional_Implementation/Optimized_Implementation/Kylin-*-q24` 提升为最终包内的 `build/Implementations/Additional_Implementation/Kylin-*-q24`，不要在最终包中保留嵌套的 `Additional_Implementation/Optimized_Implementation/` 层级。
+- 重写 `build/Implementations/README`，使其只描述最终打包树、每个 shipped 文件/目录的职责，以及 q24 Additional 的扁平布局。
+- 从 `build/` 内打包生成 `Kylin-{mmdd}.zip`，其中 `{mmdd}` 使用打包当天月日，例如 `Kylin-0429.zip`。
+- 默认打包烟测覆盖主提交 `Kylin-128/256/512` 的参考实现与优化实现；`Kylin-*-q24` 的 `make test` 单次可能需要 10 分钟以上，除非明确要求，否则不纳入默认打包烟测。
+- 生成提交前 checklist（接口、文件完整性、可重复构建、版本标识、签字 PDF 状态、q24 测试是否显式执行）。
 
 验收标准：
 
 - 从干净环境可复现构建与主要验证流程。
-- 提交包文件齐全，命名与目录符合 NGCC 规范。
+- 提交包根目录包含 `算法基本信息.pdf`、`算法文本.pdf`、`知识产权声明.pdf`、`Implementations/`、`Test_Vectors/`。
+- `build/Implementations/` 只包含提交所需实现目录与重写后的 `README`；Additional q24 实例以 `Additional_Implementation/Kylin-*-q24` 的扁平结构出现。
+- zip 文件命名与打包日期一致，例如 4 月 29 日打包为 `Kylin-0429.zip`。
 - checklist 全项有状态，阻塞项明确。
 
 ## 4. 执行原则
@@ -103,6 +114,22 @@
 - 任何影响英文文档结构或自然语言内容的任务，都要同步评估中文镜像章节、术语表和 EN->ZH 同步指引是否需要更新。
 
 ## 5. 进度日志
+
+### 2026-04-29 - Build Final NGCC Submission Zip (Done)
+
+- 编译英文算法文本并将最新 `main.pdf` 复制为 `build/算法文本.pdf`，同时复制 `算法基本信息.pdf`、`知识产权声明.pdf` 与 `Test_Vectors/`。
+- 构造最终 `build/Implementations/`：保留主提交 `Reference_Implementation/Kylin-{128,256,512}` 与 `Optimized_Implementation/Kylin-{128,256,512}`，并将 q24 优化实现提升为 `Additional_Implementation/Kylin-*-q24`。
+- 在最终包内重写 `Implementations/README`，描述实际 shipped 目录、实例、参数、通用源文件与构建方式。
+- 打包生成 `build/Kylin-0429.zip`；结构检查确认包内无生成的可执行文件、`output/`、`.stack-usage/`、`tools/` 或 `benchmarks/`，且 Additional q24 没有嵌套实现层级。
+- 验证：`make -C paper/build all` 通过；最终包内主提交 Ref/Opt 的 `Kylin-128/256/512` 均完成 `make clean all test`；q24 test 默认跳过（`Kylin-128-q24` 曾误启动并自然完成，`Kylin-256-q24` 与 `Kylin-512-q24` 未运行）。
+
+### 2026-04-29 - Final NGCC Packaging Rules Captured (Done)
+
+- 将最终电子提交包的暂存方式固定为仓库根目录 `build/`，并明确从 `build/` 内生成 `Kylin-{mmdd}.zip`。
+- 固定包根目录材料：`算法基本信息.pdf`、由当前 `main.pdf` 编译后改名得到的 `算法文本.pdf`、`知识产权声明.pdf`、`Implementations/` 与 `Test_Vectors/`。
+- 固定 `build/Implementations/` 的提交结构：保留主提交 `Reference_Implementation/` 与 `Optimized_Implementation/`，将源码树中 `Additional_Implementation/Optimized_Implementation/Kylin-*-q24` 提升为最终包内扁平的 `Additional_Implementation/Kylin-*-q24`。
+- 明确最终包内需要重写 `Implementations/README`，使其描述实际打包结构和 shipped 文件，而不是仓库本地 benchmark/tooling 布局。
+- 补充 q24 验证策略：`Kylin-*-q24` 的 `make test` 单次可能需要 10 分钟以上，默认打包烟测不运行 q24 test，除非后续明确要求。
 
 ### 2026-04-27 - Clean Tracked Generated Files (Done)
 

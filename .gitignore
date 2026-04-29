@@ -1,3 +1,4 @@
+/build/
 Implementations/**/KAT_SIG
 Implementations/**/test_sig
 Implementations/**/bench_sig

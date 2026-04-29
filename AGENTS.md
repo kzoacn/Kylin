@@ -15,7 +15,7 @@
 - The bilingual NGCC materials under `docs/` may be used as terminology and phrasing references, but they do not replace the current submission document as the source of truth.
 - The NGCC code package is under `Implementations/`.
 - Primary submission profiles are fixed as three variants: `Kylin-128`, `Kylin-256`, and `Kylin-512`.
-- Companion `q=2^24` variants (`Kylin-128-q24`, `Kylin-256-q24`, `Kylin-512-q24`) are maintained as reference-only additional implementations under `Implementations/Additional_Implementation/`.
+- Companion `q=2^24` variants (`Kylin-128-q24`, `Kylin-256-q24`, `Kylin-512-q24`) are maintained in the source tree under `Implementations/Additional_Implementation/{Reference_Implementation,Optimized_Implementation}/`; final packaging promotes the optimized q24 instance directories to flat `build/Implementations/Additional_Implementation/Kylin-*-q24`.
 - Frozen parameter source of truth is `paper/data/para_kylin_final_6profiles.csv`.
 - Frozen parameter set (do not retune unless explicitly requested):
   - `Kylin-128`: `q=2^64, n=16, h=65, d=9, h_vec=[7,7,7,7,7,7,7,8,8], a=13, k=11, w=73, len=22`
@@ -25,10 +25,21 @@
   - `Kylin-256-q24`: `q=2^24, n=32, h=21, d=1, h_vec=[21], a=25, k=12, w=4, len=131`
   - `Kylin-512-q24`: `q=2^24, n=64, h=57, d=3, h_vec=[19,19,19], a=20, k=24, w=64, len=87`
 - `Kylin-512` usually runs slowly; for quick smoke tests it may be skipped temporarily, but final-result validation must run `Kylin-512` in practice.
+- Companion `q=2^24` instance tests can take 10 minutes or more; do not run q24 `make test` as part of default packaging smoke tests unless explicitly requested.
 - Use NGCC SIG API files and names: `SIG_AlgorithmInstance.h`, `SIG_AlgorithmInstance.c`, and `KAT_SIG.c`.
 - Copy NGCC helper/template files from `docs/API_PKC/...`; do not modify `KAT_SIG.c`, `auxfunc.*`, or `drng.*` after copying.
 - Required NGCC functions are `sig_get_pk_len_bytes`, `sig_get_sk_len_bytes`, `sig_get_sn_len_bytes`, `sig_keygen`, `sig_sign`, and `sig_verify`.
 - NGCC requires automated builds, generated KAT files, an ISO C reference implementation, and an optimized 64-bit PC implementation.
+- Final NGCC electronic submission packaging should be staged in a fresh repository-root `build/` directory before zipping.
+- The final `build/` package root should contain `算法基本信息.pdf`, `算法文本.pdf`, `知识产权声明.pdf`, `Implementations/`, and `Test_Vectors/`.
+- Build the current English `main.pdf` before packaging, then copy/rename it in `build/` as `算法文本.pdf`.
+- `算法基本信息.pdf` and `知识产权声明.pdf` are required signed/scanned PDF materials and must be present in the `build/` package root.
+- Copy `Test_Vectors/` into `build/` so KAT files remain under `build/Test_Vectors/`.
+- Copy `Implementations/` into `build/Implementations/` as a submission-only tree containing `Reference_Implementation/`, `Optimized_Implementation/`, `Additional_Implementation/`, and a rewritten submission manifest `README`; omit repository-local helper areas such as benchmarking/tooling directories unless explicitly required.
+- In the final `build/Implementations/` tree, keep primary `Kylin-128`, `Kylin-256`, and `Kylin-512` under both `Reference_Implementation/` and `Optimized_Implementation/`.
+- In the final `build/Implementations/` tree, promote the companion `q=2^24` directories from source `Implementations/Additional_Implementation/Optimized_Implementation/Kylin-*-q24` to flat `Additional_Implementation/Kylin-*-q24`.
+- Rewrite `build/Implementations/README` for the final packaged tree, reflecting the flattened Additional layout and only the files actually shipped.
+- Zip the finished contents from inside `build/` as `Kylin-{mmdd}.zip`, for example `Kylin-0429.zip`.
 - Hash and XOF calls in the NGCC package must use ICCS auxiliary functions: `sm3hash`, `pseudohash`, and especially `pseudoXOF`.
 - Randomness in KAT mode must come from NGCC `drng_algorithm` via `get_random_number`.
 - Baseline references remain in `paper/data/para_ngcc.csv`, but parameter selection/optimization is completed and fixed in `paper/data/para_kylin_final_6profiles.csv`.
