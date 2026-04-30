@@ -696,3 +696,18 @@
   - `paper/bib/extra.bib` 新增 `NIST:FIPS205` 与 `NIST:SP800-230-IPD` 条目。
 - 验证：
   - 使用 `latexmk -pdf -shell-escape -interaction=nonstopmode -halt-on-error main.tex` 编译通过，`main.pdf` 更新。
+
+### 2026-04-30 - Build NGCC Electronic Submission Package (Done)
+
+- 重新构建英文算法文本：`make -C paper/build all` 通过，并将当前 `main.pdf` 复制为 `build/算法文本.pdf`。
+- 重新生成 fresh `build/` 提交暂存树：
+  - 根目录包含 `算法基本信息.pdf`、`算法文本.pdf`、`知识产权声明.pdf`、`Implementations/`、`Test_Vectors/`；
+  - 主提交三档 `Kylin-128`、`Kylin-256`、`Kylin-512` 保留在 `Reference_Implementation/` 与 `Optimized_Implementation/`；
+  - q24 伴随实现从源码树的 `Additional_Implementation/Optimized_Implementation/Kylin-*-q24` 提升为包内扁平 `Additional_Implementation/Kylin-*-q24`。
+- 重写 `build/Implementations/README`，只描述最终包内实际 shipped 目录、q24 扁平布局和实例目录内容。
+- 打包生成 `build/Kylin-0430.zip`，SHA-256 为 `339d90dc91118e900df2ab5fd3c30ea65d2d191b2dbfbb18ee556295a859e7e7`。
+- 验证：
+  - `make clean build test` 通过主提交 Ref/Opt 六个实例，包括 `Kylin-512`；
+  - q24 优化实现三档 `make clean all` 通过，并修复其 `hash_iccs.c` 中 `SPX_TREE_BITS/SPX_LEAF_BITS` 常量移位告警；
+  - zip 清单检查确认无旧 zip、无嵌套 Additional 实现层级、无 `tools/`、`benchmarks/`、`output/`、`.stack-usage/` 或生成的可执行文件；
+  - 从 zip 解包后，主提交 Ref/Opt 六个实例 `make clean all test` 通过；按要求未将 q24 `make test` 作为默认验证项。

@@ -22,7 +22,10 @@ We propose \SPHINCSA, a stateless hash-based signature scheme, which improves up
 
 Our optimization mainly stems from the optimization of the one-time signature scheme, which we prove to have a size-optimal encoding scheme among all tree structured one-time signatures. Moreover, no DAG-based construction offers better size efficiency, making our proposal size-optimal among all known schemes to the best of our knowledge \cite{optimalwots}.
 
-Since our modification upon the \SPHINCSP scheme is limited to the encoding scheme of the underlying \WOTSP one-time signature, the security analysis of our new scheme remains largely the same as the original analysis.
+\paragraph{Diverse Layer Heights in the Hypertree.}
+Kylin also uses a flexible hypertree profile with per-layer heights $(h_0,\ldots,h_{d-1})$ rather than requiring all $d$ layers to have the same height. This removes the unnecessary divisibility restriction $h \bmod d = 0$ and lets the parameter search choose balanced layer-height vectors whenever the total hypertree height $h$ is not divisible by the number of layers.
+
+Since our modifications to the \SPHINCSP scheme are confined to the encoding scheme of the underlying \WOTSP one-time signature and to this hypertree layer-height layout, the security analysis of our new scheme remains largely the same as the original analysis.
 Based on the security analysis of the original work, we estimate the security level and carefully choose parameters in order to achieve optimized performance.
 
 To facilitate a direct package-level view, \cref{tab:comp tiny} reports the hash-call proxies and key/signature sizes for \texttt{Kylin-128}, \texttt{Kylin-256}, and \texttt{Kylin-512}. In particular, the table includes key-generation, signing, and verification hash-call metrics under the frozen packaged parameter sets.

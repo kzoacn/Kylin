@@ -121,17 +121,17 @@ void hash_message(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
 #endif
 
     *tree = bytes_to_ull(bufp, SPX_TREE_BYTES);
-    if (SPX_TREE_BITS == 0) {
-        *tree = 0;
-    } else if (SPX_TREE_BITS < 64) {
-        *tree &= (~(uint64_t)0) >> (64 - SPX_TREE_BITS);
-    }
+#if SPX_TREE_BITS == 0
+    *tree = 0;
+#elif SPX_TREE_BITS < 64
+    *tree &= (~(uint64_t)0) >> (64 - SPX_TREE_BITS);
+#endif
     bufp += SPX_TREE_BYTES;
 
     *leaf_idx = (uint32_t)bytes_to_ull(bufp, SPX_LEAF_BYTES);
-    if (SPX_LEAF_BITS == 0) {
-        *leaf_idx = 0;
-    } else if (SPX_LEAF_BITS < 32) {
-        *leaf_idx &= (~(uint32_t)0) >> (32 - SPX_LEAF_BITS);
-    }
+#if SPX_LEAF_BITS == 0
+    *leaf_idx = 0;
+#elif SPX_LEAF_BITS < 32
+    *leaf_idx &= (~(uint32_t)0) >> (32 - SPX_LEAF_BITS);
+#endif
 }
