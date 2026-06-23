@@ -8,10 +8,11 @@
 #define SPX_ADDR_TYPE_WOTS 0
 #define SPX_ADDR_TYPE_WOTSPK 1
 #define SPX_ADDR_TYPE_HASHTREE 2
-#define SPX_ADDR_TYPE_FORSTREE 3
-#define SPX_ADDR_TYPE_FORSPK 4
+#define SPX_ADDR_TYPE_BPORSCHILDTREE 3
+#define SPX_ADDR_TYPE_BPORSPK 4
 #define SPX_ADDR_TYPE_WOTSPRF 5
-#define SPX_ADDR_TYPE_FORSPRF 6
+#define SPX_ADDR_TYPE_BPORSCHILDPRF 6
+#define SPX_ADDR_TYPE_BPORSOUTER 7
 
 #define set_layer_addr SPX_NAMESPACE(set_layer_addr)
 void set_layer_addr(uint32_t addr[8], uint32_t layer);
@@ -26,7 +27,7 @@ void set_type(uint32_t addr[8], uint32_t type);
 #define copy_subtree_addr SPX_NAMESPACE(copy_subtree_addr)
 void copy_subtree_addr(uint32_t out[8], const uint32_t in[8]);
 
-/* These functions are used for WOTS and FORS addresses. */
+/* These functions are used for WOTS and BPORS addresses. */
 
 #define set_keypair_addr SPX_NAMESPACE(set_keypair_addr)
 void set_keypair_addr(uint32_t addr[8], uint32_t keypair);
@@ -40,7 +41,7 @@ void set_hash_addr(uint32_t addr[8], uint32_t hash);
 #define copy_keypair_addr SPX_NAMESPACE(copy_keypair_addr)
 void copy_keypair_addr(uint32_t out[8], const uint32_t in[8]);
 
-/* These functions are used for all hash tree addresses (including FORS). */
+/* These functions are used for all hash tree addresses (including BPORS). */
 
 #define set_tree_height SPX_NAMESPACE(set_tree_height)
 void set_tree_height(uint32_t addr[8], uint32_t tree_height);

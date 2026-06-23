@@ -486,6 +486,76 @@ HT 签名验证（\cref{alg:htverify}）可以概括为：调用 $d$ 次 \texttt
     \caption{\texttt{ht\_verify} --- 使用 HT 公钥 ${\bf PK}_{HT}$ 验证消息 $M$ 上的 HT 签名 $\bf {SIG}_{HT}$。}
     \label{alg:htverify}
 \end{algorithm}
+\section{BPORS+FP：桶稀疏少次签名}
+\label{sec:bpors}
+\label{sec:fors}
+
+\SPHINCSA\ 的超树 HT 并不直接签名原始消息。随机化消息哈希首先选择一个底层 HT 叶子，并给出一个 $n$ 字节摘要 \md。Kylin 使用 BPORS+FP 对该摘要签名；BPORS+FP 是基于 bucket thinning 的少次签名组件~\cite{bucketthinning}。随后，底层 XMSS 树对恢复出的 BPORS+FP 公钥进行签名。
+
+BPORS+FP 包含一个外层桶结构和一个子 PORS 层。外层有 $K$ 个坐标；每个坐标包含 $2^B$ 个桶，每个桶存放一个独立子 PORS 实例的公钥。子 PORS 实例包含 $t$ 个叶子，并通过左填充 Merkle 树上的 Octopus 认证集合打开一个 $k$ 元子集。Kylin 采用全局 forced-pruning 阈值 $m_{\max}$：签名者使用显式 counter 反复执行 BPORS 编码哈希，直到总认证节点数不超过 $m_{\max}$；这里的总数同时包括 $KB$ 个外层认证节点和所有子 Octopus 节点。
+
+\subsection{BPORS+FP 参数}
+\label{sec:bporspara}
+
+BPORS+FP 使用参数 $K,B,t,k,m_{\max}$ 以及 counter 字节长度 $c_{\mathrm{ctr}}$：
+\begin{itemize}
+    \item $K$：外层坐标数，也即被选中的子 PORS key 个数。
+    \item $B$：桶地址比特长度；每个坐标有 $2^B$ 个桶。
+    \item $t$：每个子 PORS 树的叶子数；它不要求是 2 的幂，非 2 幂情形采用左填充树约定。
+    \item $k$：每个被选中子 PORS key 内打开的叶子数。
+    \item $m_{\max}$：固定的全局认证节点预算。
+    \item $c_{\mathrm{ctr}}$：counter 编码字节数；打包实现使用 $c_{\mathrm{ctr}}=8$。
+\end{itemize}
+
+对摘要 \md 和 counter 值 $\mathtt{ctr}$，域分离 XOF 将 $(\md,\mathtt{ctr},\pk.\seed,\ADRS)$ 映射为
+\[
+    ((j_0,I_0),\ldots,(j_{K-1},I_{K-1}))
+    \in \left([2^B]\times\binom{[t]}{k}\right)^K .
+\]
+其中 $j_c$ 是坐标 $c$ 中被选中的桶，$I_c\subseteq[t]$ 是对应子树中打开的 $k$ 元子集。候选被接受当且仅当
+\[
+    A_{\mathrm{tot}}
+    =KB+\sum_{c=0}^{K-1}\left|\operatorname{Oct}_t(I_c)\right|
+    \le m_{\max}.
+\]
+
+\subsection{BPORS+FP 私钥与公钥}
+
+与 Kylin 其他部分一样，BPORS+FP 私钥值由单一秘密种子 \sk.\seed 伪随机生成。坐标 $c$、桶 $j$、子叶子 $u$ 的秘密值为
+\[
+    x_{c,j,u}\gets \PRF(\sk.\seed,\ADRS_{c,j,u}),
+\]
+其中地址类型以及坐标、桶、子叶子字段将该值与所有 WOTS 和超树值分离。子叶子为
+$\hashF(\pk.\seed,\ADRS_{c,j,u},x_{c,j,u})$。
+
+每个子 PORS 公钥是其 $t$ 个子叶子构成的左填充 Merkle 树根。对每个外层坐标 $c$，$2^B$ 个子公钥作为高度为 $B$ 的完整二叉 Merkle 树叶子。BPORS+FP 公钥为
+\[
+    \pk_{\mathsf{BPORS}}
+    =\Th_K(\pk.\seed,\ADRS_{\mathsf{BPORS\_PK}},
+           \mathsf{root}_0\|\cdots\|\mathsf{root}_{K-1}).
+\]
+
+\subsection{BPORS+FP 签名生成}
+
+BPORS+FP 签名包含 counter、$Kk$ 个被选中的子秘密值、子 Octopus 认证节点、外层认证路径，以及填充到固定预算 $m_{\max}$ 的零节点槽。签名算法见 \cref{alg:bporpsign}。
+
+\begin{algorithm}
+    \inputminted[breaklines,linenos,tabsize=2,mathescape,escapeinside=||]{C}{paper/code/bpors_sign.cs}
+    \caption{\texttt{bpors\_sign} --- 生成 BPORS+FP 签名和公钥。}
+    \label{alg:bporpsign}
+\end{algorithm}
+
+\subsection{由签名恢复 BPORS+FP 公钥}
+
+Kylin 对 BPORS+FP 采用隐式验证。验证者根据 \sigbpors 与 \md 重新由 counter 派生桶标签和子集，利用公开的秘密值和 Octopus 节点恢复每个子公钥，再由外层认证路径恢复每个外层根，并检查未使用认证槽是否为零，最后压缩 $K$ 个外层根。算法见 \cref{alg:bporspkfromsig}。
+
+\begin{algorithm}
+    \inputminted[breaklines,linenos,tabsize=2,mathescape,escapeinside=||]{C}{paper/code/bpors_pkFromSig.cs}
+    \caption{\texttt{bpors\_pkFromSig} --- 由 BPORS+FP 签名恢复 BPORS+FP 公钥。}
+    \label{alg:bporspkfromsig}
+\end{algorithm}
+
+\iffalse
 \section{FORS：随机子集森林}
 \label{sec:fors}
 
@@ -593,6 +663,8 @@ FORS 签名是一个长度为 $k(\log t+1)$ 的 $n$ 字节串数组。它包含 
     \label{alg:forspkfromsig}
 \end{algorithm}
 
+\fi
+
 \section{完整的 Kylin 签名方案}
 \label{sec:spx-core}
 到这里，我们已经具备描述主构造 \SPHINCSA\ 所需的全部组件。本质上，\SPHINCSA\ 沿用了 \SPHINCSA\ 的基础结构，唯一的差异在于其一次性签名组件。
@@ -611,20 +683,18 @@ FORS 签名是一个长度为 $k(\log t+1)$ 的 $n$ 字节串数组。它包含 
 
     \item $d$：\cref{sec:htpara} 中定义的超树层数。
 
-    \item $k$：\cref{sec:forspara} 中定义的 FORS 树数量。
-
-    \item $t$：\cref{sec:forspara} 中定义的 FORS 树叶子数量。
+    \item $K,B,t,k,m_{\max}$：\cref{sec:bporspara} 中定义的 BPORS+FP 参数。
 
 \end{itemize}
 
-前文给出的全部限制在这里都同样适用。回忆我们记 $a=\log t$。此外，由这些参数还可导出 $m$ 和 \wotslen：
+前文给出的全部限制在这里都同样适用。此外，由这些参数还可导出 $m$ 和 \wotslen：
 
 \begin{itemize}
     \item $m$：消息摘要长度（单位：字节），其计算公式为
     $$
-    m=\lfloor(k\log t+7)/8\rfloor+\lfloor(h-h_0+7)/8\rfloor+\lfloor(h_0+7)/8\rfloor.
+    m=n+\lfloor(h-h_0+7)/8\rfloor+\lfloor(h_0+7)/8\rfloor.
     $$
-    虽然理论上只需要 $h+k\log t$ 个比特，但采用这里定义的更长 $m$ 能显著简化实现。
+    前 $n$ 个字节是 BPORS+FP 摘要，其余字节编码超树 tree index 与 leaf index。
 
     \item $\wotslen$：\WOTSCS\ 私钥、公钥与签名中 $n$ 字节字符串元素的个数。选择 $\wotslen$ 时，需要保证下列偏序集的大小大于目标消息空间 $\bool^n$（参见 \cref{sec:balanced wotsp}）：
     \[\left| D_{ \wotslen, \lfloor \frac{\wotslen \cdot (w-1)}{2} \rfloor } \right| \geq 2^n \enspace. \]
@@ -634,7 +704,7 @@ FORS 签名是一个长度为 $k(\log t+1)$ 的 $n$ 字节串数组。它包含 
 
 \subsection{\SPHINCSA\ 密钥生成（函数 \texttt{kylin\_keygen})}
 
-\SPHINCSA\ 私钥包含两个元素。第一，$n$ 字节秘密种子 $\sk.\seed$，用于生成所有 \WOTSCS\ 与 FORS 私钥元素。第二，$n$ 字节 PRF 密钥 $\sk.\prf$，用于确定性地产生随机化消息哈希所需的随机值。
+\SPHINCSA\ 私钥包含两个元素。第一，$n$ 字节秘密种子 $\sk.\seed$，用于生成所有 \WOTSCS\ 与 BPORS+FP 私钥元素。第二，$n$ 字节 PRF 密钥 $\sk.\prf$，用于确定性地产生随机化消息哈希所需的随机值。
 
 \SPHINCSA\ 公钥同样包含两个元素。第一，HT 公钥，即顶层树的根节点。第二，一个均匀随机采样得到的 $n$ 字节公有种子值 $\pk.\seed$。
 
@@ -669,7 +739,11 @@ FORS 签名是一个长度为 $k(\log t+1)$ 的 $n$ 字节串数组。它包含 
 
 \subsection{\SPHINCSA\ 签名}
 
-\SPHINCSA\ 签名 $\sight$ 是一个长度为 $(1 + k \cdot (a+1) + h + d \cdot \wotslen)n$ 的字节串。它由一个 $n$ 字节随机化字符串 \randstr、一个由 $k(a+1)n$ 字节组成的 FORS 签名 $\sigfors$，以及一个长度为 $(h + d \cdot \wotslen)n$ 字节的 HT 签名 $\sight$ 组成。
+\SPHINCSA\ 签名 $\sig$ 是一个长度为
+\[
+    n+c_{\mathrm{ctr}}+(Kk+m_{\max})n+(h+d\cdot\wotslen)n
+\]
+的字节串。它由一个 $n$ 字节随机化字符串 \randstr、一个 BPORS+FP 签名 \sigbpors（包含显式 counter、$Kk$ 个 $n$ 字节秘密值与 $m_{\max}$ 个 $n$ 字节认证节点槽），以及一个长度为 $(h + d \cdot \wotslen)n$ 字节的 HT 签名 $\sight$ 组成。
 
 签名数据格式见 \cref{fig:spx15}。
 
@@ -677,7 +751,7 @@ FORS 签名是一个长度为 $k(\log t+1)$ 的 $n$ 字节串数组。它包含 
     \centering
     \begin{bytefield}[bitwidth=1.1em,bitheight=2em]{16}
         \wordbox{1}{Randomness $\randstr$} \\
-        \wordbox{1}{FORS Signature $\sigfors$} \\
+        \wordbox{1}{BPORS+FP Signature $\sigbpors$} \\
         \wordbox{1}{HT Signature $\sight$}
     \end{bytefield}
     \caption{\SPHINCSA\ 签名。} \label{fig:spx15}
@@ -685,7 +759,7 @@ FORS 签名是一个长度为 $k(\log t+1)$ 的 $n$ 字节串数组。它包含 
 
 \subsection{\SPHINCSA\ 签名生成（函数 \texttt{kylin\_sign})}
 
-生成 \SPHINCSA\ 签名分为四步。第一步，伪随机生成随机值 $\randstr$。第二步，利用该随机值计算一个长度为 $m$ 字节的消息摘要，并将其拆分为三部分：长度为 $\lfloor(k\log t+7)/8\rfloor$ 字节的部分消息摘要 \texttt{tmp\_md}、长度为 $\lfloor(h-h_0+7)/8\rfloor$ 字节的树索引 \texttt{tmp\_idx\_tree}，以及长度为 $\lfloor(h_0+7)/8\rfloor$ 字节的叶索引 \texttt{tmp\_idx\_leaf}。第三步，通过抽取所需比特数，进一步得到实际值 $\md$、\texttt{idx\_tree} 和 \texttt{idx\_leaf}。随后，使用最低 HT 层中第 \texttt{idx\_tree} 棵 XMSS 树上的第 \texttt{idx\_leaf} 个 FORS 密钥对对部分消息摘要 \md\ 进行签名。最后，再使用 HT 对该 FORS 公钥进行签名。需要注意的是，完整索引并不会被整体使用，而是在实现中会立刻拆分成 tree index 与 leaf index。
+生成 \SPHINCSA\ 签名分为四步。第一步，伪随机生成随机值 $\randstr$。第二步，利用该随机值计算一个长度为 $m$ 字节的消息摘要，并将其拆分为三部分：$n$ 字节 BPORS+FP 摘要 \md、长度为 $\lfloor(h-h_0+7)/8\rfloor$ 字节的树索引 \texttt{tmp\_idx\_tree}，以及长度为 $\lfloor(h_0+7)/8\rfloor$ 字节的叶索引 \texttt{tmp\_idx\_leaf}。随后，通过抽取所需比特数得到 \texttt{idx\_tree} 和 \texttt{idx\_leaf}。摘要 \md\ 由最低 HT 层中第 \texttt{idx\_tree} 棵 XMSS 树上的第 \texttt{idx\_leaf} 个 BPORS+FP 密钥对签名。最后，再使用 HT 对该 BPORS+FP 公钥进行签名。需要注意的是，完整索引并不会被整体使用，而是在实现中会立刻拆分成 tree index 与 leaf index。
 
 在计算 $\tt{R}$ 时，PRF 接受一个 $n$ 字节字符串 \texttt{opt}。它默认初始化为 $\pk.\seed$，但若全局变量 \texttt{RANDOMIZE} 被设置，也可以改为使用外部随机性。保留这一选项的原因在于，否则 \SPHINCSA\ 签名将始终是确定性的。
 
@@ -697,7 +771,7 @@ FORS 签名是一个长度为 $k(\log t+1)$ 的 $n$ 字节串数组。它包含 
 
 \subsection{\SPHINCSA\ 签名验证（函数 \texttt{kylin\_verify})}
 
-\SPHINCSA\ 的签名验证（算法 \ref{alg:spxvrfy}）可以概括为：重新计算消息摘要与索引、恢复一个候选 FORS 公钥，并验证该公钥上的 HT 签名。注意，若该候选 FORS 公钥与真实公钥不一致，则 HT 签名验证将在压倒性概率下失败。 \SPHINCSA\ 签名验证的输入包括：消息 $M$、签名 \sig\ 以及 \SPHINCSA\ 公钥 $\pk$。
+\SPHINCSA\ 的签名验证（算法 \ref{alg:spxvrfy}）可以概括为：重新计算消息摘要与索引、恢复一个候选 BPORS+FP 公钥，并验证该公钥上的 HT 签名。注意，若该候选 BPORS+FP 公钥与真实公钥不一致，则 HT 签名验证将在压倒性概率下失败。 \SPHINCSA\ 签名验证的输入包括：消息 $M$、签名 \sig\ 以及 \SPHINCSA\ 公钥 $\pk$。
 
 \begin{algorithm}[ht]
     \inputminted[breaklines,linenos,tabsize=2,mathescape,escapeinside=||]{C}{paper/code/kylin_verify.cs}
@@ -726,16 +800,14 @@ FORS 签名是一个长度为 $k(\log t+1)$ 的 $n$ 字节串数组。它包含 
 
 \item $d$：超树层数。
 
-\item $k$：FORS 中树的数量。
-
-\item $t$：FORS 树的叶子数。
+\item $K,B,t,k,m_{\max}$：BPORS+FP 少次签名参数。
 
 \end{itemize}
 
-回忆我们记 $a=\log t$。此外，由这些参数可以导出 $m$ 和 $\wotslen$：
+此外，由这些参数可以导出 $m$ 和 $\wotslen$：
 \begin{itemize}
     \item $ m $：消息摘要长度（字节），其计算公式为
-    $$m=\lfloor(k\log t+7)/8\rfloor+\lfloor(h-h_0+7)/8\rfloor+\lfloor(h_0+7)/8\rfloor.$$
+    $$m=n+\lfloor(h-h_0+7)/8\rfloor+\lfloor(h_0+7)/8\rfloor.$$
     \item $\wotslen$：\WOTSCS\ 私钥、公钥与签名中 $n$ 字节字符串元素的个数。
     $$
     \wotslen = \min \left\{ \ell : \left| D_{\ell, \lfloor \frac{\ell \cdot (w-1)}{2} \rfloor} \right| \geq 2^n \right\} \enspace,
@@ -747,13 +819,13 @@ FORS 签名是一个长度为 $k(\log t+1)$ 的 $n$ 字节串数组。它包含 
 
 Winternitz 参数 $w$ 决定了每个 \WOTSCS\ 实例中哈希链的条数与长度。增大 $w$ 会线性增加哈希链长度，但对链条数量的减少只带来对数级影响。哈希链条数正好对应于 \WOTSCS\ 签名中 $n$ 字节值的个数，因此它对 \SPHINCSA\ 签名尺寸有显著影响。哈希链数量与长度的乘积又与签名速度直接相关，因为 HT 签名生成的主要时间几乎都花在计算 \WOTSCS\ 公钥上。因此，较大的 $w$ 意味着更短的签名，但更慢的签名过程。不过要注意其中的指数差异：$w$ 越大，进一步缩短签名所付出的代价就越高。Winternitz 参数本身不影响 \SPHINCSA\ 的安全性。
 
-超树高度 $h$ 决定了 FORS 实例的数量，因此也决定了在给定 \SPHINCSA\ 密钥对签名次数下，某个 FORS 密钥对被重复使用多次的概率。所以，高度 $h$ 直接影响安全性：超树越高，安全性越强；但另一方面，树越高，签名也越大。
+超树高度 $h$ 决定了底层 BPORS+FP 实例的数量，因此也决定了在给定 \SPHINCSA\ 密钥对签名次数下，某个底层少次密钥对被重复使用多次的概率。所以，高度 $h$ 直接影响安全性：超树越高，安全性越强；但另一方面，树越高，签名也越大。
 
 层数 $d$ 是一个纯粹的性能折中参数，并不直接影响安全性。它决定了超树中 XMSS 树的层数。各层高度 $(h_0,\ldots,h_{d-1})$ 则决定每层 XMSS 的高度，并必须满足 $\sum_{i=0}^{d-1} h_i = h$。增大 $d$ 往往有利于缩小子树规模并加快签名；但 $d$ 同时也控制层数，从而控制 HT 中 \WOTSCS\ 签名的数量，进而影响整个 \SPHINCSA\ 签名长度。
 
-参数 $k$ 与 $t$ 决定 FORS 的性能与安全性。FORS 树的叶子数 $t$ 必须是 2 的幂，而 $k$ 可以自由选择。通常较小的 $t$ 会带来更小、更快的签名；但在给定安全级别下，较小的 $t$ 往往需要较大的 $k$，这又会增大签名尺寸并拖慢签名速度。因此，这两个参数之间需要平衡，而最佳平衡通常应依赖下文给出的公式。
+参数 $K,B,t,k,m_{\max}$ 决定 BPORS+FP 的性能与安全性。较大的 $B$ 会增强 bucket thinning 效果，使每个子 PORS key 看到更少历史使用次数，但也会增加外层桶树构造成本并增加 $KB$ 个外层认证节点。较大的 $K$ 会放大 cover 项指数，同时打开更多子 key。子参数 $t$ 与 $k$ 决定 PORS cover 项和每个子 opening 的大小。阈值 $m_{\max}$ 固定认证节点载荷：较小阈值可缩短签名，但会增加 counter 试验次数。
 
-消息摘要长度 $m$ 是 $\hashmsg$ 的输出字节长度，其值为 $\lfloor(k\log t+7)/8\rfloor+ \lfloor(h-h_0+7)/8\rfloor+\lfloor(h_0+7)/8\rfloor$ 字节。
+消息摘要长度 $m$ 是 $\hashmsg$ 的输出字节长度，其值为 $n+\lfloor(h-h_0+7)/8\rfloor+\lfloor(h_0+7)/8\rfloor$ 字节。
 
 \WOTSCS\ 密钥对中链条数量 $\wotslen$ 决定了 \WOTSCS\ 签名的尺寸。
 
@@ -765,38 +837,19 @@ Winternitz 参数 $w$ 决定了每个 \WOTSCS\ 实例中哈希链的条数与长
 生成 \SPHINCSA\ 私钥和 $\pk.\seed$ 需要调用三次安全随机数生成器。随后需要生成顶层树（第 $d-1$ 层）。叶节点部分需要进行 $2^{h_{d-1}}$ 次 \WOTSCS\ 密钥生成（生成 $\sk$ 需要 $\wotslen$ 次 PRF 调用，生成 $\pk$ 需要 $w \wotslen$ 次 $\hashF$ 调用），并对 \WOTSCS\ 公钥进行压缩（一次 $\Th_{\wotslen}$ 调用）。计算顶层树根则还需要 $(2^{h_{d-1}}-1)$ 次 $\hashH$ 调用。
 
 \paragraph{签名。}
-随机化和消息压缩分别需要一次 $\PRFmsg$ 和一次 $\hashmsg$ 调用。FORS 签名需要 $kt$ 次 \PRF\ 和 $\hashF$ 调用；此外还需计算 $k$ 棵高度为 $\log t$ 的二叉树的根，这会增加 $k(t-1)$ 次 $\hashH$ 调用，最后还需要一次 $\Th_{k}$ 调用。接着，需要计算一次 HT 签名，而 HT 签名由 $d$ 层树组成，其结构与密钥生成中的树类似。因此，总共需要 $\sum_{i=0}^{d-1} 2^{h_i}$ 次 $\wotslen$ 次 PRF 调用与 $w \wotslen$ 次 $\hashF$ 调用，以及 $\sum_{i=0}^{d-1} 2^{h_i}$ 次 $\Th_{\wotslen}$ 调用。计算每棵树的根还会额外带来 $\sum_{i=0}^{d-1} (2^{h_i}-1)$ 次 $\hashH$ 调用。
+随机化和消息压缩分别需要一次 $\PRFmsg$ 和一次 $\hashmsg$ 调用。BPORS+FP 签名成本包括 counter 试验、$Kk$ 个公开子秘密值生成、选中子 opening 构造以及 $K$ 条外层认证路径构造。在打包实现中，主导项是构造选中的外层桶树，即约 $K\cdot2^B$ 个子根，每个子根覆盖 $t$ 个子叶子。接着，需要计算一次 HT 签名，而 HT 签名由 $d$ 层树组成，其结构与密钥生成中的树类似。因此，总共需要 $\sum_{i=0}^{d-1} 2^{h_i}$ 次 $\wotslen$ 次 PRF 调用与 $w \wotslen$ 次 $\hashF$ 调用，以及 $\sum_{i=0}^{d-1} 2^{h_i}$ 次 $\Th_{\wotslen}$ 调用。计算每棵树的根还会额外带来 $\sum_{i=0}^{d-1} (2^{h_i}-1)$ 次 $\hashH$ 调用。
 
 \paragraph{验证。}
-首先需要用 $\hashmsg$ 计算消息哈希。随后执行一次 FORS 验证：其中需要 $k$ 次 $\hashF$ 调用（由签名元素恢复叶节点），$k\log t$ 次 $\hashH$ 调用（结合叶节点和认证路径恢复根节点），以及一次 $\Th_{k}$ 调用来压缩这些根。接着，需要验证 $d$ 个 XMSS 签名；每个签名在 \WOTSCS\ 验证阶段需要少于 $w \wotslen$ 次 $\hashF$ 调用以及一次 $\Th_{\wotslen}$ 调用\footnotemark。除此之外，$d$ 个根恢复总共还需要 $\sum_{i=0}^{d-1} h_i = h$ 次 $\hashH$ 调用。
+首先需要用 $\hashmsg$ 计算消息哈希。随后执行一次 BPORS+FP 公钥恢复：其中需要 $Kk$ 次 $\hashF$ 调用来把公开子秘密值哈希为叶子，并对每个选中坐标用 Octopus 节点恢复子树根，另需 $KB$ 次 $\hashH$ 用于外层认证路径，以及一次 $\Th_K$ 调用来压缩外层根。接着，需要验证 $d$ 个 XMSS 签名；每个签名在 \WOTSCS\ 验证阶段需要少于 $w \wotslen$ 次 $\hashF$ 调用以及一次 $\Th_{\wotslen}$ 调用\footnotemark。除此之外，$d$ 个根恢复总共还需要 $\sum_{i=0}^{d-1} h_i = h$ 次 $\hashH$ 调用。
 
 \footnotetext{需要说明的是，$w \wotslen$ 次 $\hashF$ 调用是一个最坏情况上界，它对应 \WOTSCS\ 签名验证的最坏开销。由于待签消息本身是哈希值，可视为接近均匀分布，因此在实际测量中，这一数值通常更接近平均情况上界 $(w/2)\cdot \wotslen$。}
 
-\SPHINCSA\ 的私钥、公钥与签名大小分别为 $4n$、$2n$ 和 $(h + k(a + 1) + d \cdot {\wotslen} + 1)n$。
+\SPHINCSA\ 的私钥、公钥与签名大小分别为 $4n$、$2n$ 和
+\[
+    n+c_{\mathrm{ctr}}+(Kk+m_{\max})n+(h+d\cdot\wotslen)n .
+\]
 
-\SPHINCSA\ 在面对通用攻击时的经典安全级别（bit security）可由下式计算：
-$$
-\mathtt{bitsec} = -\log\left(
-    \frac{1}{2^{8n}}+
-    \sum_{\gamma}
-        \left(1-\left(1-\frac{1}{t}\right)^{\gamma}\right)^{k}
-        \binom{q}{\gamma}
-        \left(1-\frac{1}{2^{h}}\right)^{q-\gamma}
-        \frac{1}{2^{h\gamma}}
-    \right) \enspace.
-$$
-\SPHINCSA\ 在面对通用攻击时的量子安全级别可由下式计算：
-$$
-\mathtt{bitsec} = -\frac{1}{2}\log\left(
-    \frac{1}{2^{8n}}+
-    \sum_{\gamma}
-        \left(1-\left(1-\frac{1}{t}\right)^{\gamma}\right)^{k}
-        \binom{q}{\gamma}
-        \left(1-\frac{1}{2^{h}}\right)^{q-\gamma}
-        \frac{1}{2^{h\gamma}}
-    \right) \enspace.
-$$
-这里同样忽略了对数内部的小常数因子。
+经典与量子通用安全代理由 \cref{sec:proof-concrete} 中的 BPORS+FP cover 项给出；这里同样忽略对数内部的小常数因子。
 
 \subsubsection{建议参数集与安全级别}
 
@@ -808,12 +861,12 @@ $$
     \label{tab:ngcc-parameters}
     \scriptsize
     \resizebox{\linewidth}{!}{%
-    \begin{tabular}{l c c c c l c c c c c c c c}
+    \begin{tabular}{l c c c c l c c c c c c c}
     \toprule
-    参数族 & NGCC 等级 & $q$ & $n$ & $h/d$ & $(h_0,\ldots,h_{d-1})$ & $a$ & $k$ & $w$ & $\wotslen$ & bitsec & pk & sk & sig \\ \midrule
-    Kylin-128 & 128/80 & $2^{64}$ & 16 & 65/9 & $(7,7,7,7,7,7,7,8,8)$ & 13 & 11 & 73 & 22 & 127 & 32 & 64 & 6688 \\
-    Kylin-256 & 256/128 & $2^{64}$ & 32 & 68/10 & $(6,6,7,7,7,7,7,7,7,7)$ & 13 & 22 & 54 & 46 & 256 & 64 & 128 & 26784 \\
-    Kylin-512 & 512/256 & $2^{64}$ & 64 & 66/11 & $(6,6,6,6,6,6,6,6,6,6,6)$ & 13 & 49 & 97 & 79 & 511 & 128 & 256 & 103808 \\
+    参数族 & NGCC 等级 & $q$ & $n$ & $h/d$ & $(h_0,\ldots,h_{d-1})$ & $(K,B,t,k,m_{\max})$ & $w$ & $\wotslen$ & bitsec & pk & sk & sig \\ \midrule
+    Kylin-128 & 128/80 & $2^{64}$ & 16 & 65/9 & $(7,7,7,7,7,7,7,8,8)$ & $(5,6,132,4,120)$ & 73 & 22 & 127 & 32 & 64 & 6472 \\
+    Kylin-256 & 256/128 & $2^{64}$ & 32 & 68/10 & $(6,6,7,7,7,7,7,7,7,7)$ & $(7,7,280,5,235)$ & 54 & 46 & 256 & 64 & 128 & 25576 \\
+    Kylin-512 & 512/256 & $2^{64}$ & 64 & 66/11 & $(6,6,6,6,6,6,6,6,6,6,6)$ & $(13,7,512,5,490)$ & 97 & 79 & 511 & 128 & 256 & 95432 \\
     \bottomrule
     \end{tabular}%
     }

@@ -4,13 +4,13 @@
 This section summarizes the main characteristics of \SPHINCSA\ in the categories requested by the call.
 
 \paragraph{Innovativeness.}
-Kylin introduces \WOTSCS, a constant-sum, size-optimal encoding for Winternitz-type one-time signatures, and combines it with Diverse Layer Heights in the hypertree parameter search. These two changes improve the signature-size and hash-call trade-off while preserving the conservative hash-based design line.
+Kylin introduces \WOTSCS, a constant-sum, size-optimal encoding for Winternitz-type one-time signatures, replaces the bottom few-time layer with BPORS+FP, and combines both with Diverse Layer Heights in the hypertree parameter search. These changes improve the signature-size and hash-call trade-off while preserving the conservative hash-based design line.
 
 \paragraph{Simplicity.}
-The scheme stays within the well-understood family of stateless hash-based signatures. Its core ingredients are tweakable hash functions, a one-time signature layer, FORS, and a hypertree, with no lattice, code, or multivariate algebraic structure.
+The scheme stays within the well-understood family of stateless hash-based signatures. Its core ingredients are tweakable hash functions, a one-time signature layer, BPORS+FP as the few-time layer, and a hypertree, with no lattice, code, or multivariate algebraic structure.
 
 \paragraph{Flexibility.}
-The parameters $(n,w,h,d,k,t)$ allow the construction to trade signature size, signing time, and verification time. The primary submission fixes the three \texttt{Kylin-128}, \texttt{Kylin-256}, and \texttt{Kylin-512} profiles, while the appendix records reference-only $q=2^{24}$ profiles for lower signing-budget scenarios.
+The parameters $(n,w,h,d,K,B,t,k,m_{\max})$ allow the construction to trade signature size, signing time, and verification time. The primary submission fixes the three \texttt{Kylin-128}, \texttt{Kylin-256}, and \texttt{Kylin-512} profiles, while the appendix records reference-only $q=2^{24}$ profiles for lower signing-budget scenarios.
 
 \paragraph{Compatibility.}
 The packaged code follows the NGCC SIG API and routes hash/XOF calls through the ICCS auxiliary functions. The public workflow remains the conventional key-generation, signing, and verification interface. Because \WOTSCS\ replaces \WOTSP, Kylin is not byte-for-byte compatible with the original \SPHINCSP\ formats.

@@ -3,7 +3,7 @@
 
 #include "params.h"
 #include "wots.h"
-#include "fors.h"
+#include "bpors.h"
 #include "hash.h"
 #include "thash.h"
 #include "address.h"
@@ -55,7 +55,7 @@ int kylin_sign_signature(uint8_t *sig, unsigned long long *siglen,
     spx_ctx ctx;
     const unsigned char *sk_prf = sk + SPX_N;
     const unsigned char *pk = sk + 2 * SPX_N;
-    unsigned char mhash[SPX_FORS_MSG_BYTES];
+    unsigned char mhash[SPX_BPORS_MSG_BYTES];
     unsigned char root[SPX_N];
     uint64_t tree;
     uint32_t idx_leaf;
@@ -78,8 +78,10 @@ int kylin_sign_signature(uint8_t *sig, unsigned long long *siglen,
     set_tree_addr(wots_addr, tree);
     set_keypair_addr(wots_addr, idx_leaf);
 
-    fors_sign(sig, root, mhash, &ctx, wots_addr);
-    sig += SPX_FORS_BYTES;
+    if (bpors_sign(sig, root, mhash, &ctx, wots_addr) != 0) {
+        return -1;
+    }
+    sig += SPX_BPORS_BYTES;
 
     for (i = 0; i < SPX_D; i++) {
         tree_height = spx_tree_height(i);
@@ -109,7 +111,7 @@ int kylin_sign_verify(const uint8_t *sig, unsigned long long siglen,
 {
     spx_ctx ctx;
     const unsigned char *pub_root = pk + SPX_N;
-    unsigned char mhash[SPX_FORS_MSG_BYTES];
+    unsigned char mhash[SPX_BPORS_MSG_BYTES];
     unsigned char wots_pk[SPX_WOTS_BYTES];
     unsigned char root[SPX_N];
     unsigned char leaf[SPX_N];
@@ -138,8 +140,10 @@ int kylin_sign_verify(const uint8_t *sig, unsigned long long siglen,
     set_tree_addr(wots_addr, tree);
     set_keypair_addr(wots_addr, idx_leaf);
 
-    fors_pk_from_sig(root, sig, mhash, &ctx, wots_addr);
-    sig += SPX_FORS_BYTES;
+    if (bpors_pk_from_sig(root, sig, mhash, &ctx, wots_addr) != 0) {
+        return -1;
+    }
+    sig += SPX_BPORS_BYTES;
 
     for (i = 0; i < SPX_D; i++) {
         tree_height = spx_tree_height(i);

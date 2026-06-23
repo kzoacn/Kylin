@@ -80,7 +80,10 @@ int sig_sign(
         return SIG_RNG_ERROR;
     }
 
-    kylin_sign_signature(sn, sn_len_bytes, m, m_len_bytes, sk, optrand);
+    if (kylin_sign_signature(sn, sn_len_bytes, m, m_len_bytes, sk, optrand) != 0) {
+        memset(optrand, 0, sizeof(optrand));
+        return SIG_API_ERROR;
+    }
     memset(optrand, 0, sizeof(optrand));
     return SIG_OK;
 }

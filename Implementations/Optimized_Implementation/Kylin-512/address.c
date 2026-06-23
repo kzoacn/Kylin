@@ -85,10 +85,10 @@ void set_hash_addr(uint32_t addr[8], uint32_t hash)
     ((unsigned char *)addr)[SPX_OFFSET_HASH_ADDR] = (unsigned char)hash;
 }
 
-/* These functions are used for all hash tree addresses (including FORS). */
+/* These functions are used for all hash tree addresses (including BPORS). */
 
 /*
- * Specify the height of the node in the Merkle/FORS tree we are in
+ * Specify the height of the node in the Merkle/BPORS tree we are in
  * (the tree height)
  */
 void set_tree_height(uint32_t addr[8], uint32_t tree_height)
@@ -97,7 +97,7 @@ void set_tree_height(uint32_t addr[8], uint32_t tree_height)
 }
 
 /*
- * Specify the distance from the left edge of the node in the Merkle/FORS tree
+ * Specify the distance from the left edge of the node in the Merkle/BPORS tree
  * (the tree index)
  */
 void set_tree_index(uint32_t addr[8], uint32_t tree_index)

@@ -113,8 +113,8 @@ void hash_message(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
         memset(buf, 0, sizeof(buf));
     }
 
-    memcpy(digest, bufp, SPX_FORS_MSG_BYTES);
-    bufp += SPX_FORS_MSG_BYTES;
+    memcpy(digest, bufp, SPX_BPORS_MSG_BYTES);
+    bufp += SPX_BPORS_MSG_BYTES;
 
 #if SPX_TREE_BITS > 64
 #error Subtree addressing is limited to at most 64 bits

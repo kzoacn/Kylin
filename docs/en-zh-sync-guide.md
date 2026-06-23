@@ -51,6 +51,7 @@ This guide defines the maintenance workflow for the bilingual submission documen
 - When `paper/tex/security_statements_and_analyses.tex` changes, mirror the theorem, lemma, equation, and game-proof structure in `paper/tex-zh/security_statements_and_analyses.tex`.
 - Translate theorem-like titles and prose, but keep labels, citation keys, formulas, query-count symbols, primitive names, and instance names unchanged.
 - Keep `game proof`, `SM-UD`, `SM-TCR`, `SM-PRE`, `SM-DSPR`, `ITSR`, and `bit-security` tokens stable unless the glossary is deliberately updated.
+- When the few-time signature layer changes, mirror the construction section, concrete cover formula, parameter tuple names, and implementation-facing pseudocode references together.
 
 ## Review Checklist
 

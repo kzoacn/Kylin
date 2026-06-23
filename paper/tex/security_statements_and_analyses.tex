@@ -10,9 +10,10 @@ This section gives the security claim and proof outline for the Kylin signature
 scheme specified in \cref{sec:spx-core}.  The reduction follows the tight
 \SPHINCSP proof framework of H\"ulsing and Kudinov~\cite{AC:HulKud22}, while
 replacing the WOTS+ checksum argument by the constant-sum antichain argument of
-\WOTSCS~\cite{optimalwots}.  The recommended NGCC-aligned parameter families
-are recorded in \cref{tab:ngcc-parameters}, and the packaged ICCS hash/XOF
-interface is described in \cref{sec:hashfunctions}.
+\WOTSCS~\cite{optimalwots}, and replacing the FORS few-time layer by
+BPORS+FP~\cite{bucketthinning}.  The recommended NGCC-aligned parameter
+families are recorded in \cref{tab:ngcc-parameters}, and the packaged ICCS
+hash/XOF interface is described in \cref{sec:hashfunctions}.
 
 \subsection{Security Model and Notation}
 \label{sec:proof-model}
@@ -21,9 +22,9 @@ Throughout this section, $n$ denotes the Kylin security parameter in bytes and
 $N=8n$ denotes the corresponding bit length.  All basic hash-chain values,
 secret-key elements, public-key elements, and Merkle-tree nodes are $n$-byte
 strings, i.e., elements of $\{0,1\}^{N}$.  The Winternitz parameter is $w$, the
-\WOTSCS chain count is $\ell=\wotslen$, the FORS parameters are $k$ and
-$t=2^a$, and the hypertree has total height $h$ split into per-layer heights
-$(h_0,\ldots,h_{d-1})$ with $\sum_{i=0}^{d-1}h_i=h$.
+\WOTSCS chain count is $\ell=\wotslen$, the BPORS+FP parameters are
+$(K,B,t,k,m_{\max})$, and the hypertree has total height $h$ split into
+per-layer heights $(h_0,\ldots,h_{d-1})$ with $\sum_{i=0}^{d-1}h_i=h$.
 
 The tweakable hash-function collection is parameterized by the public seed
 $\pk.\seed$ and by 32-byte addresses \ADRS.  In this collection, $\hashF$ maps
@@ -47,12 +48,12 @@ Kylin relies on the following properties.
     single-function multi-target undetectability (SM-UD), target-collision
     resistance (SM-TCR), preimage resistance (SM-PRE), and decisional
     second-preimage resistance (SM-DSPR) for distinct tweaks.
-    \item $\hashH$, $\Th_k$, and $\Th_\ell$ satisfy SM-TCR for distinct tweaks.
+    \item $\hashH$, $\Th_K$, and $\Th_\ell$ satisfy SM-TCR for distinct tweaks.
 \end{itemize}
 
 The distinct-tweak condition is enforced by the address scheme in
 \cref{sec:addr}.  The reductions below only place targets at addresses that
-are fixed by a virtual FORS, XMSS, or \WOTSCS instance; all other evaluations
+are fixed by a virtual BPORS+FP, XMSS, or \WOTSCS instance; all other evaluations
 are simulated using the same tweakable-hash collection.
 
 \subsection{Security of CS-WOTS-TW}
@@ -269,9 +270,9 @@ computes
     (\md,\mathsf{idx}_{\mathsf{tree}},\mathsf{idx}_{\mathsf{leaf}})
     \gets\hashmsg(R,\pk.\seed,\pk.\root,M).
 \]
-The digest \md is signed by FORS.  The recovered FORS public key is then signed
-by the bottom XMSS tree of the hypertree; each higher XMSS layer signs the root
-of the layer below.
+The digest \md is signed by BPORS+FP.  The recovered BPORS+FP public key is
+then signed by the bottom XMSS tree of the hypertree; each higher XMSS layer
+signs the root of the layer below.
 
 Layer $i$ has height $h_i$.  It therefore contributes one \WOTSCS signature and
 one authentication path of $h_i$ $n$-byte nodes to each hypertree signature.
@@ -288,9 +289,9 @@ $hn$ bytes, independent of the distribution of the $h_i$.
 
 \begin{theorem}[EUF-CMA security of Kylin]
 \label{thm:proof-kylin}
-Let Kylin use parameters $n,w,h,d,(h_0,\ldots,h_{d-1}),a,k,\ell$ as specified
-above, and let $t=2^a$.  For any adversary making at most $q_s$ signing
-queries,
+Let Kylin use parameters $n,w,h,d,(h_0,\ldots,h_{d-1}),\ell$ and BPORS+FP
+parameters $(K,B,t,k,m_{\max})$ as specified above.  For any adversary making
+at most $q_s$ signing queries,
 \begin{align}
 \InSec{EU\text{-}CMA}(\mathsf{Kylin};\tau,q_s)
 \le{}&
@@ -301,7 +302,7 @@ queries,
     +\InSec{sm\text{-}pre}(\hashF\in\THFColl;\tau,q_2) \notag\\
 &   +\InSec{sm\text{-}tcr}(\hashF\in\THFColl;\tau,q_3+q_7)
     +\InSec{sm\text{-}tcr}(\hashH\in\THFColl;\tau,q_4) \notag\\
-&   +\InSec{sm\text{-}tcr}(\Th_k\in\THFColl;\tau,q_5)
+&   +\InSec{sm\text{-}tcr}(\Th_K\in\THFColl;\tau,q_5)
     +\InSec{sm\text{-}tcr}(\Th_\ell\in\THFColl;\tau,q_6) \notag\\
 &   +3\cdot\InSec{sm\text{-}tcr}(\hashF\in\THFColl;\tau,q_8)
     +\InSec{sm\text{-}dspr}(\hashF\in\THFColl;\tau,q_8),
@@ -309,22 +310,23 @@ queries,
 \end{align}
 where the target counts can be bounded by
 \begin{align*}
-q_1 &< 2^{h+1}(kt+\ell),&
+q_1 &< 2^{h+1}(K2^B t+\ell),&
 q_2 &< 2^{h+1}\ell,&
 q_3 &< 2^{h+1}\ell w,&
-q_4 &< 2^{h+1}k\cdot 2t,\\
+q_4 &< 2^{h+1}K2^B(2t+2),\\
 q_5 &< 2^h,&
 q_6 &< 2^{h+1},&
-q_7 &< 2^{h+1}kt,&
-q_8 &< 2^hkt.
+q_7 &< 2^{h+1}K2^B t,&
+q_8 &< 2^hK2^B t.
 \end{align*}
 \end{theorem}
 
 \begin{proof}
 The proof adapts the tight \SPHINCSP game sequence of~\cite{AC:HulKud22} to
-the \WOTSCS layer.  The FORS, hypertree, PRF, message-randomization, and
-tweakable-hash parts are unchanged except for the target counts induced by
-$\ell$ and by the non-uniform height vector $(h_0,\ldots,h_{d-1})$.
+the \WOTSCS and BPORS+FP layers.  The hypertree, PRF, message-randomization,
+and tweakable-hash games are unchanged in structure; the target counts change
+because the bottom few-time layer now contains $K2^B$ child PORS trees per
+bottom key and because \WOTSCS uses $\ell$ chains.
 
 \paragraph{Game $\mathsf{G}_0$: real EUF-CMA experiment.}
 The adversary receives a real Kylin public key and may ask for up to $q_s$
@@ -332,10 +334,10 @@ signatures.  It wins by outputting a valid signature on a message that was not
 queried.
 
 \paragraph{Game $\mathsf{G}_0\to\mathsf{G}_1$: replace \PRF.}
-All secret values derived from $\PRF(\sk.\seed,\cdot)$ in FORS and in the
+All secret values derived from $\PRF(\sk.\seed,\cdot)$ in BPORS+FP and in the
 \WOTSCS instances are replaced by independent uniform values.  The number of
 possible targeted secret values in the virtual structure is bounded by
-$q_1<2^{h+1}(kt+\ell)$, giving the first PRF term in
+$q_1<2^{h+1}(K2^Bt+\ell)$, giving the first PRF term in
 \cref{eq:proof-kylin-bound}.
 
 \paragraph{Game $\mathsf{G}_1\to\mathsf{G}_2$: replace \PRFmsg.}
@@ -344,8 +346,8 @@ $q_s$ signing queries.  This gives the
 $\InSec{prf}(\PRFmsg;\tau,q_s)$ term.
 
 \paragraph{Game $\mathsf{G}_2\to\mathsf{G}_3$: ITSR of \hashmsg.}
-The game aborts if the forgery avoids introducing a fresh FORS leaf while still
-corresponding to an unqueried message.  This is exactly the event controlled by
+The game aborts if the forgery avoids introducing a fresh BPORS+FP child leaf
+while still corresponding to an unqueried message.  This is exactly the event controlled by
 interleaved target subset resilience of \hashmsg, giving
 $\InSec{itsr}(\hashmsg;\tau,q_s)$.
 
@@ -355,15 +357,16 @@ The remaining successful forgery is decomposed by the first place where the
 verification computation diverges from the honestly generated virtual
 structure.
 \begin{itemize}
-    \item A second preimage in a FORS or XMSS binary tree reduces to SM-TCR of
-    $\hashH$ with at most $q_4<2^{h+1}k\cdot 2t$ targets.
-    \item A second preimage in the compression of the $k$ FORS roots reduces
-    to SM-TCR of $\Th_k$ with at most $q_5<2^h$ targets.
+    \item A second preimage in a BPORS+FP child tree, BPORS+FP outer tree, or
+    XMSS binary tree reduces to SM-TCR of $\hashH$ with at most
+    $q_4<2^{h+1}K2^B(2t+2)$ targets.
+    \item A second preimage in the compression of the $K$ BPORS+FP outer roots
+    reduces to SM-TCR of $\Th_K$ with at most $q_5<2^h$ targets.
     \item A second preimage in the compression of a \WOTSCS public key reduces
     to SM-TCR of $\Th_\ell$ with at most $q_6<2^{h+1}$ targets.
-    \item A second preimage in a FORS leaf computation outside the WOTS
-    instances reduces to SM-TCR of $\hashF$ with at most
-    $q_7<2^{h+1}kt$ targets.
+    \item A second preimage in a BPORS+FP child leaf computation outside the
+    WOTS instances reduces to SM-TCR of $\hashF$ with at most
+    $q_7<2^{h+1}K2^Bt$ targets.
 \end{itemize}
 
 \paragraph{Game $\mathsf{G}_{3.4}\to\mathsf{G}_4$: WOTS forgery.}
@@ -373,12 +376,12 @@ $2^{h+1}$ addressed one-time instances.  Applying
 \cref{thm:proof-cswots-multi} with $D<2^{h+1}$ gives the SM-UD, SM-PRE, and
 SM-TCR terms with target counts $q_2$ and $q_3$.
 
-\paragraph{Final game: second FORS leaf case.}
-The only remaining case is the standard \SPHINCSP ``second leaf'' case for
-FORS: the forgery contains a fresh FORS leaf value that verifies under the same
-path but is not the expected leaf.  As in the tight \SPHINCSP proof, this
-reduces to three SM-TCR placements and one SM-DSPR term for $\hashF$, with
-$q_8<2^hkt$ targets.  Summing all transition losses proves
+\paragraph{Final game: second BPORS+FP child leaf case.}
+The only remaining case is the analogous ``second leaf'' case for BPORS+FP:
+the forgery contains a fresh child leaf value that verifies under the same
+child and outer paths but is not the expected leaf.  As in the tight
+\SPHINCSP proof, this reduces to three SM-TCR placements and one SM-DSPR term
+for $\hashF$, with $q_8<2^hK2^Bt$ targets.  Summing all transition losses proves
 \cref{eq:proof-kylin-bound}.
 \end{proof}
 
@@ -386,32 +389,56 @@ $q_8<2^hkt$ targets.  Summing all transition losses proves
 The height vector $(h_0,\ldots,h_{d-1})$ affects running time and memory through
 the cost of generating individual XMSS trees, but not the reduction structure.
 The security target counts above depend on the total number of virtual leaves,
-WOTS instances, FORS leaves, and authentication-path nodes, all bounded using
-the total height $h$.
+WOTS instances, BPORS+FP child leaves, and authentication-path nodes, all
+bounded using the total height $h$ and the BPORS+FP parameters.
 \end{remark}
 
 \subsection{Concrete Security Against Generic Attacks}
 \label{sec:proof-concrete}
 
 \Cref{thm:proof-kylin} is a reduction theorem.  For parameter selection, Kylin
-uses the usual \SPHINCSP generic-attack proxy for random-function-like
-instantiations.  Let $q_s$ be the allowed number of signatures under one key
-and $t=2^a$.  The dominant generic forgery probability is
+uses a BPORS+FP cover-term proxy for random-function-like instantiations.  Let
+$q_s$ be the allowed number of signatures under one key.  For a child PORS tree
+with $t$ leaves and $k$ opened leaves, define the fixed-child cover term after
+$r$ uses by the inclusion-exclusion formula
+\begin{equation}
+\label{eq:proof-bpors-child-cover}
+    p_{\mathsf{ch}}(r)
+    =
+    \sum_{i=0}^{k}(-1)^i\binom{k}{i}
+    \left(\frac{\binom{t-i}{k}}{\binom{t}{k}}\right)^r .
+\end{equation}
+If the bottom BPORS+FP key has already been used $\gamma$ times, a fixed child
+bucket in one coordinate has thinned use count
+$R\sim\operatorname{Bin}(\gamma,2^{-B})$.  The one-coordinate averaged child
+cover term is therefore
+\begin{equation}
+\label{eq:proof-bpors-thinned-cover}
+    \bar p_{\mathsf{ch}}(\gamma)
+    =
+    \mathbb{E}_{R\sim\operatorname{Bin}(\gamma,2^{-B})}
+    \left[p_{\mathsf{ch}}(R)\right].
+\end{equation}
+The dominant generic forgery probability used in the parameter search is
 \begin{equation}
 \label{eq:proof-generic-prob}
 p_{\mathsf{gen}}
 =2^{-N}
 +\sum_{\gamma=0}^{q_s}
-\left(1-\left(1-\frac{1}{t}\right)^\gamma\right)^k
+\left(\bar p_{\mathsf{ch}}(\gamma)\right)^K
 \binom{q_s}{\gamma}
 \left(1-\frac{1}{2^h}\right)^{q_s-\gamma}
 2^{-h\gamma}.
 \end{equation}
 Here $\gamma$ is the number of previous signatures that hit the same hypertree
 leaf as the forgery attempt.  Conditioned on this hit count, the first factor
-inside the sum is the probability that every one of the $k$ FORS trees exposes
-a reusable index.  The leading term $2^{-N}=2^{-8n}$ captures generic search
-against an $n$-byte primitive output.
+inside the sum is the probability that all $K$ selected BPORS+FP coordinates
+are covered by child secrets exposed in previous signatures, after the
+$2^{-B}$ bucket thinning in each coordinate.  The leading term
+$2^{-N}=2^{-8n}$ captures generic search against an $n$-byte primitive output.
+This conservative estimate does not count forced-pruning acceptance as an
+independent security gain; $m_{\max}$ is used for fixed-size signatures and
+signing-time control.
 
 The corresponding classical and quantum generic bit-security proxies are
 \begin{equation}
@@ -426,17 +453,17 @@ names are submission names; the table below reports the exponents obtained by
 \texttt{paper/data/para\_kylin\_final\_6profiles.csv}.
 
 \begin{center}
-\begin{tabular}{lcccccccccc}
+\begin{tabular}{lccccccccc}
 \toprule
-Instance & $q_s$ & $n$ & $h$ & $d$ & $a$ & $k$ & $w$ & $\ell$ &
+Instance & $q_s$ & $n$ & $h$ & $d$ & $(K,B,t,k,m_{\max})$ & $w$ & $\ell$ &
 $\mathsf{bitsec}_{\mathsf{cl}}$ & $\mathsf{bitsec}_{\mathsf{q}}$ \\
 \midrule
-Kylin-128     & $2^{64}$ & 16 & 65 & 9  & 13 & 11 & 73 & 22  & 127.209 & 63.605 \\
-Kylin-256     & $2^{64}$ & 32 & 68 & 10 & 13 & 22 & 54 & 46  & 255.944 & 127.972 \\
-Kylin-512     & $2^{64}$ & 64 & 66 & 11 & 13 & 49 & 97 & 79  & 511.243 & 255.622 \\
-Kylin-128-q24 & $2^{24}$ & 16 & 22 & 1  & 24 & 6  & 4  & 67  & 127.281 & 63.641 \\
-Kylin-256-q24 & $2^{24}$ & 32 & 21 & 1  & 25 & 12 & 4  & 131 & 255.359 & 127.680 \\
-Kylin-512-q24 & $2^{24}$ & 64 & 57 & 3  & 20 & 24 & 64 & 87  & 511.415 & 255.708 \\
+Kylin-128     & $2^{64}$ & 16 & 65 & 9  & $(5,6,132,4,120)$    & 73 & 22  & 127.999 & 64.000 \\
+Kylin-256     & $2^{64}$ & 32 & 68 & 10 & $(7,7,280,5,235)$    & 54 & 46  & 256.000 & 128.000 \\
+Kylin-512     & $2^{64}$ & 64 & 66 & 11 & $(13,7,512,5,490)$   & 97 & 79  & 512.000 & 256.000 \\
+Kylin-128-q24 & $2^{24}$ & 16 & 22 & 1  & $(2,13,736,7,112)$   & 4  & 67  & 127.141 & 63.570 \\
+Kylin-256-q24 & $2^{24}$ & 32 & 21 & 1  & $(3,13,3456,8,235)$  & 4  & 131 & 255.026 & 127.513 \\
+Kylin-512-q24 & $2^{24}$ & 64 & 57 & 3  & $(5,12,3456,9,420)$  & 64 & 87  & 512.000 & 256.000 \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -445,7 +472,8 @@ Kylin-512-q24 & $2^{24}$ & 64 & 57 & 3  & 20 & 24 & 64 & 87  & 511.415 & 255.708
 \label{sec:proof-sphincs-comparison}
 
 The proof above inherits the tight \SPHINCSP structure of~\cite{AC:HulKud22}
-and changes only the WOTS-specific encoding argument.
+and changes two construction-specific parts: the WOTS encoding argument and the
+bottom few-time cover calculation.
 \begin{enumerate}
     \item The \SPHINCSP WOTS+ checksum is replaced by
     \cref{lem:proof-cswots-direction}.  This gives the decreasing chain
@@ -460,6 +488,12 @@ and changes only the WOTS-specific encoding argument.
     \item The diverse hypertree heights change the algorithmic loops in
     \texttt{ht\_sign} and \texttt{ht\_verify}, but the reduction uses the total
     height $h$ to bound the number of virtual leaves and targets.
+    \item The FORS cover term is replaced by the BPORS+FP cover term in
+    \cref{eq:proof-bpors-child-cover,eq:proof-bpors-thinned-cover}.  The game
+    structure is the same: after hash-collision and WOTS-forgery events are
+    excluded, a remaining bottom-layer forgery must either be covered by
+    previously revealed few-time secrets or yield a second child leaf for
+    $\hashF$.
 \end{enumerate}
 
 \subsection{Other Security Properties}

@@ -13,8 +13,8 @@
 #define SPX_OFFSET_KP_ADDR1  23  /* The low byte used to specify the key pair */
 #define SPX_OFFSET_CHAIN_ADDR 27  /* The byte used to specify the chain address (which Winternitz chain) */
 #define SPX_OFFSET_HASH_ADDR 31  /* The byte used to specify the hash address (where in the Winternitz chain) */
-#define SPX_OFFSET_TREE_HGT  27  /* The byte used to specify the height of this node in the FORS or Merkle tree */
-#define SPX_OFFSET_TREE_INDEX 28 /* The start of the 4 byte field used to specify the node in the FORS or Merkle tree */
+#define SPX_OFFSET_TREE_HGT  27  /* The byte used to specify the height of this node in the BPORS or Merkle tree */
+#define SPX_OFFSET_TREE_INDEX 28 /* The start of the 4 byte field used to specify the node in the BPORS or Merkle tree */
 
 #define SPX_SHAKE 1
 

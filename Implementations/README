@@ -22,12 +22,12 @@ runtime-dispatched hash-path acceleration and reduced allocation overhead.
 
 Current frozen packaged parameters are:
 
-- `Kylin-128`: `q=2^64, h=65, d=9, h_vec=[7,7,7,7,7,7,7,8,8], a=13, k=11, w=73, len=22`
-- `Kylin-256`: `q=2^64, h=68, d=10, h_vec=[6,6,7,7,7,7,7,7,7,7], a=13, k=22, w=54, len=46`
-- `Kylin-512`: `q=2^64, h=66, d=11, h_vec=[6,6,6,6,6,6,6,6,6,6,6], a=13, k=49, w=97, len=79`
-- `Kylin-128-q24`: `q=2^24, h=22, d=1, h_vec=[22], a=24, k=6, w=4, len=67`
-- `Kylin-256-q24`: `q=2^24, h=21, d=1, h_vec=[21], a=25, k=12, w=4, len=131`
-- `Kylin-512-q24`: `q=2^24, h=57, d=3, h_vec=[19,19,19], a=20, k=24, w=64, len=87`
+- `Kylin-128`: `q=2^64, h=65, d=9, h_vec=[7,7,7,7,7,7,7,8,8], BPORS=(K=5,B=6,t=132,k=4,mmax=120), w=73, len=22`
+- `Kylin-256`: `q=2^64, h=68, d=10, h_vec=[6,6,7,7,7,7,7,7,7,7], BPORS=(K=7,B=7,t=280,k=5,mmax=235), w=54, len=46`
+- `Kylin-512`: `q=2^64, h=66, d=11, h_vec=[6,6,6,6,6,6,6,6,6,6,6], BPORS=(K=13,B=7,t=512,k=5,mmax=490), w=97, len=79`
+- `Kylin-128-q24`: `q=2^24, h=22, d=1, h_vec=[22], BPORS=(K=2,B=13,t=736,k=7,mmax=112), w=4, len=67`
+- `Kylin-256-q24`: `q=2^24, h=21, d=1, h_vec=[21], BPORS=(K=3,B=13,t=3456,k=8,mmax=235), w=4, len=131`
+- `Kylin-512-q24`: `q=2^24, h=57, d=3, h_vec=[19,19,19], BPORS=(K=5,B=12,t=3456,k=9,mmax=420), w=64, len=87`
 
 The packaged NGCC wrappers accept messages up to `2^60` bytes, i.e. `2^63`
 bits, matching the submission bound recorded in the specification.
@@ -84,8 +84,8 @@ Each instance directory listed above contains the common file inventory below:
 - `hash_iccs.c`: ICCS-helper-backed hash and message-digest implementation.
 - `thash.h`: declarations for tweakable hash functions.
 - `thash_iccs.c`: ICCS-helper-backed tweakable hash implementation.
-- `fors.h`: FORS interface declarations.
-- `fors.c`: FORS signing and public-key reconstruction implementation.
+- `bpors.h`: BPORS+FP interface declarations.
+- `bpors.c`: BPORS+FP signing and public-key reconstruction implementation.
 - `wots.h`: WOTSCS interface declarations.
 - `wots.c`: WOTSCS signing and public-key reconstruction implementation.
 - `wotsx1.h`: one-address WOTSCS helper declarations used by tree code and

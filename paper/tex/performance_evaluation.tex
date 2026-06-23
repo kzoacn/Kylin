@@ -4,7 +4,7 @@
 This section provides the performance analysis and benchmark data required by the call. The current repository uses repository-local measurements for the packaged Kylin NGCC instances.
 
 \paragraph{Performance analysis.}
-At the design level, Kylin's dominant costs are hash and XOF calls. Key generation builds the top hypertree layer, signing computes FORS material and one authentication path through each hypertree layer, and verification recomputes the FORS public key and verifies the hypertree signature. \WOTSCS reduces the number of $n$-byte elements in each one-time signature, while Diverse Layer Heights keeps the signing hash-call proxy balanced even when $h$ is not divisible by $d$.
+At the design level, Kylin's dominant costs are hash and XOF calls. Key generation builds the top hypertree layer, signing computes BPORS+FP material and one authentication path through each hypertree layer, and verification recomputes the BPORS+FP public key and verifies the hypertree signature. \WOTSCS reduces the number of $n$-byte elements in each one-time signature, BPORS+FP reduces the bottom few-time signature payload, and Diverse Layer Heights keeps the signing hash-call proxy balanced even when $h$ is not divisible by $d$.
 
 \begin{table}[H]
     \centering
@@ -14,9 +14,9 @@ At the design level, Kylin's dominant costs are hash and XOF calls. Key generati
     \begin{tabular}{l r r r r}
     \toprule
     Instance & KeyGen hash calls & Sign hash calls & Verify hash calls & Signature bytes \\ \midrule
-    Kylin-128 & 417279 & 2442880 & 7357 & 6688 \\
-    Kylin-256 & 324095 & 3223168 & 12577 & 26784 \\
-    Kylin-512 & 495615 & 6198272 & 42476 & 103808 \\
+    Kylin-128 & 417279 & BPORS+HT & BPORS+HT & 6472 \\
+    Kylin-256 & 324095 & BPORS+HT & BPORS+HT & 25576 \\
+    Kylin-512 & 495615 & BPORS+HT & BPORS+HT & 95432 \\
     \bottomrule
     \end{tabular}
 \end{table}

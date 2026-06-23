@@ -18,6 +18,10 @@ This glossary fixes the preferred wording for the bilingual submission document 
 | stateless signature | 无状态签名 |  |
 | one-time signature | 一次性签名 |  |
 | few-time signature | 少次签名 |  |
+| bucket thinning | bucket thinning（桶稀疏） | Keep English term on first use when naming the technique. |
+| BPORS+FP | BPORS+FP | Do not translate component acronym. |
+| forced pruning | forced pruning | Keep English technical term; explain as `强制剪枝` only if needed. |
+| Octopus authentication set | Octopus 认证集合 | Keep `Octopus` unchanged. |
 | hypertree | 超树 | Keep `HT` token unchanged when used as an algorithm/component name. |
 | layer height | 层高 | `layer heights` -> `分层高度`. |
 | Diverse Layer Heights | Diverse Layer Heights（分层高度多样化） | First use can keep English plus Chinese. |
@@ -68,7 +72,7 @@ This glossary fixes the preferred wording for the bilingual submission document 
 
 - `Kylin-128`, `Kylin-256`, `Kylin-512`
 - `Kylin-128-q24`, `Kylin-256-q24`, `Kylin-512-q24`
-- `SPHINCS+`, `CS-WOTS+`, `WOTS+`, `XMSS`, `FORS`, `HT`
+- `SPHINCS+`, `CS-WOTS+`, `WOTS+`, `XMSS`, `BPORS+FP`, `FORS`, `HT`
 - `SIG_AlgorithmInstance.h`, `SIG_AlgorithmInstance.c`, `KAT_SIG.c`
 - `pseudoXOF`, `pseudohash`, `sm3hash`
 - `paper/data/para_kylin_final_6profiles.csv`

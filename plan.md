@@ -745,3 +745,25 @@
   - q24 优化实现三档 `make clean all` 通过，并修复其 `hash_iccs.c` 中 `SPX_TREE_BITS/SPX_LEAF_BITS` 常量移位告警；
   - zip 清单检查确认无旧 zip、无嵌套 Additional 实现层级、无 `tools/`、`benchmarks/`、`output/`、`.stack-usage/` 或生成的可执行文件；
   - 从 zip 解包后，主提交 Ref/Opt 六个实例 `make clean all test` 通过；按要求未将 q24 `make test` 作为默认验证项。
+
+### 2026-06-23 - Migrate Kylin Few-Time Layer from FORS to BPORS+FP (Done)
+
+- 将 Kylin 的 few-time signature 层从 FORS 替换为 BPORS+FP：
+  - 在主提交与 q24 伴随提交的 Reference/Optimized 共 12 个实例中新增 `bpors.c`/`bpors.h`，删除 `fors.c`/`fors.h`；
+  - `kylin_sign.c`、`hash_iccs.c`、`SIG_AlgorithmInstance.c`、`params.h`、`Makefile` 与地址类型常量同步改为 BPORS+FP；
+  - 保持外层 Kylin 参数 `n,h,d,h_vec,w,len` 不变，并为六个冻结 profiles 固定 BPORS+FP 参数与签名长度。
+- 同步英文与中文文档：
+  - `paper/tex/kylin.tex` 与 `paper/tex-zh/kylin.tex` 新增 BPORS+FP 规格、签名格式、算法伪代码与参数表；
+  - `paper/tex/security_statements_and_analyses.tex` 与中文镜像补入 BPORS+FP game proof、single-instance cover-security、multi-instance theorem、Kylin reduction theorem 和 HK22/SPHINCS+ comparison；
+  - 参数 CSV、术语表、EN->ZH 同步指南、实现 README 与伪代码文件同步更新。
+- 固定参数检查：
+  - `Kylin-128`: `K=5,B=6,t=132,k=4,mmax=120`, signature `6472` bytes, concrete bit security `127.999038489`；
+  - `Kylin-256`: `K=7,B=7,t=280,k=5,mmax=235`, signature `25576` bytes, concrete bit security `255.999998892`；
+  - `Kylin-512`: `K=13,B=7,t=512,k=5,mmax=490`, signature `95432` bytes, concrete bit security `511.999999933`；
+  - q24 companion profiles remain size-first and meet their target levels under the BPORS+FP checker.
+- 验证：
+  - `python3 paper/code/check_bpors_profiles.py` 通过；
+  - 主提交 Reference/Optimized 六个实例 `make clean && make test` 全部通过，包括 `Kylin-512`；
+  - q24 Reference/Optimized 六个实例 `make clean && make` 全部通过，且 `Optimized_Implementation/Kylin-128-q24 make test` 通过；其余 q24 测试因 size-first 参数耗时较长，未纳入默认收口验证；
+  - `make -C paper/build all` 与 `make -C paper/build zh` 均通过；
+  - `git diff --check` 通过，活跃实现代码中未检出 `FORS/SPX_FORS/fors` 残留。

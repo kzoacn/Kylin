@@ -14,7 +14,7 @@ COMMON_SOURCES = \
 	wotsx1.c \
 	utils.c \
 	utilsx1.c \
-	fors.c \
+	bpors.c \
 	hash_iccs.c \
 	thash_iccs.c \
 	auxfunc.c \

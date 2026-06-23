@@ -107,9 +107,16 @@ To compress the message to be signed, \SPHINCSA\ uses an additional keyed hash f
 
 An address \ADRS is a 32-byte value that follows a defined structure. In addition, it comes with set methods to manipulate the address. We explain the generation of addresses in the following sections where they are used. Essentially, all functions have to keep track of the current context, updating the addresses after each hash call.
 
-There are five different types of addresses for the different use cases. One type is used for the hashes in \WOTSCS\ schemes, one is used for compression of the \WOTSCS\ public key, the third is used for hashes within the main Merkle tree construction, another is used for the hashes in the Merkle tree in FORS, and the last is used for the compression of the tree roots of FORS. These types largely share a common format. We describe them in more detail, below.
+There are eight different address type values for the different use cases. One
+type is used for the hashes in \WOTSCS\ schemes, one is used for compression of
+the \WOTSCS\ public key, the third is used for hashes within the main Merkle
+tree construction, two are used for BPORS+FP child-tree hashing and BPORS+FP
+root compression, one is used for \WOTSCS\ private-key value generation, one is
+used for BPORS+FP child secret generation, and one is used for BPORS+FP outer
+bucket-tree hashing. These types largely share a common format. We describe
+them in more detail, below.
 
-The structure of an address complies with word borders, with a word being 32 bits long in this context. Only the tree address (i.e. the index of a specific subtree in the main tree) is too long to fit a single word: for this, we reserve three words. An address is structured as follows. It always starts with a layer address of one word in the most significant bits, followed by a tree address of three words. These addresses describe the position of a tree within the hypertree. The layer address describes the height of a tree within the hypertree starting from height zero for trees on the bottom layer. The tree address describes the position of a tree within a layer of a multi-tree starting with index zero for the leftmost tree. The next word defines the type of the address. It is set to 0 for a \WOTSCS\ hash address, to 1 for the compression of the \WOTSCS\ public key, to 2 for a hash tree address, to 3 for a FORS address, and to 4 for the compression of FORS tree roots.
+The structure of an address complies with word borders, with a word being 32 bits long in this context. Only the tree address (i.e. the index of a specific subtree in the main tree) is too long to fit a single word: for this, we reserve three words. An address is structured as follows. It always starts with a layer address of one word in the most significant bits, followed by a tree address of three words. These addresses describe the position of a tree within the hypertree. The layer address describes the height of a tree within the hypertree starting from height zero for trees on the bottom layer. The tree address describes the position of a tree within a layer of a multi-tree starting with index zero for the leftmost tree. The next word defines the type of the address. It is set to 0 for a \WOTSCS\ hash address, to 1 for the compression of the \WOTSCS\ public key, to 2 for a hash tree address, to 3 for a BPORS+FP child-tree address, to 4 for BPORS+FP root compression, to 5 for \WOTSCS\ private-key generation, to 6 for BPORS+FP child secret generation, and to 7 for BPORS+FP outer-tree hashing.
 
 We first describe the \WOTSCS\ address (\cref{fig:spx2}). In this case, the type word is followed by the key pair address that encodes the index of the \WOTSCS\ key pair within the specified tree. The next word encodes the chain address (i.e. the index of the chain within \WOTSCS\ ), followed by a word that encodes the address of the hash function call within the chain. Note that for the generation of the secret keys based on \sk.\seed a different type of address is used (see below).
 
@@ -158,7 +165,13 @@ The third type (\cref{fig:spx4}) addresses the hash functions in the main tree. 
     \label{fig:spx4}
 \end{figure}
 
-The next type (\cref{fig:spx5}) is of a similar format, and is used to describe the hash functions in the FORS tree. The type word is set to 3. The key pair address is used to signify which FORS key pair is used, identical to the key pair address in the \WOTSCS\ hash addresses. Its value is the same as that of the \WOTSCS\ key pair that is used to authenticate it, i.e. its index as a leaf in the specified tree. The tree height and tree index fields are used to address the hashes within the FORS tree. This is done like for the above-mentioned hashes in the main tree, with the additional consideration that the tree indices are counted continuously across the different FORS trees. To generate the leaf nodes from \sk.\seed a different type of address is used (see below).
+The next type (\cref{fig:spx5}) is of a similar format, and is used to describe
+hash functions in a BPORS+FP child tree. The type word is set to 3. The key
+pair address identifies the bottom BPORS+FP key pair, identical to the key pair
+address in the \WOTSCS\ hash addresses. The remaining words encode the BPORS
+coordinate, bucket, tree height, and tree index as needed by the implementation
+address setters. To generate child secret values from \sk.\seed a different
+type of address is used (see below).
 
 \begin{figure}[ht]
     \centering
@@ -170,11 +183,13 @@ The next type (\cref{fig:spx5}) is of a similar format, and is used to describe 
         \bitbox{8}{Tree Height} &
         \bitbox{8}{Tree Index}
     \end{bytefield}
-    \caption{FORS tree address.}
+    \caption{BPORS+FP child-tree address.}
     \label{fig:spx5}
 \end{figure}
 
-The next type (\cref{fig:spx6}) is used to compress the tree roots of the FORS trees. The type word is set to 4. Like the \WOTSCS\ public key compression address, it contains only the address of the FORS key pair, but is padded to the full length.
+The next type (\cref{fig:spx6}) is used to compress the BPORS+FP outer roots.
+The type word is set to 4. Like the \WOTSCS\ public key compression address, it
+contains the address of the BPORS+FP key pair and is padded to the full length.
 
 \begin{figure}[ht]
     \centering
@@ -185,12 +200,17 @@ The next type (\cref{fig:spx6}) is used to compress the tree roots of the FORS t
         \bitbox{8}{Key Pair Address} &
         \bitbox{16}{Padding = 0}
     \end{bytefield}
-    \caption{FORS tree roots compression address.}
+    \caption{BPORS+FP roots compression address.}
     \label{fig:spx6}
 \end{figure}
 
 
-The final two types are used for secret key value generation in \WOTSCS\ and FORS. A \WOTSCS\ key generation address (\cref{fig:spx7}) is the same as a \WOTSCS\ hash address with two differences. First, the type word is set to 5. Second, the hash address word is constantly set to $0$. When generating the secret key value for a given chain, the remaining words have to be set the same way as for the \WOTSCS\ hash addresses used for this chain.
+The type values 5 and 6 are used for secret key value generation in \WOTSCS\
+and BPORS+FP. A \WOTSCS\ key generation address (\cref{fig:spx7}) is the same
+as a \WOTSCS\ hash address with two differences. First, the type word is set to
+5. Second, the hash address word is constantly set to $0$. When generating the
+secret key value for a given chain, the remaining words have to be set the same
+way as for the \WOTSCS\ hash addresses used for this chain.
 
 \begin{figure}[ht]
     \centering
@@ -206,11 +226,20 @@ The final two types are used for secret key value generation in \WOTSCS\ and FOR
     \label{fig:spx7}
 \end{figure}
 
-Similarly, the FORS key generation type (\cref{fig:spx8}) is the same as the FORS tree address type, except that the type word is set to 6, and the tree height word is set to $0$. As for the \WOTSCS\ key generation address, the remaining words have to be set as for the FORS tree address used when processing the generated value.
+Similarly, the BPORS+FP child secret generation type (\cref{fig:spx8}) is the
+same as the BPORS+FP child-tree address type, except that the type word is set
+to 6, and the tree height word is set to $0$. As for the \WOTSCS\ key
+generation address, the remaining words have to be set as for the BPORS+FP
+child-tree address used when processing the generated value.  Type value 7 is
+used for hashing the complete BPORS+FP outer bucket trees.
 
 All fields within these addresses encode unsigned integers. When describing the generation of addresses we use set methods that take positive integers and set the bits of a field to the binary representation of that integer, in big-endian notation. Throughout this document, we adhere to the convention of assuming that changing the type word of an address (indicated by the use of the \texttt{setType()} method) initializes the subsequent three words to zero.
 
-In order to make keeping track of the types easier throughout the pseudo-code in the rest of this document, we refer to them respectively using the constants \verb|WOTS_HASH|, \verb|WOTS_PK|, \verb|TREE|, \verb|FORS_TREE|, \verb|FORS_ROOTS|, \verb|WOTS_PRF|, and \verb|FORS_PRF|.
+In order to make keeping track of the types easier throughout the pseudo-code
+in the rest of this document, we refer to them respectively using the constants
+\verb|WOTS_HASH|, \verb|WOTS_PK|, \verb|TREE|, \verb|BPORS_CHILD_TREE|,
+\verb|BPORS_ROOTS|, \verb|WOTS_PRF|, \verb|BPORS_CHILD_PRF|, and
+\verb|BPORS_OUTER|.
 
 \begin{figure}[ht]
     \centering
@@ -222,7 +251,7 @@ In order to make keeping track of the types easier throughout the pseudo-code in
         \bitbox{8}{Tree Height = 0} &
         \bitbox{8}{Tree Index}
     \end{bytefield}
-    \caption{FORS key generation address.}
+    \caption{BPORS+FP child secret generation address.}
     \label{fig:spx8}
 \end{figure}
 
@@ -439,7 +468,7 @@ The method \texttt{xmss\_pkFromSig} takes an $n$-byte message $M$, an XMSS signa
 
 \subsection{HT: The Hypertree}
 
-The \SPHINCSA\ hypertree HT is a variant of \XMSSMT. It is essentially a certification tree of XMSS instances. A HT is a tree of several layers of XMSS trees. The trees on top and intermediate layers are used to sign the public keys, i.e., the root nodes, of the XMSS trees on the respective next layer below. Trees on the lowest layer are used to sign the actual messages, which are FORS public keys in \SPHINCSA.
+The \SPHINCSA\ hypertree HT is a variant of \XMSSMT. It is essentially a certification tree of XMSS instances. A HT is a tree of several layers of XMSS trees. The trees on top and intermediate layers are used to sign the public keys, i.e., the root nodes, of the XMSS trees on the respective next layer below. Trees on the lowest layer are used to sign the actual messages, which are BPORS+FP public keys in \SPHINCSA.
 
 Consider a HT of total height $h$ that has $d$ layers of XMSS trees with per-layer heights $(h_0,\ldots,h_{d-1})$ from bottom to top, where $\sum_{i=0}^{d-1} h_i = h$. Then layer $d-1$ contains one XMSS tree. In general, layer $i$ contains $2^{\sum_{j=i+1}^{d-1} h_j}$ XMSS trees. Finally, layer $0$ contains $2^{h-h_0}$ XMSS trees.
 
@@ -500,6 +529,111 @@ HT signature verification (\cref{alg:htverify}) can be summarized as $d$ calls t
     \caption{\texttt{ht\_verify} --- Verifying a HT signature $\bf {SIG}_{HT}$ on a message $M$ using a HT public key ${\bf PK}_{HT}$.}
     \label{alg:htverify}
 \end{algorithm}
+\section{BPORS+FP: Bucket-Thinned Few-Time Signatures}
+\label{sec:bpors}
+\label{sec:fors}
+
+The \SPHINCSA\ hypertree HT is not used to sign the original message directly.
+Instead, the randomized message hash selects a bottom HT leaf and gives an
+$n$-byte digest \md.  Kylin signs this digest with BPORS+FP, a bucket-thinned
+few-time signature component based on the construction in
+\cite{bucketthinning}.  The resulting BPORS+FP public key is then signed by the
+bottom XMSS tree of the hypertree.
+
+BPORS+FP has an outer bucketing layer and a child PORS layer.  The outer layer
+contains $K$ coordinates.  Each coordinate contains $2^B$ buckets, and each
+bucket stores the public key of an independent child PORS instance.  A child
+PORS instance has $t$ leaves and opens a $k$-subset of those leaves using the
+Octopus authentication set of the left-filled Merkle tree on $t$ leaves.  Kylin
+uses a global forced-pruning threshold $m_{\max}$: the signer repeats the
+BPORS encoding hash with an explicit counter until the total authentication
+node count, including the $KB$ outer authentication nodes and all child Octopus
+nodes, is at most $m_{\max}$.
+
+\subsection{BPORS+FP Parameters}
+\label{sec:bporspara}
+
+BPORS+FP uses the parameters $K,B,t,k,m_{\max}$ and a counter length
+$c_{\mathrm{ctr}}$ in bytes:
+\begin{itemize}
+    \item $K$: the number of outer coordinates and selected child PORS keys.
+    \item $B$: the bucket-address bit length; each coordinate has $2^B$ buckets.
+    \item $t$: the number of leaves in each child PORS tree.  This value need
+    not be a power of two; non-power-of-two trees use the left-filled tree
+    convention.
+    \item $k$: the number of leaves opened inside each selected child PORS key.
+    \item $m_{\max}$: the fixed global authentication-node budget.
+    \item $c_{\mathrm{ctr}}$: the number of bytes used to encode the rejection
+    counter.  The packaged implementation uses $c_{\mathrm{ctr}}=8$.
+\end{itemize}
+
+For a digest \md and counter value $\mathtt{ctr}$, a domain-separated XOF maps
+$(\md,\mathtt{ctr},\pk.\seed,\ADRS)$ to
+\[
+    ((j_0,I_0),\ldots,(j_{K-1},I_{K-1}))
+    \in \left([2^B]\times\binom{[t]}{k}\right)^K .
+\]
+Here $j_c$ is the bucket selected in coordinate $c$, and
+$I_c\subseteq[t]$ is the $k$-subset opened in the corresponding child tree.
+The candidate is accepted when
+\[
+    A_{\mathrm{tot}}
+    =KB+\sum_{c=0}^{K-1}\left|\operatorname{Oct}_t(I_c)\right|
+    \le m_{\max}.
+\]
+
+\subsection{BPORS+FP Private Key and Public Key}
+
+As with the rest of Kylin, BPORS+FP private values are generated
+pseudorandomly from the single seed \sk.\seed.  The secret value for
+coordinate $c$, bucket $j$, and child leaf $u$ is derived as
+\[
+    x_{c,j,u}\gets \PRF(\sk.\seed,\ADRS_{c,j,u}),
+\]
+where the address type and the coordinate, bucket, and child-leaf fields
+separate this value from all WOTS and hypertree values.  The child leaf is
+$\hashF(\pk.\seed,\ADRS_{c,j,u},x_{c,j,u})$.
+
+Each child PORS public key is the root of the left-filled Merkle tree over its
+$t$ child leaves.  For each outer coordinate $c$, the $2^B$ child public keys
+are placed as leaves of a complete binary Merkle tree of height $B$.  The
+BPORS+FP public key is
+\[
+    \pk_{\mathsf{BPORS}}
+    =\Th_K(\pk.\seed,\ADRS_{\mathsf{BPORS\_PK}},
+           \mathsf{root}_0\|\cdots\|\mathsf{root}_{K-1}),
+\]
+where $\mathsf{root}_c$ is the root of the outer tree for coordinate $c$.
+
+\subsection{BPORS+FP Signature Generation}
+
+A BPORS+FP signature contains the counter, the $Kk$ selected child secret
+values, the child Octopus authentication nodes, the outer authentication
+paths, and zero padding up to the fixed budget $m_{\max}$.  The signing
+algorithm is shown in \cref{alg:bporpsign}.
+
+\begin{algorithm}
+    \inputminted[breaklines,linenos,tabsize=2,mathescape,escapeinside=||]{C}{paper/code/bpors_sign.cs}
+    \caption{\texttt{bpors\_sign} --- Generate a BPORS+FP signature and public key.}
+    \label{alg:bporpsign}
+\end{algorithm}
+
+\subsection{BPORS+FP Compute Public Key from Signature}
+
+Kylin uses implicit verification for BPORS+FP.  Given \sigbpors and \md, the
+verifier re-derives the accepted bucket labels and child subsets from the
+counter, reconstructs each child public key from the revealed secrets and
+Octopus nodes, reconstructs each outer root using the outer authentication
+path, checks that unused authentication slots are zero, and finally compresses
+the $K$ outer roots.  This is shown in \cref{alg:bporspkfromsig}.
+
+\begin{algorithm}
+    \inputminted[breaklines,linenos,tabsize=2,mathescape,escapeinside=||]{C}{paper/code/bpors_pkFromSig.cs}
+    \caption{\texttt{bpors\_pkFromSig} --- Compute a BPORS+FP public key from a signature.}
+    \label{alg:bporspkfromsig}
+\end{algorithm}
+
+\iffalse
 \section{FORS: Forest Of Random Subsets}
 \label{sec:fors}
 
@@ -611,6 +745,8 @@ The method \texttt{fors\_pkFromSig} takes a $ k\log t$-bit string $M$, a FORS si
     \label{alg:forspkfromsig}
 \end{algorithm}
 
+\fi
+
 \section{The Full Kylin Signature Scheme}
 \label{sec:spx-core}
 We now have all ingredients to describe our main construction \SPHINCSA. Essentially, \SPHINCSA\ follows the fundamental structure of \SPHINCSA\ with the only difference being the one-time signature component.
@@ -629,20 +765,21 @@ We now have all ingredients to describe our main construction \SPHINCSA. Essenti
     
     \item $d$: the number of layers in the hypertree as defined in Section \ref{sec:htpara}.
     
-    \item $k$: the number of trees in FORS as defined in Section \ref{sec:forspara}.
-    
-    \item $t$: the number of leaves of a FORS tree as defined in Section \ref{sec:forspara}.
+    \item $K,B,t,k,m_{\max}$: the BPORS+FP parameters as defined in
+    \cref{sec:bporspara}.
     
 \end{itemize}
 
-All the restrictions stated in the previous sections apply. Recall that we use $a=\log t.$ Moreover, from these values the values $m$ and \wotslen are computed as
+All the restrictions stated in the previous sections apply.  Moreover, from
+these values the values $m$ and \wotslen are computed as
 
 \begin{itemize}
     \item $m$: the message digest length in bytes. It is computed as
     $$
-    m=\lfloor(k\log t+7)/8\rfloor+\lfloor(h-h_0+7)/8\rfloor+\lfloor(h_0+7)/8\rfloor.
+    m=n+\lfloor(h-h_0+7)/8\rfloor+\lfloor(h_0+7)/8\rfloor.
     $$
-    While only $h+k\log t$ bits would be needed, using the longer $m$ as defined above simplifies implementations significantly.
+    The first $n$ bytes are the BPORS+FP digest.  The remaining bytes encode
+    the hypertree tree and leaf indices.
     
     \item $\wotslen$: the number of $n$-byte string elements in a \WOTSCS\ private key, public key, and signature. The value $\wotslen$ is chosen so that the size of the following poset is larger than the desired message space $\bool^{8n}$ (cf.~\cref{sec:balanced wotsp}).
     \[\left| D_{ \wotslen, \lfloor \frac{\wotslen \cdot (w-1)}{2} \rfloor } \right| \geq 2^{8n} \enspace. \]
@@ -652,7 +789,7 @@ In the following, we assume that all algorithms have access to these parameters.
 
 \subsection{\SPHINCSA\ Key Generation (Function \texttt{kylin\_keygen})}
 
-The \SPHINCSA\ private key contains two elements. First, the $n$-byte secret seed $\sk.\seed$ which is used to generate all the \WOTSCS\ and FORS private key elements. Second, an $n$-byte PRF key $\sk.\prf$ which is used to deterministically generate a randomization value for the randomized message hash.
+The \SPHINCSA\ private key contains two elements. First, the $n$-byte secret seed $\sk.\seed$ which is used to generate all the \WOTSCS\ and BPORS+FP private key elements. Second, an $n$-byte PRF key $\sk.\prf$ which is used to deterministically generate a randomization value for the randomized message hash.
 
 The \SPHINCSA\ public key also contains two elements. First, the HT public key, i.e.~the root of the tree on the top layer. Second, an $n$-byte public seed value $\pk.\seed$ which is sampled uniformly at random.
 
@@ -688,7 +825,15 @@ The format of a \SPHINCSA\ private and public key is given in \cref{fig:spx14}.
 
 \subsection{\SPHINCSA\ Signature}
 
-A \SPHINCSA\ signature $\sig$ is a byte string of length $(1 + k \cdot (a+1) + h + d \cdot \wotslen)n$. It consists of an $n$-byte randomization string \randstr, a FORS signature $\sigfors$ consisting of $k(a+1)$ $n$-byte strings, and a HT signature $\sight$ of $(h + d \cdot \wotslen)n$ bytes.
+A \SPHINCSA\ signature $\sig$ is a byte string of length
+\[
+    n+c_{\mathrm{ctr}}+
+    (Kk+m_{\max})n+(h+d\cdot\wotslen)n .
+\]
+It consists of an $n$-byte randomization string \randstr, a BPORS+FP signature
+\sigbpors consisting of an explicit counter, $Kk$ $n$-byte secret values and
+$m_{\max}$ $n$-byte authentication-node slots, and a HT signature $\sight$ of
+$(h+d\cdot\wotslen)n$ bytes.
 
 The data format for a signature is given in \cref{fig:spx15}.
 
@@ -696,7 +841,7 @@ The data format for a signature is given in \cref{fig:spx15}.
     \centering
     \begin{bytefield}[bitwidth=1.1em,bitheight=2em]{16}
         \wordbox{1}{Randomness $\randstr$} \\
-        \wordbox{1}{FORS Signature $\sigfors$} \\
+        \wordbox{1}{BPORS+FP Signature $\sigbpors$} \\
         \wordbox{1}{HT Signature $\sight$}
     \end{bytefield} 
     %\includegraphics[width=.4\linewidth]{paper/spx-fig/Figure15.pdf}
@@ -705,7 +850,18 @@ The data format for a signature is given in \cref{fig:spx15}.
 
 \subsection{\SPHINCSA\ Signature Generation (Function \texttt{kylin\_sign})}
 
-Generating a \SPHINCSA\ signature consists of four steps. First, a random value $\randstr$ is pseudorandomly generated. Next, this is used to compute a $m$ byte message digest which is split into a $\lfloor(k\log t+7)/8\rfloor$-byte partial message digest \texttt{tmp\_md}, a $\lfloor(h-h_0+7)/8\rfloor$-byte tree index \texttt{tmp\_idx\_tree}, and a $\lfloor(h_0+7)/8\rfloor$-byte leaf index \texttt{tmp\_idx\_leaf}. Next, the actual values $\md$, \texttt{idx\_tree}, and \texttt{idx\_leaf} are computed by extracting the necessary number of bits. The partial message digest md is then signed with the \texttt{idx\_leaf}-th FORS key pair of the \texttt{idx\_tree}-th XMSS tree on the lowest HT layer. The public key of the FORS key pair is then signed using HT.The index is never actually used as a whole, but immediately split into a tree index and a leaf index, for ease of implementation.
+Generating a \SPHINCSA\ signature consists of four steps. First, a random value
+\randstr is pseudorandomly generated. Next, this is used to compute an $m$ byte
+message digest which is split into an $n$-byte BPORS+FP digest \md, a
+$\lfloor(h-h_0+7)/8\rfloor$-byte tree index \texttt{tmp\_idx\_tree}, and a
+$\lfloor(h_0+7)/8\rfloor$-byte leaf index \texttt{tmp\_idx\_leaf}.  The values
+\texttt{idx\_tree} and \texttt{idx\_leaf} are computed by extracting the
+necessary number of bits. The digest \md is then signed with the BPORS+FP key
+pair associated with the \texttt{idx\_leaf}-th bottom leaf of the
+\texttt{idx\_tree}-th XMSS tree on the lowest HT layer. The resulting
+BPORS+FP public key is then signed using HT. The index is never actually used
+as a whole, but immediately split into a tree index and a leaf index, for ease
+of implementation.
 
 When computing $\tt{R}$, the PRF takes a $n$-byte string opt which is initialized with $\pk.\seed$ but can be overwritten with randomness if the global variable \texttt{RANDOMIZE} is set. This option is given as otherwise \SPHINCSA\ signatures would be always deterministic.  
 
@@ -717,7 +873,13 @@ When computing $\tt{R}$, the PRF takes a $n$-byte string opt which is initialize
 
 \subsection{\SPHINCSA\ Signature Verification (Function \texttt{kylin\_verify})}
 
-\SPHINCSA\ signature verification (Algorithm \ref{alg:spxvrfy}) can be summarized as recomputing message digest and index, computing a candidate FORS public key, and verifying the HT signature on that public key. Note that the HT signature verification will fail if the FORS public key is not matching the real one (with overwhelming probability). \SPHINCSA\ signature verification takes a message $M$, a signature \sig, and a \SPHINCSA\ public key $\pk$.
+\SPHINCSA\ signature verification (Algorithm \ref{alg:spxvrfy}) can be
+summarized as recomputing the message digest and index, computing a candidate
+BPORS+FP public key, and verifying the HT signature on that public key. Note
+that the HT signature verification will fail if the BPORS+FP public key is not
+matching the real one (with overwhelming probability). \SPHINCSA\ signature
+verification takes a message $M$, a signature \sig, and a \SPHINCSA\ public
+key $\pk$.
 
 \begin{algorithm}[ht]
     \inputminted[breaklines,linenos,tabsize=2,mathescape,escapeinside=||]{C}{paper/code/kylin_verify.cs}
@@ -747,16 +909,15 @@ In this section, we first define the requirements on parameters and discuss exis
 
 \item $d$: the number of layers in the hypertree.
 
-\item $k$: the number of trees in FORS.
-
-\item $t$: the number of leaves of a FORS tree. 
+\item $K,B,t,k,m_{\max}$: the BPORS+FP few-time parameters.
 
 \end{itemize}
 
 
-Recall that we use $a=\log t$. Moreover, from these values the values $m$ and $\wotslen$ are computed as
+Moreover, from these values the values $m$ and $\wotslen$ are computed as
 \begin{itemize}
-    \item $ m $: the message digest length in bytes. It is computed as $$m=\lfloor(k\log t+7)/8\rfloor+\lfloor(h-h_0+7)/8\rfloor+\lfloor(h_0+7)/8\rfloor.$$
+    \item $ m $: the message digest length in bytes. It is computed as
+    $$m=n+\lfloor(h-h_0+7)/8\rfloor+\lfloor(h_0+7)/8\rfloor.$$
     \item $\wotslen$: the number of $n$-byte string elements in a \WOTSCS\ private key, public key, and signature.
     $$
     \wotslen = \min \left\{ \ell : \left| D_{\ell, \lfloor \frac{\ell \cdot (w-1)}{2} \rfloor} \right| \geq 2^{8n} \right\} \enspace,
@@ -768,13 +929,27 @@ We now repeat the roles of, requirements on, and properties of these parameters.
 
 The Winternitz parameter $w$ determines the number and length of the hash chains per \WOTSCS\ instance. A greater value for $w$ linearly increases the length of the hash chains but logarithmically reduces their number. The number of hash chains exactly corresponds to the number of $n$-byte values in a \WOTSCS\ signature. Thereby it largely influences the size of a \SPHINCSA\ signature. The product of the number and the length of hash chains directly correlates with signing speed as essentially all time in HT signature generation is spent computing \WOTSCS\ public keys. Therefore, greater $w$ means shorter signatures but slower signing. However, note the exponential gap. The bigger $w$ gets, the more expensive is the signature size reduction. The Winternitz parameter does not influence \SPHINCSA\ security.
 
-The height of the hypertree $h$ determines the number of FORS instances. Hence, it determines the probability that a FORS key pair is used several times, given the number of signatures made with a \SPHINCSA\ key pair. Hence, the height has a direct impact on security: A taller hypertree gives more security. On the other hand, a taller tree leads to larger signatures.
+The height of the hypertree $h$ determines the number of bottom BPORS+FP
+instances. Hence, it determines the probability that a bottom few-time key pair
+is used several times, given the number of signatures made with a \SPHINCSA\
+key pair. Hence, the height has a direct impact on security: A taller hypertree
+gives more security. On the other hand, a taller tree leads to larger
+signatures.
 
 The number of layers $d$ is a pure performance trade-off parameter and does not influence security. It determines the number of layers of XMSS trees in the hypertree. The per-layer heights $(h_0,\ldots,h_{d-1})$ define the XMSS heights and must satisfy $\sum_{i=0}^{d-1} h_i = h$. Increasing $d$ usually allows smaller subtrees and faster signing. However, $d$ also controls the number of layers and thereby the number of \WOTSCS\ signatures within a HT and thereby a \SPHINCSA\ signature.
 
-The parameters $k$ and $t$ determine the performance and security of FORS. The number of leaves of a tree in FORS $t$ must be a power of two while $k$ can be chosen freely. A smaller $t$ generally leads to smaller and faster signatures. However, for a given security level a smaller $t$ requires a greater $k$ which increases signature size and slows down signing. Hence, it is important to balance these two parameters. This is best done using the formulas below.
+The parameters $K,B,t,k,m_{\max}$ determine the performance and security of
+BPORS+FP.  Larger $B$ gives stronger bucket thinning because each child PORS key
+sees a smaller fraction of the signing history, but it also increases the cost
+of building the outer bucket trees and adds $KB$ outer authentication nodes.
+Larger $K$ amplifies the cover-term exponent and opens more child keys.  The
+child parameters $t$ and $k$ determine the PORS cover term and the size of each
+child opening.  The threshold $m_{\max}$ fixes the authentication-node payload:
+smaller values reduce signatures but increase the expected number of counter
+trials.
 
-The message digest length $m$ is the output length of $\hashmsg$ in bytes. It is $\lfloor(k\log t+7)/8\rfloor+ \lfloor(h-h_0+7)/8\rfloor+\lfloor(h_0+7)/8\rfloor$ bytes.
+The message digest length $m$ is the output length of $\hashmsg$ in bytes. It
+is $n+\lfloor(h-h_0+7)/8\rfloor+\lfloor(h_0+7)/8\rfloor$ bytes.
 
 The number $\wotslen$ of chains in a \WOTSCS\ key pair determines the \WOTSCS\ signature size.
 
@@ -787,38 +962,42 @@ In the following we provide formulas to compute speed, size and security for a g
 Generating the \SPHINCSA\ private key and $\pk.\seed$ requires three calls to a secure random number generator. Next we have to generate the top tree (layer $d-1$). For the leaves we need to do $2^{h_{d-1}}$ \WOTSCS key generations ($\wotslen$ calls to PRF for generating the $\sk$ and $w \wotslen$ calls to $\hashF$ for the $\pk$) and we have to compress the \WOTSCS\ public key (one call to $\Th_{\wotslen}$). Computing the root of the top tree requires $(2^{h_{d-1}}-1)$ calls to $\hashH$.
 
 \paragraph{Signing.}
-For randomization and message compression we need one call to $\PRFmsg$, and one to $\hashmsg$. The FORS signature requires $kt$ calls to $\PRF$ and $\hashF$. Further, we have to compute the root of $k$ binary trees of height $\log t$ which adds $k(t-1)$ calls to $\hashH$. Finally, we need one call to $\Th_{k}$. Next, we compute one HT signature which consists of $d$ trees similar to the key generation. Hence, we have to do $\sum_{i=0}^{d-1} 2^{h_i}$ times $\wotslen$ calls to $\PRF$ and $w \wotslen$ calls to $\hashF$ as well as $\sum_{i=0}^{d-1} 2^{h_i}$ calls to $\Th_{\wotslen}$. For computing the root of each tree we get additionally $\sum_{i=0}^{d-1} (2^{h_i}-1)$ calls to $\hashH$.
+For randomization and message compression we need one call to $\PRFmsg$, and
+one to $\hashmsg$.  The BPORS+FP signing cost consists of counter trials,
+generation of the $Kk$ revealed child secrets, construction of the selected
+child openings, and construction of the $K$ outer authentication paths.  In the
+packaged implementation this is dominated by constructing the selected outer
+bucket trees, i.e., about $K\cdot 2^B$ child roots, each over $t$ child leaves,
+plus the child-opening work for the selected buckets.  Next, we compute one HT
+signature which consists of $d$ trees similar to the key generation. Hence, we
+have to do $\sum_{i=0}^{d-1} 2^{h_i}$ times $\wotslen$ calls to $\PRF$ and
+$w \wotslen$ calls to $\hashF$ as well as $\sum_{i=0}^{d-1} 2^{h_i}$ calls to
+$\Th_{\wotslen}$. For computing the root of each tree we get additionally
+$\sum_{i=0}^{d-1} (2^{h_i}-1)$ calls to $\hashH$.
 
 \paragraph{Verification.}
-First we need to compute the message hash using $\hashmsg$. We need to do one FORS verification which requires $k$ calls to $\hashF$ (to compute the leaf nodes from the signature elements), $k\log t$ calls to $\hashH$ (to compute the root nodes using the leaf nodes and the authentication paths), and one call to $\Th_{k}$ for hashing the roots. Next, we have to verify $d$ XMSS signatures which takes $< w \wotslen$ calls to $\hashF$ and one call to $\Th_{\wotslen}$ each for \WOTSCS\ signature verification\footnotemark. It also needs $\sum_{i=0}^{d-1} h_i = h$ calls to $\hashH$ for the $d$ root computations.
+First we need to compute the message hash using $\hashmsg$. We need to do one
+BPORS+FP public-key reconstruction.  This requires $Kk$ calls to $\hashF$ to
+hash the revealed child secrets into leaves, one child-tree reconstruction for
+each selected coordinate using the supplied Octopus nodes, $KB$ calls to
+$\hashH$ for the outer authentication paths, and one call to $\Th_K$ for
+hashing the outer roots. Next, we have to verify $d$ XMSS signatures which
+takes $< w \wotslen$ calls to $\hashF$ and one call to $\Th_{\wotslen}$ each
+for \WOTSCS\ signature verification\footnotemark. It also needs
+$\sum_{i=0}^{d-1} h_i = h$ calls to $\hashH$ for the $d$ root computations.
 
 \footnotetext{It should be noted that the $w \wotslen$ bound for calls to $\hashF$ is a worst-case bound. This is a bound on the cost for \WOTSCS signature verification. Given that the messages are hash values which can assumed to be close to uniformly distributed, this value will be closer to the average-case bound $(w/2)$. $\wotslen$ in actual measurements.}
 
-The size of the \SPHINCSA\ private and public keys along with the signature are $4n,2n,(h + k(a + 1) + d \cdot {\wotslen} + 1)n$ respectively.
+The size of the \SPHINCSA\ private and public keys along with the signature are
+$4n$, $2n$, and
+\[
+    n+c_{\mathrm{ctr}}+(Kk+m_{\max})n+(h+d\cdot\wotslen)n
+\]
+respectively.
 
-The classical security level, or bit security of \SPHINCSA\ against generic attacks can be computed as
-$$
-\mathtt{bitsec} = -\log\left(
-    \frac{1}{2^{8n}}+
-    \sum_{\gamma}
-        \left(1-\left(1-\frac{1}{t}\right)^{\gamma}\right)^{k}
-        \binom{q}{\gamma}
-        \left(1-\frac{1}{2^{h}}\right)^{q-\gamma}
-        \frac{1}{2^{h\gamma}}
-    \right) \enspace.
-$$
-The quantum security level, or bit security of \SPHINCSA\ against generic attacks can be computed as
-$$
-\mathtt{bitsec} = -\frac{1}{2}\log\left(
-    \frac{1}{2^{8n}}+
-    \sum_{\gamma}
-        \left(1-\left(1-\frac{1}{t}\right)^{\gamma}\right)^{k}
-        \binom{q}{\gamma}
-        \left(1-\frac{1}{2^{h}}\right)^{q-\gamma}
-        \frac{1}{2^{h\gamma}}
-    \right) \enspace.
-$$
-Here, we are neglecting the small constant factors inside the logarithm. 
+The classical and quantum generic-security proxies are computed from the
+BPORS+FP cover term in \cref{sec:proof-concrete}; small constant factors inside
+the logarithm are neglected.
 
 
 
@@ -832,12 +1011,12 @@ As explained in the previous subsection, even for a fixed security level the des
     \label{tab:ngcc-parameters}
     \scriptsize
     \resizebox{\linewidth}{!}{%
-    \begin{tabular}{l c c c c l c c c c c c c c}
+\begin{tabular}{l c c c c l c c c c c c c}
     \toprule
-    Family & NGCC lvl & $q$ & $n$ & $h/d$ & $(h_0,\ldots,h_{d-1})$ & $a$ & $k$ & $w$ & $\wotslen$ & bitsec & pk & sk & sig \\ \midrule
-    Kylin-128 & 128/80 & $2^{64}$ & 16 & 65/9 & $(7,7,7,7,7,7,7,8,8)$ & 13 & 11 & 73 & 22 & 127 & 32 & 64 & 6688 \\
-    Kylin-256 & 256/128 & $2^{64}$ & 32 & 68/10 & $(6,6,7,7,7,7,7,7,7,7)$ & 13 & 22 & 54 & 46 & 256 & 64 & 128 & 26784 \\
-    Kylin-512 & 512/256 & $2^{64}$ & 64 & 66/11 & $(6,6,6,6,6,6,6,6,6,6,6)$ & 13 & 49 & 97 & 79 & 511 & 128 & 256 & 103808 \\
+    Family & NGCC lvl & $q$ & $n$ & $h/d$ & $(h_0,\ldots,h_{d-1})$ & $(K,B,t,k,m_{\max})$ & $w$ & $\wotslen$ & bitsec & pk & sk & sig \\ \midrule
+    Kylin-128 & 128/80 & $2^{64}$ & 16 & 65/9 & $(7,7,7,7,7,7,7,8,8)$ & $(5,6,132,4,120)$ & 73 & 22 & 127 & 32 & 64 & 6472 \\
+    Kylin-256 & 256/128 & $2^{64}$ & 32 & 68/10 & $(6,6,7,7,7,7,7,7,7,7)$ & $(7,7,280,5,235)$ & 54 & 46 & 256 & 64 & 128 & 25576 \\
+    Kylin-512 & 512/256 & $2^{64}$ & 64 & 66/11 & $(6,6,6,6,6,6,6,6,6,6,6)$ & $(13,7,512,5,490)$ & 97 & 79 & 511 & 128 & 256 & 95432 \\
     \bottomrule
     \end{tabular}%
     }

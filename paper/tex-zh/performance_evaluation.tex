@@ -5,7 +5,7 @@
 本节给出征集要求所需的性能分析与基准数据。当前仓库对打包的 Kylin NGCC 实例使用仓库本地测量结果。
 
 \paragraph{性能分析。}
-在设计层面，Kylin 的主要开销来自哈希与 XOF 调用。密钥生成需要构造超树顶层；签名需要计算 FORS 相关材料，并在超树的每一层上计算一条认证路径；验证则需要重建 FORS 公钥并验证超树签名。\WOTSCS\ 减少了每个一次性签名中 $n$ 字节元素的数量，而 Diverse Layer Heights 则在 $h$ 不能被 $d$ 整除时，仍然使签名阶段的哈希调用代理计数保持平衡。
+在设计层面，Kylin 的主要开销来自哈希与 XOF 调用。密钥生成需要构造超树顶层；签名需要计算 BPORS+FP 相关材料，并在超树的每一层上计算一条认证路径；验证则需要重建 BPORS+FP 公钥并验证超树签名。\WOTSCS\ 减少了每个一次性签名中 $n$ 字节元素的数量，BPORS+FP 减少了底层少次签名载荷，而 Diverse Layer Heights 则在 $h$ 不能被 $d$ 整除时，仍然使签名阶段的哈希调用代理计数保持平衡。
 
 \begin{table}[H]
     \centering
@@ -15,9 +15,9 @@
     \begin{tabular}{l r r r r}
     \toprule
     实例 & 密钥生成哈希调用 & 签名哈希调用 & 验证哈希调用 & 签名字节数 \\ \midrule
-    Kylin-128 & 417279 & 2442880 & 7357 & 6688 \\
-    Kylin-256 & 324095 & 3223168 & 12577 & 26784 \\
-    Kylin-512 & 495615 & 6198272 & 42476 & 103808 \\
+    Kylin-128 & 417279 & BPORS+HT & BPORS+HT & 6472 \\
+    Kylin-256 & 324095 & BPORS+HT & BPORS+HT & 25576 \\
+    Kylin-512 & 495615 & BPORS+HT & BPORS+HT & 95432 \\
     \bottomrule
     \end{tabular}
 \end{table}

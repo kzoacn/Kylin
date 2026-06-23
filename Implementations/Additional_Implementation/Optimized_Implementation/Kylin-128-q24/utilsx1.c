@@ -10,7 +10,7 @@
  * Generate the entire Merkle tree, computing the authentication path for
  * leaf_idx, and the resulting root node using Merkle's TreeHash algorithm.
  * Expects the layer and tree parts of the tree_addr to be set, as well as the
- * tree type (i.e. SPX_ADDR_TYPE_HASHTREE or SPX_ADDR_TYPE_FORSTREE)
+ * tree type (i.e. SPX_ADDR_TYPE_HASHTREE or SPX_ADDR_TYPE_BPORSCHILDTREE)
  *
  * This expects tree_addr to be initialized to the addr structures for the
  * Merkle tree nodes
