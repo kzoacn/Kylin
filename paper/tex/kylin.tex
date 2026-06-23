@@ -644,8 +644,8 @@ All the restrictions stated in the previous sections apply. Recall that we use $
     $$
     While only $h+k\log t$ bits would be needed, using the longer $m$ as defined above simplifies implementations significantly.
     
-    \item $\wotslen$: the number of $n$-byte string elements in a \WOTSCS\ private key, public key, and signature. The value $\wotslen$ is chosen so that the size of the following poset is larger than the desired message space $\bool^n$ (cf.~\cref{sec:balanced wotsp}).
-    \[\left| D_{ \wotslen, \lfloor \frac{\wotslen \cdot (w-1)}{2} \rfloor } \right| \geq 2^n \enspace. \]
+    \item $\wotslen$: the number of $n$-byte string elements in a \WOTSCS\ private key, public key, and signature. The value $\wotslen$ is chosen so that the size of the following poset is larger than the desired message space $\bool^{8n}$ (cf.~\cref{sec:balanced wotsp}).
+    \[\left| D_{ \wotslen, \lfloor \frac{\wotslen \cdot (w-1)}{2} \rfloor } \right| \geq 2^{8n} \enspace. \]
 
 \end{itemize}
 In the following, we assume that all algorithms have access to these parameters.
@@ -688,7 +688,7 @@ The format of a \SPHINCSA\ private and public key is given in \cref{fig:spx14}.
 
 \subsection{\SPHINCSA\ Signature}
 
-A \SPHINCSA\ signature $\sight$ is a byte string of length $(1 + k \cdot (a+1) + h + d \cdot \wotslen)n$. It consists of an $n$-byte randomization string \randstr, a FORS signature $\sigfors$ consisting of $k(a+1)n$-byte strings, and a HT signature $\sight$ of $(h + d \cdot \wotslen)n$ bytes.
+A \SPHINCSA\ signature $\sig$ is a byte string of length $(1 + k \cdot (a+1) + h + d \cdot \wotslen)n$. It consists of an $n$-byte randomization string \randstr, a FORS signature $\sigfors$ consisting of $k(a+1)$ $n$-byte strings, and a HT signature $\sight$ of $(h + d \cdot \wotslen)n$ bytes.
 
 The data format for a signature is given in \cref{fig:spx15}.
 
@@ -759,7 +759,7 @@ Recall that we use $a=\log t$. Moreover, from these values the values $m$ and $\
     \item $ m $: the message digest length in bytes. It is computed as $$m=\lfloor(k\log t+7)/8\rfloor+\lfloor(h-h_0+7)/8\rfloor+\lfloor(h_0+7)/8\rfloor.$$
     \item $\wotslen$: the number of $n$-byte string elements in a \WOTSCS\ private key, public key, and signature.
     $$
-    \wotslen = \min \left\{ \ell : \left| D_{\ell, \lfloor \frac{\ell \cdot (w-1)}{2} \rfloor} \right| \geq 2^n \right\} \enspace,
+    \wotslen = \min \left\{ \ell : \left| D_{\ell, \lfloor \frac{\ell \cdot (w-1)}{2} \rfloor} \right| \geq 2^{8n} \right\} \enspace,
     $$
     where the size of $D_{\ell, \lfloor \frac{\ell \cdot (w-1)}{2} \rfloor}$ is evaluated using the recurrence relation in \cref{equ:recurrence}.
 \end{itemize}
@@ -876,4 +876,3 @@ Here, \texttt{sm3hash} is the fixed-output SM3 interface and
 behavior required by the NGCC API profile. The public packaged implementation
 uses explicit domain-separation tags for these calls and keeps the
 address/seed layout aligned with the ICCS helper functions.
-

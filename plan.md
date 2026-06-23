@@ -115,6 +115,31 @@
 
 ## 5. 进度日志
 
+### 2026-06-23 - Recheck English Paper Consistency (Done)
+
+- 重新检查 `main.tex` 实际输入的英文论文源，重点覆盖 `paper/tex/kylin.tex`、`paper/tex/security_statements_and_analyses.tex`、`paper/tex/design_rationale.tex` 与 `paper/tex/kylin-appendix.tex`。
+- 修正主文档中 `n` 为字节参数但 \WOTSCS\ 编码空间仍写作 `2^n` 的两处残留，统一改为 `2^{8n}`；同时修正全签名格式描述中误用 HT 签名符号 `\sight` 和 `k(a+1)n`-byte strings 的易误读表述。
+- 修正 appendix 中 `paper/code/para.sage` 的旧版 `Kylin-512` 参数，使其与冻结参数表一致：`h=66,d=11,h_vec=[6,...,6],a=13,k=49,w=97,len=79`；`python3 paper/code/para.sage` 现已通过漂移断言。
+- 同步备用 `paper/tex/submission_overview.tex` 中旧的 `h\in\{65,68,70\}`，并修正 `q=2^{24}` appendix 标题的 PDF bookmark 写法，消除 hyperref 书签 warning。
+- 验证：`python3 paper/code/search_ngcc_params.py` 输出冻结三档参数；`make -C paper/build all` 通过并生成最新 `main.pdf`；源码/PDF 扫描未发现旧 `2^n`、旧 `h=70`、`65,68,70` 或断引用 `??`。
+- 待人工决策：当前脚本仍明确输出 `Kylin-128` 的 `formula_quantum=63.6`，而 NGCC 等级标签为 `128/80`；这不是排版或同步问题，若要把 generic quantum exponent 也作为强声明，需要重新确认安全口径或重选参数。
+
+### 2026-06-23 - Refresh Kylin Security Proof Draft (Done)
+
+- 聚焦 `new-files/kylin_security_proof.tex`，修正安全证明草稿中的符号口径：`n` 统一为 Kylin 字节安全参数，新增 `N=8n` 表示位长，并清理旧的 `\bits^n`、`2^n` 写法。
+- 收紧 CS-WOTS+ 证明部分：将最大反链论证改为对 `[w]^\ell` 的对称链分解证明，并说明编码消息空间与 `D_{\ell,\lfloor \ell(w-1)/2\rfloor}\ge 2^N` 的关系。
+- 修正 HT 描述：按底层到顶层给出非均匀高度 hypertree 的树数量公式，明确 HT 每层签名只包含一个 CS-WOTS-TW 签名和 `h_i` 个认证路径节点，FORS 的 `a=\log t` 认证节点仅属于 `\sigma_{\mathsf{FORS}}`。
+- 恢复并重写 concrete security section，使 `sec:concrete` 成为可引用章节；公式与 `paper/code/search_ngcc_params.py` 使用的 generic attack proxy 对齐，并列出六组冻结 profile 的 classical exponent。
+- 验证：`pdflatex -interaction=nonstopmode kylin_security_proof.tex` 多轮通过并生成更新后的 `new-files/kylin_security_proof.pdf`；日志无 warning/overfull；PDF 文本扫描无断引用 `??`；源码扫描确认无残留 `\bits^n` 或 `2^n`。
+
+### 2026-04-30 - Refresh Final NGCC Submission Zip (Done)
+
+- 重新编译当前英文算法文本，生成最新 `main.pdf`，并复制到新的 `build/算法文本.pdf`；同时将当前仓库中的 `算法基本信息.pdf`、`知识产权声明.pdf` 与 `Test_Vectors/` 一并纳入本次提交暂存区。
+- 重建全新的仓库根目录 `build/`，按最终提交树复制 `Implementations/`：保留主提交 `Reference_Implementation/Kylin-{128,256,512}` 与 `Optimized_Implementation/Kylin-{128,256,512}`，并继续将 `Implementations/Additional_Implementation/Optimized_Implementation/Kylin-*-q24` 提升为扁平的 `build/Implementations/Additional_Implementation/Kylin-*-q24`。
+- 重写 `build/Implementations/README`，使其只描述实际 shipped 的提交树、参数、通用源文件清单，以及扁平 q24 Additional 布局；继续排除仓库开发态的 `tools/`、`benchmarks/`、嵌套 Additional staging 树、生成的可执行文件、`output/` 与 `.stack-usage/`。
+- 从 `build/` 内打包生成 `build/Kylin-0430.zip`，并用 `unzip -l` 复核压缩包根目录材料、Additional 扁平结构和 `Test_Vectors/` 内容。
+- 验证：`make -C paper/build all` 通过；主提交 `Kylin-128/256/512` 的 Ref/Opt 六个实例均完成 `make clean all test`；`q24` 版本按本次明确要求未做测试，仅打包其提交源码与现有 KAT 文件。
+
 ### 2026-04-29 - Build Final NGCC Submission Zip (Done)
 
 - 编译英文算法文本并将最新 `main.pdf` 复制为 `build/算法文本.pdf`，同时复制 `算法基本信息.pdf`、`知识产权声明.pdf` 与 `Test_Vectors/`。

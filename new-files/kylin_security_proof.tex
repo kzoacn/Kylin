@@ -1,0 +1,817 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{claim}[theorem]{Claim}
+\newtheorem{remark}[theorem]{Remark}
+
+\newcommand{\F}{\mathsf{F}}
+\newcommand{\Hfunc}{\mathsf{H}}
+\newcommand{\Th}{\mathsf{Th}}
+\newcommand{\T}{\mathsf{T}}
+\newcommand{\bits}{\{0,1\}}
+\newcommand{\pk}{\mathsf{pk}}
+\newcommand{\sk}{\mathsf{sk}}
+\newcommand{\SK}{\mathsf{sk}}
+\newcommand{\PK}{\mathsf{pk}}
+\newcommand{\seed}{\mathsf{seed}}
+\newcommand{\ADRS}{\mathsf{ADRS}}
+\newcommand{\PRF}{\mathsf{PRF}}
+\newcommand{\PRFmsg}{\mathsf{PRF}_{\mathsf{msg}}}
+\newcommand{\Hmsg}{\mathsf{H}_{\mathsf{msg}}}
+\newcommand{\InSec}[1]{\mathbf{InSec}^{\mathsf{#1}}}
+\newcommand{\Succ}{\mathbf{Succ}}
+\newcommand{\Adv}{\mathbf{Adv}}
+\newcommand{\GAME}{\mathbf{GAME}}
+\newcommand{\cC}{\mathcal{C}}
+\newcommand{\Enc}{\mathsf{Enc}}
+\newcommand{\Dec}{\mathsf{Dec}}
+\newcommand{\poly}{\mathrm{poly}}
+\newcommand{\prf}{\mathsf{PRF}}
+\newcommand{\Nbits}{N}
+
+\title{Tight Security Proof of Kylin}
+\author{Based on ``Recovering the Tight Security Proof of SPHINCS+''\\ by H\"ulsing and Kudinov (2022)}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We present a tight security proof for Kylin, a stateless hash-based signature scheme that improves upon SPHINCS+ by replacing the WOTS+ one-time signature scheme with CS-WOTS+ (Constant Sum WOTS+) and allowing diverse layer heights in the hypertree. Our proof follows the tight proof framework of H\"ulsing and Kudinov~\cite{HK22}, which recovered the tight reduction for SPHINCS+ after the flaw identified by Kudinov, Kiktenko, and Fedorov~\cite{KKF20}. The key technical contribution is the adaptation of the WOTS-TW security proof~\cite[Theorem~1]{HK22} to CS-WOTS-TW, replacing the checksum-based encoding with the antichain-based CS-WOTS+ encoding. We show that all game transitions (PRF replacement, SM-UD hybrid, SM-TCR placement, SM-PRE extraction) carry over unchanged, with only the final preimage extraction step relying on the antichain property instead of the checksum.
+\end{abstract}
+
+\tableofcontents
+
+% ======================================================================
+\section{Introduction}
+% ======================================================================
+
+Kylin~\cite{kylin} is a stateless hash-based digital signature scheme submitted to the NGCC competition. It modifies SPHINCS+~\cite{BHK+19} in two principal ways:
+
+\begin{enumerate}
+    \item The one-time signature scheme is replaced from WOTS+ to \textbf{CS-WOTS+} (Constant Sum WOTS+), which uses a size-optimal constant-sum encoding based on the maximum antichain of the hash-chain poset. All codewords are pairwise incomparable, eliminating the explicit checksum.
+    \item The hypertree layers are allowed to have non-uniform heights $(h_0,\ldots,h_{d-1})$ with $\sum h_i = h$.
+\end{enumerate}
+
+The original SPHINCS+ security proof~\cite{BHK+19} was shown to have a flaw by Kudinov, Kiktenko, and Fedorov~\cite{KKF20}. H\"ulsing and Kudinov~\cite{HK22} recovered the tight security proof by formalizing the WOTS variant as WOTS-TW and proving its security in the EU-naCMA model using three properties of tweakable hash functions: SM-TCR, SM-PRE, and SM-UD. Since Kylin inherits all other components (hypertree, FORS, tweakable hash function framework, PRF-based key derivation) from SPHINCS+, its security proof can be obtained by adapting the tight proof of~\cite{HK22} to use CS-WOTS+ encoding in place of the checksum.
+
+\medskip
+\textbf{Our contribution.} We provide a complete, self-contained tight security reduction for Kylin. The proof structure closely follows~\cite{HK22}:
+
+\begin{itemize}
+    \item \textbf{Section~\ref{sec:prelim}} defines the cryptographic primitives and security notions (SM-TCR, SM-PRE, SM-UD, SM-DSPR for tweakable hash functions; EU-naCMA for signatures).
+    \item \textbf{Section~\ref{sec:cswots}} defines CS-WOTS+, proves the antichain property, and establishes the encoding scheme.
+    \item \textbf{Section~\ref{sec:wotstw-single}} proves single-instance EU-naCMA security of CS-WOTS-TW (Theorem~\ref{thm:wots-tw}).
+    \item \textbf{Section~\ref{sec:wotstw-multi}} extends to multi-instance security (Theorem~\ref{thm:wots-tw-d}).
+    \item \textbf{Section~\ref{sec:kylin-construction}} describes the Kylin construction, including diverse layer heights.
+    \item \textbf{Section~\ref{sec:kylin-proof}} gives the main EUF-CMA security reduction for Kylin (Theorem~\ref{thm:kylin}).
+    \item \textbf{Section~\ref{sec:concrete}} derives concrete classical and quantum security bounds against generic attacks.
+\end{itemize}
+
+% ======================================================================
+\section{Preliminaries}
+\label{sec:prelim}
+% ======================================================================
+
+\subsection{Tweakable Hash Functions}
+
+Throughout this note, $n$ denotes the Kylin security parameter in bytes, matching the specification and implementation. We write $\Nbits = 8n$ for the corresponding bit length. A tweakable hash function~\cite{BHK+19} takes public parameters $P \in \mathcal{P}$, a tweak $T \in \mathcal{T}$, and a message $M$, and outputs an $\Nbits$-bit hash value:
+\[
+\Th : \mathcal{P} \times \mathcal{T} \times \bits^* \to \bits^\Nbits, \qquad
+\Th(P, T, M) \;\text{or}\; \Th_{P,T}(M).
+\]
+
+In Kylin (as in SPHINCS+), the public parameter $P = \pk.\seed$ is an $n$-byte public seed, and the tweak $T$ is an address $\ADRS \in \bits^{256}$ identifying the position of the hash call within the virtual structure. A \emph{collection} of tweakable hash functions $\boldsymbol{\Th} = \{\Th_{m_i}\}$ consists of several THFs with different message lengths $m_i$ sharing the same public parameter $P$.
+
+For Kylin we define the following THFs within the collection:
+\begin{align*}
+\F &= \Th_1 :
+\bits^\Nbits \times \bits^{256} \times \bits^\Nbits
+\to \bits^\Nbits,\\
+\Hfunc &= \Th_2 :
+\bits^\Nbits \times \bits^{256} \times \bits^{2\Nbits}
+\to \bits^\Nbits,\\
+\T_\ell &:
+\bits^\Nbits \times \bits^{256} \times \bits^{\ell \Nbits}
+\to \bits^\Nbits.
+\end{align*}
+
+\subsection{Security Notions for Tweakable Hash Functions}
+
+We work in the post-quantum setting: adversaries have access to a quantum computer but oracles implementing secretly-keyed functions only allow classical access. All definitions are parameterized by the number of targets $p$ and require distinct tweaks. We omit the ``post-quantum'' prefix for brevity.
+
+\begin{definition}[SM-TCR]
+\label{def:sm-tcr}
+Single-function multi-target collision resistance for distinct tweaks is defined as follows. Let $\Th$ be a tweakable hash function. The success probability of adversary $\mathcal{A}=(\mathcal{A}_1,\mathcal{A}_2)$ with $p$ targets is:
+\[
+\Succ_{\Th,p}^{\mathsf{sm\text{-}tcr}}(\mathcal{A}) = \Pr\left[
+\begin{array}{l}
+P \xleftarrow{\$} \mathcal{P}; \; S \gets \mathcal{A}_1^{\Th(P,\cdot,\cdot)}(); \\
+(j, M) \gets \mathcal{A}_2(Q, S, P) :\\
+\Th(P, T_j, M_j) = \Th(P, T_j, M),\quad
+M \neq M_j,\quad \mathsf{DIST}(\{T_i\}_{i=1}^p)
+\end{array}
+\right],
+\]
+where $\mathcal{A}_1$ makes $p$ classical queries $Q=\{(T_i,M_i)\}_{i=1}^p$ with distinct tweaks.
+
+For a THF $\Th_m$ that is a member of a collection $\boldsymbol{\Th}$, $\mathcal{A}_1$ additionally gets oracle access to $\boldsymbol{\Th}(P,\cdot,\cdot)$ under the same $P$, with the restriction that tweaks used in the two oracles are disjoint. We write $\Th_m \in \boldsymbol{\Th}$ in the insecurity.
+\end{definition}
+
+\begin{definition}[SM-PRE]
+\label{def:sm-pre}
+Single-function multi-target preimage resistance for distinct tweaks is defined as follows. For $\Th$, parameterized by $p$ targets:
+\[
+\Succ_{\Th,p}^{\mathsf{sm\text{-}pre}}(\mathcal{A}) = \Pr\left[
+\begin{array}{l}
+P \xleftarrow{\$} \mathcal{P}; \; S \gets \mathcal{A}_1^{\Th(P,\cdot,x_i)}(); \\
+(j, M) \gets \mathcal{A}_2(Q, S, P) :\\
+\Th(P, T_j, M) = \Th(P, T_j, x_j),\quad
+\mathsf{DIST}(\{T_i\}_{i=1}^p)
+\end{array}
+\right],
+\]
+where for the $i$-th query, the oracle evaluates $\Th$ on a uniformly random hidden $x_i$. The collection case is handled analogously.
+\end{definition}
+
+\begin{definition}[SM-UD: Single-Function Multi-Target Undetectability for Distinct Tweaks]
+\label{def:sm-ud}
+For $\Th$, parameterized by $p$ targets. The challenger flips a fair coin $b$ and samples $P \xleftarrow{\$} \mathcal{P}$. Define oracle $\mathcal{O}_P(T, b)$: if $b=0$, return $\Th(P,T,x)$ with $x \xleftarrow{\$} \bits^\Nbits$; if $b=1$, return a uniformly random $y \xleftarrow{\$} \bits^\Nbits$. $\mathcal{A}_1$ makes $p$ classical queries to $\mathcal{O}_P(\cdot,b)$. Then $\mathcal{A}_2$ receives $Q, S, P$ and outputs a bit. The advantage is:
+\[
+\Adv_{\Th,p}^{\mathsf{sm\text{-}ud}}(\mathcal{A}) = \bigl|
+\Pr[\mathcal{A}_2 \to 1 \mid b=0 \land \mathsf{DIST}] - \Pr[\mathcal{A}_2 \to 1 \mid b=1 \land \mathsf{DIST}]
+\bigr|.
+\]
+\end{definition}
+
+\begin{definition}[SM-DSPR: Single-Function Multi-Target Decisional Second-Preimage Resistance]
+\label{def:sm-dspr}
+The second-preimage-exists predicate is $\mathsf{SP}_{P,T}(M) = 1$ iff $|\Th_{P,T}^{-1}(\Th_{P,T}(M))| \ge 2$. For adversary $\mathcal{A}=(\mathcal{A}_1,\mathcal{A}_2)$ with $p$ targets:
+\[
+\Adv_{\Th,p}^{\mathsf{sm\text{-}dspr}}(\mathcal{A}) = \max\{0,\; \mathsf{succ} - \mathsf{triv}\},
+\]
+where
+\begin{align*}
+\mathsf{succ} &= \Pr[P \xleftarrow{\$} \mathcal{P}; S \gets \mathcal{A}_1^{\Th(P,\cdot,\cdot)}(); (j,b) \gets \mathcal{A}_2(Q,S,P) : \mathsf{SP}_{P,T_j}(M_j) = b \land \mathsf{DIST}],\\
+\mathsf{triv} &= \Pr[P \xleftarrow{\$} \mathcal{P}; S \gets \mathcal{A}_1^{\Th(P,\cdot,\cdot)}(); (j,b) \gets \mathcal{A}_2(Q,S,P) : \mathsf{SP}_{P,T_j}(M_j) = 1 \land \mathsf{DIST}].
+\end{align*}
+\end{definition}
+
+\subsection{Pseudorandom Functions}
+
+We use two PRFs: $\PRF : \bits^\Nbits \times \bits^{256} \to \bits^\Nbits$ for key generation and $\PRFmsg : \bits^\Nbits \times \bits^* \to \bits^\Nbits$ for message randomization. Standard PRF security (pq-prf) is assumed; see~\cite{HK22}.
+
+\subsection{Interleaved Target Subset Resilience}
+
+For the message digest function $\Hmsg : \bits^\Nbits \times \bits^* \to \bits^{8m}$, where $m$ is the digest length in bytes, we require interleaved target subset resilience (ITSR) as defined in~\cite[Definition~18]{BHK+19} and~\cite{HK22}. We refer to the standard definition and use $\InSec{itsr}(\Hmsg; \tau, q)$ for the insecurity against $q$-query adversaries.
+
+\subsection{EU-naCMA Security Model}
+\label{sec:eunacma}
+
+\begin{definition}[EU-naCMA]
+Let $\mathsf{Dss}=(\mathsf{Kg},\mathsf{Sign},\mathsf{Vf})$ be a digital signature scheme. The EU-naCMA experiment with two-stage adversary $\mathcal{A}=(\mathcal{A}_1,\mathcal{A}_2)$ is:
+\begin{enumerate}
+    \item $(\sk,\pk) \gets \mathsf{Kg}(1^\Nbits)$.
+    \item $(\{M_1,\ldots,M_q\}, S) \gets \mathcal{A}_1()$. (Non-adaptive: messages chosen before seeing $\pk$.)
+    \item Compute $\sigma_i \gets \mathsf{Sign}(M_i,\sk)$ for $i \in [q]$.
+    \item $(M^*,\sigma^*) \gets \mathcal{A}_2(S, \{\sigma_i\}_{i=1}^q, \pk)$.
+    \item Return $1$ iff $\mathsf{Vf}(\pk, \sigma^*, M^*) = 1$ and $M^* \notin \{M_i\}_{i=1}^q$.
+\end{enumerate}
+\end{definition}
+
+For one-time signatures, we set $q=1$.
+
+% ======================================================================
+\section{CS-WOTS+: Constant Sum WOTS+}
+\label{sec:cswots}
+% ======================================================================
+
+\subsection{The Poset and Antichain}
+
+Let $w \ge 2$ be the Winternitz parameter and $\ell \in \mathbb{N}$ be the number of chains. Consider the poset $([w]^\ell, \preceq)$ where $[w] = \{0,1,\ldots,w-1\}$ and $\mathbf{a} \preceq \mathbf{b}$ iff $a_i \le b_i$ for all $i \in [\ell]$.
+
+\begin{definition}[Constant-sum sets]
+For $s \in \{0,1,\ldots,\ell(w-1)\}$, define
+\[
+\cC_s = \left\{\mathbf{v} \in [w]^\ell : \sum_{i=1}^\ell v_i = s\right\}.
+\]
+\end{definition}
+
+\begin{lemma}[Antichain property]
+\label{lem:antichain}
+For any $s$, $\cC_s$ is an antichain: for any distinct $\mathbf{a},\mathbf{b} \in \cC_s$, neither $\mathbf{a} \preceq \mathbf{b}$ nor $\mathbf{b} \preceq \mathbf{a}$.
+\end{lemma}
+
+\begin{proof}
+Assume $\mathbf{a} \preceq \mathbf{b}$ and $\mathbf{a} \neq \mathbf{b}$. Then $\exists j: a_j < b_j$ and $\forall i: a_i \le b_i$, so $\sum a_i < \sum b_i$, contradicting $\sum a_i = \sum b_i = s$. The symmetric argument excludes $\mathbf{b} \preceq \mathbf{a}$.
+\end{proof}
+
+\begin{lemma}[Maximal antichain]
+\label{lem:maxantichain}
+$\cC_{s^*}$ with $s^* = \lfloor \ell(w-1)/2\rfloor$ is a maximum antichain of $([w]^\ell, \preceq)$. Moreover, $|\cC_{s^*}| = \max_s |\cC_s|$.
+\end{lemma}
+
+\begin{proof}
+It is enough, by Dilworth's theorem~\cite{dilworth}, to exhibit a chain decomposition of $([w]^\ell,\preceq)$ with exactly $|\cC_{s^*}|$ chains. We use the standard symmetric-chain argument for a product of chains, specialized to the present notation.
+
+For $r \ge 1$, let $S_r=([w]^r,\preceq)$. We construct, by induction on $r$, a chain decomposition of $S_r$ such that each chain $C=\{\mathbf{c}_1 \prec \cdots \prec \mathbf{c}_m\}$ satisfies
+\[
+|\mathbf{c}_{i+1}|=|\mathbf{c}_i|+1
+\quad\text{and}\quad
+|\mathbf{c}_1|+|\mathbf{c}_m|=r(w-1),
+\]
+where $|\mathbf{c}|$ denotes the sum of the coordinates. The case $r=1$ is the single chain $(0)\prec(1)\prec\cdots\prec(w-1)$.
+
+Assume such a decomposition is known for $S_{r-1}$. For a chain
+$C=\{\mathbf{c}_1,\ldots,\mathbf{c}_m\}$ in that decomposition, let
+$u=\min(w-1,m-1)$. Replace $C$ by the $u+1$ chains, indexed by
+$j=0,\ldots,u$,
+\[
+(\mathbf{c}_1,j)\preceq \cdots \preceq
+(\mathbf{c}_{m-j},j)\preceq
+(\mathbf{c}_{m-j},j+1)\preceq \cdots \preceq
+(\mathbf{c}_{m-j},w-1).
+\]
+The final segment is omitted when $j=w-1$.
+These chains partition all pairs $(\mathbf{c}_i,a)$ with
+$\mathbf{c}_i\in C$ and $a\in\{0,\ldots,w-1\}$ exactly once. They also preserve the two displayed properties: consecutive elements increase the coordinate sum by one, and the first and last sums add to $r(w-1)$. Applying this replacement to every chain of the decomposition of $S_{r-1}$ gives the desired decomposition of $S_r$.
+
+For $r=\ell$, every symmetric chain contains exactly one vector with coordinate sum $s^*=\lfloor \ell(w-1)/2\rfloor$. Hence the number of chains in the decomposition is $|\cC_{s^*}|$. Since any antichain intersects each chain in at most one point, no antichain can be larger than $|\cC_{s^*}|$. Lemma~\ref{lem:antichain} shows that $\cC_{s^*}$ itself is an antichain, so it is maximum.
+\end{proof}
+
+\subsection{Cardinality and Recurrence}
+
+For $r,m \ge 0$, let $D_{r,m}$ be the number of $r$-tuples of $\{0,\ldots,w-1\}$ summing to $m$. This satisfies:
+\begin{equation}\label{eq:recurrence}
+D_{0,0} = 1, \quad D_{0,m} = 0 \;(m \neq 0), \quad D_{r,m} = \sum_{i=0}^{w-1} D_{r-1,m-i},
+\end{equation}
+with $D_{r,m} = 0$ for $m < 0$ or $m > r(w-1)$.
+
+The CS-WOTS+ parameter $\ell$ is chosen as the minimal integer such that
+\begin{equation}\label{eq:ell-def}
+D_{\ell,\, \lfloor \ell(w-1)/2\rfloor} \ge 2^\Nbits.
+\end{equation}
+
+\subsection{Encoding and Decoding}
+
+Let $C_{\max} = |\cC_{s^*}| = D_{\ell, s^*}$ and assume $C_{\max} \ge 2^\Nbits$. We define a bijection $\Enc : [0, C_{\max}-1] \to \cC_{s^*}$ that maps an integer to its rank in the antichain, using the combinatorial numbering system based on Eq.~\eqref{eq:recurrence}. The inverse is $\Dec : \cC_{s^*} \to [0, C_{\max}-1]$.
+
+For an $\Nbits$-bit message $m \in \bits^\Nbits$, the encoding is:
+\[
+\mathsf{cs\text{-}wots\text{-}encode}(m) = \Enc(\mathsf{toInt}(m)),
+\]
+with $\mathsf{toInt}(m) \in [0, 2^\Nbits-1] \subseteq [0, C_{\max}-1]$.
+
+\begin{lemma}[Unforgeability of CS-WOTS+ encoding]
+\label{lem:cs-wots-uf}
+For any distinct messages $m \neq m' \in \bits^\Nbits$, let $\mathbf{b} = \mathsf{cs\text{-}wots\text{-}encode}(m)$ and $\mathbf{b}' = \mathsf{cs\text{-}wots\text{-}encode}(m')$. Then $\mathbf{b}$ and $\mathbf{b}'$ are incomparable. In particular, there exists $j \in [\ell]$ such that $b_j' < b_j$.
+\end{lemma}
+
+\begin{proof}
+Since $\mathbf{b}, \mathbf{b}' \in \cC_{s^*}$, Lemma~\ref{lem:antichain} implies they are incomparable. Hence there exists $j$ with $b_j' < b_j$ (otherwise $\mathbf{b} \preceq \mathbf{b}'$, contradiction) and also $k$ with $b_k < b_k'$.
+\end{proof}
+
+\begin{remark}
+This is the fundamental property that \emph{replaces the checksum} in the WOTS-TW proof. In standard WOTS+, modifying a message forces an increase in some $m_i$ and a decrease in some checksum component $C_j$, so at least one chain index decreases. In CS-WOTS+, the antichain property directly guarantees that for any two distinct messages, there exist indices with $b_j' < b_j$ and $b_k' > b_k$, which is exactly what the reduction needs.
+\end{remark}
+
+\subsection{CS-WOTS-TW Scheme}
+
+We now define CS-WOTS-TW, which is WOTS-TW~\cite[Section~3]{HK22} with CS-WOTS+ encoding.
+
+\medskip\noindent\textbf{Parameters:} $n$ (security parameter in bytes, with $\Nbits=8n$ bits), $w$ (Winternitz parameter), $\ell$ (from Eq.~\eqref{eq:ell-def}).
+
+\medskip\noindent\textbf{Chaining function:} For $x \in \bits^\Nbits$, iteration count $k \ge 0$, start index $j$, chain index $i$, and public seed $\seed$:
+\[
+c_{j,k}(x, i, \seed) = \begin{cases}
+x, & k = 0,\\
+\Th(\seed, T_{i,j+k-1}, c_{j,k-1}(x, i, \seed)), & k > 0.
+\end{cases}
+\]
+If multiple instances are used with different addresses, we write $c^{\ADRS}_{j,k}(x,i,\seed)$.
+
+\medskip\noindent\textbf{Key Generation} $\mathsf{CS\text{-}WOTS\text{-}TW.kg}(C = (\seed, \ADRS); S)$:
+\begin{itemize}
+    \item Compute $\sk_i \gets \PRF(S, T_{i,0})$ for $i \in [\ell]$, where $T_{i,j}$ are tweaks derived from $\ADRS$ via the addressing scheme.
+    \item Compute $\pk_i = c_{0,w-1}(\sk_i, i, \seed)$.
+    \item Return $\SK = (S, C)$ and $\PK = (\pk = (\pk_1,\ldots,\pk_\ell), C)$.
+\end{itemize}
+
+\medskip\noindent\textbf{Signature} $\mathsf{CS\text{-}WOTS\text{-}TW.sign}(M, \SK)$:
+\begin{itemize}
+    \item Compute $\mathbf{b} = (b_1,\ldots,b_\ell) = \mathsf{cs\text{-}wots\text{-}encode}(M)$.
+    \item Compute $\sigma_i = c_{0,b_i}(\sk_i, i, \seed)$ for $i \in [\ell]$.
+    \item Return $\sigma = (\sigma_1,\ldots,\sigma_\ell)$.
+\end{itemize}
+
+\medskip\noindent\textbf{Verification} $\mathsf{CS\text{-}WOTS\text{-}TW.vf}(M, \sigma, \PK)$:
+\begin{itemize}
+    \item Compute $\mathbf{b}$ as above.
+    \item Check whether $\pk_i = c_{b_i, w-1-b_i}(\sigma_i, i, \seed)$ for all $i$. Return $\mathsf{true}$ if equality holds, $\mathsf{false}$ otherwise.
+\end{itemize}
+
+% ======================================================================
+\section{Tight Security of CS-WOTS-TW (Single Instance)}
+\label{sec:wotstw-single}
+% ======================================================================
+
+We prove that CS-WOTS-TW is EU-naCMA secure (one-time, i.e., $q=1$), assuming the THF $\Th$ satisfies SM-TCR, SM-PRE, and SM-UD.
+
+\begin{theorem}[Security of CS-WOTS-TW, single instance]
+\label{thm:wots-tw}
+Let $n,w \in \mathbb{N}$ with $\Nbits=8n$ and $w = \poly(\Nbits)$. Let $\Th : \mathcal{P} \times \mathcal{T} \times \bits^\Nbits \to \bits^\Nbits$ be SM-TCR, SM-PRE, and SM-UD secure. Let $\PRF : \mathcal{S} \times \mathcal{T} \to \bits^\Nbits$ be a PRF. Then:
+%
+\begin{align}
+	\InSec{EU\text{-}naCMA}(\mathsf{CS\text{-}WOTS\text{-}TW}; \tau, 1) \le~& 
+	\InSec{prf}(\PRF; \tau, \ell) + \InSec{sm\text{-}tcr}(\Th; \tau, \ell w)     \notag   \\
+	&  + \InSec{sm\text{-}pre}(\Th; \tau, \ell)  + w \cdot \InSec{sm\text{-}ud}(\Th; \tau, \ell),
+	\label{eq-bound-WOTS}
+\end{align}
+%
+with $\tau' = \tau + \ell w$ (time measured in $\Th$ evaluations).
+\end{theorem}
+
+\begin{proof}
+We proceed via a sequence of four games. Let $\mathcal{A}$ be an EU-naCMA adversary for CS-WOTS-TW.
+
+\subsection*{GAME.1 (EU-naCMA game)}
+This is the original EU-naCMA experiment (Definition~\ref{sec:eunacma}). $\mathcal{A}_1$ outputs a message $M$. The experiment generates $(\SK,\PK) = \mathsf{CS\text{-}WOTS\text{-}TW.kg}(C = (\seed,\ADRS); S)$ with $\seed \xleftarrow{\$} \bits^\Nbits$, $S \xleftarrow{\$} \bits^\Nbits$, computes $\sigma \gets \mathsf{CS\text{-}WOTS\text{-}TW.sign}(M,\SK)$, and returns $(\sigma,\PK)$ to $\mathcal{A}_2$. $\mathcal{A}_2$ wins if it outputs a valid forgery $(M',\sigma')$ with $M' \neq M$.
+
+\subsection*{GAME.2 (Replace PRF with random function)}
+Same as GAME.1 but all outputs of $\PRF(S,\cdot)$ are replaced by independent uniformly random values. Since all $\ell$ tweaks $T_{i,0}$ are distinct, the $\PRF$ outputs are independent. The difference is bounded by the PRF advantage.
+
+\begin{claim}
+$|\Succ_{\GAME.1}(\mathcal{A}) - \Succ_{\GAME.2}(\mathcal{A})| \le \InSec{prf}(\PRF; \tau, \ell)$.
+\end{claim}
+
+\begin{proof}
+Standard reduction: the distinguisher uses its $\PRF$ oracle to simulate GAME.1 (oracle is $\PRF$) or GAME.2 (oracle is random), making $\ell$ distinct queries. The difference in success probability equals the PRF distinguishing advantage.
+\end{proof}
+
+\subsection*{GAME.3 (Replace chain values with hashes of random values)}
+In this game, upon receiving $\mathcal{A}_1$'s signing query $M$ (without knowing $\seed$), we construct the signature differently. Let $\mathbf{b} = \mathsf{cs\text{-}wots\text{-}encode}(M)$. Generate $\ell$ random values $u_i \xleftarrow{\$} \bits^\Nbits$, $i \in [\ell]$. Set the signature as
+\[
+\sigma_i = \begin{cases}
+\Th(\seed, T_{i,b_i-1}, u_i), & b_i > 0,\\
+u_i, & b_i = 0.
+\end{cases}
+\]
+Then request $\seed$ and compute the public key via $\pk_i = c_{b_i, w-1-b_i}(\sigma_i, i, \seed)$, exactly as in verification. Return $(\sigma, \PK = (\pk_1,\ldots,\pk_\ell), C)$.
+
+\begin{claim}
+$|\Succ_{\GAME.2}(\mathcal{A}) - \Succ_{\GAME.3}(\mathcal{A})| \le w \cdot \InSec{sm\text{-}ud}(\Th; \tau, \ell)$.
+\end{claim}
+
+\begin{proof}
+Let $\mathbf{b} = (b_1,\ldots,b_\ell)$. Define two distributions:
+\begin{align*}
+D_{\mathsf{Kg}} &= \{\,y_i = c_{0,b_i-1}(\tilde{u}_i, i, \seed) : \tilde{u}_i \xleftarrow{\$} \bits^\Nbits,\; i \in [\ell]\,\},\\
+D_0 &= \{\,\varepsilon_i \xleftarrow{\$} \bits^\Nbits : i \in [\ell]\,\}.
+\end{align*}
+Samples from $D_{\mathsf{Kg}}$ are distributed as the $(b_i-1)$-th values of valid CS-WOTS-TW chains. Samples from $D_0$ are uniform random.
+
+An algorithm $\mathcal{M}^{\mathcal{A}}_{2\to 3}$ that distinguishes $D_{\mathsf{Kg}}$ from $D_0$ simulates the EU-naCMA game as follows. It receives $\mathbf{b}$ from $\mathcal{A}_1$, queries its distribution oracle $O(\mathbf{b})$ to obtain samples $\psi_i$, and sets
+\[
+\sigma_i =
+\begin{cases}
+\Th(\seed, T_{i,b_i-1}, \psi_i), & b_i>0,\\
+\psi_i, & b_i=0.
+\end{cases}
+\]
+It then builds $\pk$ and returns to $\mathcal{A}_2$. When $O$ samples from $D_{\mathsf{Kg}}$, the view is GAME.2; from $D_0$, the view is GAME.3. Thus
+\[
+\Adv_{D_0,D_{\mathsf{Kg}}}(\mathcal{M}^{\mathcal{A}}_{2\to 3}) = |\Succ_{\GAME.2}(\mathcal{A}) - \Succ_{\GAME.3}(\mathcal{A})|.
+\]
+
+Let $b_{\max} = \max\{b_1,\ldots,b_\ell\} \le w-1$. Define intermediate hybrids $H_k$ by
+\[
+\psi_i^{(k)} = c_{k, b_i-1-k}(\tilde{u}_i, i, \seed).
+\]
+Then $H_0 = D_{\mathsf{Kg}}$ and $H_{b_{\max}-1} = D_0$. By the hybrid argument, there exist consecutive $j,j+1$ distinguishable with advantage at least
+\[
+\frac{\Adv_{D_0,D_{\mathsf{Kg}}}(\mathcal{M}^{\mathcal{A}}_{2\to 3})}{b_{\max}-1}.
+\]
+
+We now reduce distinguishing $H_j$ from $H_{j+1}$ to SM-UD. The reduction $\mathcal{M}^{\mathsf{UD}}$ makes $\ell$ queries to the SM-UD oracle $\mathcal{O}^{\mathsf{UD}}(\cdot,b)$ with tweaks $\{T_{1,j},\ldots,T_{\ell,j}\}$. If $b=0$, responses are $\Th(\seed,T_{i,j},\tilde{u}_i) = c_{j,1}(\tilde{u}_i,i,\seed)$ (random preimages, yielding hash outputs); if $b=1$, responses are uniformly random. After obtaining $\seed$, $\mathcal{M}^{\mathsf{UD}}$ applies the remaining chain steps $c_{j+1, b_i-1-(j+1)}$ to construct $H_{j+b}$ and returns the forger's output. Hence
+\[
+\Adv_{H_j,H_{j+1}} \le \InSec{sm\text{-}ud}(\Th; \tau, \ell).
+\]
+Combining,
+\[
+|\Succ_{\GAME.2} - \Succ_{\GAME.3}|
+\le (b_{\max}-1) \cdot \InSec{sm\text{-}ud}(\Th; \tau, \ell)
+\le w \cdot \InSec{sm\text{-}ud}(\Th; \tau, \ell).
+\]
+\end{proof}
+
+\subsection*{GAME.4 (Exclude chain collisions)}
+GAME.4 is the same as GAME.3, but the game is declared lost if $\mathcal{A}$ outputs a valid forgery $(M',\sigma')$ for which there exists $i \in [\ell]$ such that $b_i' < b_i$ and
+\[
+c_{b_i',\,b_i-b_i'}(\sigma_i', i, \seed) = \sigma_i.
+\]
+(Here $\mathbf{b}$ is from the queried message $M$, and $\mathbf{b}'$ from the forgery $M'$.)
+
+\begin{claim}
+$|\Succ_{\GAME.3}(\mathcal{A}) - \Succ_{\GAME.4}(\mathcal{A})| \le \InSec{sm\text{-}tcr}(\Th; \tau, \ell w)$.
+\end{claim}
+
+\begin{proof}
+We construct an SM-TCR adversary $\mathcal{M}^{\mathsf{TCR}}$ that simulates GAME.3. Upon receiving $\mathcal{A}_1$'s message $M$, $\mathcal{M}^{\mathsf{TCR}}$ encodes it as $\mathbf{b}$ and, for each $i$ with $b_i > 0$, samples a random $\tilde{u}_i$ and queries the SM-TCR oracle with $(T_{i,b_i-1}, \tilde{u}_i)$ to obtain a target $\sigma_i = \Th(P, T_{i,b_i-1}, \tilde{u}_i)$. Then it continues querying the SM-TCR oracle to build the rest of each chain: $(T_{i,b_i}, \sigma_i) \to c_1$, $(T_{i,b_i+1}, c_1) \to c_2$, \ldots, up to $c_{w-1-b_i}$, which becomes $\pk_i$. The entire chain from position $b_i$ to $w-1$ is built using SM-TCR challenges.
+
+When $\mathcal{A}$ returns a forgery satisfying $c_{b_i',b_i-b_i'}(\sigma_i',i,\seed)=\sigma_i$ for some $i$ with $b_i' < b_i$, by a pigeonhole argument there must be a collision between the honestly computed chain and the adversary's chain somewhere between index $b_i'$ and $w-1$. $\mathcal{M}^{\mathsf{TCR}}$ extracts the first position where they diverge and collide, which yields a valid SM-TCR solution. The number of SM-TCR challenges placed is at most $\ell w$ (covering all chain positions from $b_i$ to $w-1$ for each $i$).
+
+The simulation is perfect: the signatures given to $\mathcal{A}$ are identically distributed to GAME.3 (they are $\Th(\seed, T_{i,b_i-1}, \tilde{u}_i)$, exactly as in GAME.3). Hence the bound follows.
+\end{proof}
+
+\subsection*{Bounding GAME.4 via SM-PRE}
+In GAME.4, the only remaining way for $\mathcal{A}$ to win is to produce a forgery $(M',\sigma')$ where for \emph{all} $i$ with $b_i' < b_i$, we have $c_{b_i',b_i-b_i'}(\sigma_i',i,\seed) \neq \sigma_i$. By Lemma~\ref{lem:cs-wots-uf} (the antichain property), since $M' \neq M$, there exists at least one $j$ with $b_j' < b_j$. For this $j$, we have $c_{b_j',b_j-b_j'}(\sigma_j',j,\seed) \neq \sigma_j$ by the GAME.4 exclusion. But for verification to succeed, we need $c_{b_j', w-1-b_j'}(\sigma_j', j, \seed) = \pk_j = c_{b_j, w-1-b_j}(\sigma_j, j, \seed)$. Since the chains from $b_j'$ and $b_j$ converge to the same $\pk_j$ but diverge at some intermediate point (by the exclusion), we can extract a preimage.
+
+\begin{claim}
+$\Succ_{\GAME.4}(\mathcal{A}) \le \InSec{sm\text{-}pre}(\Th; \tau, \ell)$.
+\end{claim}
+
+\begin{proof}
+We construct an SM-PRE adversary $\mathcal{M}^{\mathsf{PRE}}$. Upon receiving $M$, $\mathcal{M}^{\mathsf{PRE}}$ encodes it as $\mathbf{b}$. For each $i$ with $b_i > 0$, it queries the SM-PRE challenger with tweak $T_{i,b_i-1}$ to obtain a preimage challenge $y_i = \Th(P,T_{i,b_i-1},x_i)$ (where $x_i$ is hidden). It sets $\sigma_i = y_i$ as the signature element. For $b_i = 0$, it sets $\sigma_i$ to a random value. Then it receives $P = \seed$ from the challenger and computes $\pk_i = c_{b_i, w-1-b_i}(\sigma_i, i, \seed)$ by finishing the chains. The resulting $(\sigma,\PK)$ has exactly the GAME.3/GAME.4 distribution.
+
+When $\mathcal{A}$ returns a forgery, Lemma~\ref{lem:cs-wots-uf} gives an index $j$ with $b_j' < b_j$. In GAME.4,
+\[
+c_{b_j',b_j-b_j'}(\sigma_j',j,\seed) \neq \sigma_j.
+\]
+The SM-PRE challenge $y_j=\sigma_j$ was computed at position $b_j-1$ as $\Th(P,T_{j,b_j-1},x_j)$. The preimage of $\sigma_j$ under $\Th(P,T_{j,b_j-1},\cdot)$ provided by the forgery path is
+\[
+c_{b_j', b_j-b_j'-1}(\sigma_j', j, \seed).
+\]
+It must differ from $x_j$, since otherwise the chain would already converge at $b_j-1$. Therefore $\mathcal{M}^{\mathsf{PRE}}$ extracts a valid preimage and wins the SM-PRE game whenever $\mathcal{A}$ succeeds.
+
+The simulation uses $\ell$ distinct SM-PRE challenges, and the reduction's success probability equals $\Succ_{\GAME.4}(\mathcal{A})$.
+\end{proof}
+
+\vspace{4pt}
+Combining Claims 1--4 via the triangle inequality yields the theorem bound.
+\end{proof}
+
+% ======================================================================
+\section{Multi-Instance CS-WOTS-TW}
+\label{sec:wotstw-multi}
+% ======================================================================
+
+In SPHINCS+/Kylin, many CS-WOTS-TW instances are used within one key pair, all sharing the same public seed $\seed$ but distinguished by different address prefixes $\ADRS$. We follow~\cite[Section~6]{HK22} and extend the EU-naCMA model to $D$ instances. This avoids overloading the Kylin parameter $d$, which denotes the number of hypertree layers.
+
+\begin{theorem}[Security of CS-WOTS-TW, multi-instance]
+\label{thm:wots-tw-d}
+Let $n,w,\ell$ be as above, with $\Nbits=8n$. Let $\F = \Th_1 : \mathcal{P} \times \mathcal{T} \times \bits^\Nbits \to \bits^\Nbits$ be SM-TCR, SM-PRE, and SM-UD secure as a member of a collection $\boldsymbol{\Th}$. Let $\PRF : \mathcal{S} \times \mathcal{T} \to \bits^\Nbits$ be a PRF. Then for any adversary making one signature query per instance (i.e., $D$ queries total):
+\begin{align*}
+\InSec{D\text{-}EU\text{-}naCMA}&(\mathsf{CS\text{-}WOTS\text{-}TW}; \tau, D) \;<\;
+\InSec{prf}(\PRF; \tau, D\!\cdot\!\ell) \\
+&+ \InSec{sm\text{-}tcr}(\F \in \boldsymbol{\Th}; \tau, D\!\cdot\!\ell w) \\
+&+ \InSec{sm\text{-}pre}(\F \in \boldsymbol{\Th}; \tau, D\!\cdot\!\ell)
++ w \cdot \InSec{sm\text{-}ud}(\F \in \boldsymbol{\Th}; \tau, D\!\cdot\!\ell),
+\end{align*}
+with $\tau' = \tau + D \cdot \ell w$.
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+The proof follows the same four-game sequence as Theorem~\ref{thm:wots-tw}, with the following adjustments for $D$ instances:
+
+\textbf{GAME.1 $\to$ GAME.2:} The PRF is replaced by random values for all $D \cdot \ell$ secret key elements. Since each instance uses a unique $\ADRS$ prefix, all tweaks are distinct, so all PRF outputs are independent random values. The bound becomes $\InSec{prf}(\PRF; \tau, D\!\cdot\!\ell)$.
+
+\textbf{GAME.2 $\to$ GAME.3} (UD hybrid): The two multi-instance distributions now contain $D \cdot \ell$ values, one per chain across all $D$ instances. The hybrid argument uses $b_{\max} \le w-1$ as before but with $D \cdot \ell$ values per hybrid. The SM-UD reduction queries $D\ell$ targets per hybrid step. The bound is $w \cdot \InSec{sm\text{-}ud}(\F \in \boldsymbol{\Th}; \tau, D\!\cdot\!\ell)$.
+
+\textbf{GAME.3 $\to$ GAME.4} (TCR exclusion): The SM-TCR reduction places challenges across all $D \cdot \ell w$ chain positions. The bound is $\InSec{sm\text{-}tcr}(\F \in \boldsymbol{\Th}; \tau, D\!\cdot\!\ell w)$.
+
+\textbf{GAME.4 bound} (PRE extraction): The SM-PRE reduction places $D\!\cdot\!\ell$ preimage challenges. If the adversary forges for instance $r$, the antichain property (Lemma~\ref{lem:cs-wots-uf}) guarantees $\exists j$ with $b_{r,j}' < b_{r,j}$, and the PRE extraction works exactly as in the single-instance case. The bound is $\InSec{sm\text{-}pre}(\F \in \boldsymbol{\Th}; \tau, D\!\cdot\!\ell)$.
+
+For the collection aspect: during SM-UD, SM-TCR, and SM-PRE reductions, all THF evaluations for tweaks that are not part of the challenge are simulated using the collection oracle $\boldsymbol{\Th}(P,\cdot,\cdot)$. The disjointness of challenge and collection tweaks is guaranteed by the addressing scheme.
+\end{proof}
+
+% ======================================================================
+\section{The Kylin Construction}
+\label{sec:kylin-construction}
+% ======================================================================
+
+\subsection{Parameters}
+
+Kylin is parameterized by:
+\begin{itemize}
+    \item $n$: security parameter (bytes),
+    \item $w$: Winternitz parameter,
+    \item $\ell$: CS-WOTS+ chain count (from Eq.~\eqref{eq:ell-def}),
+    \item $h$: total hypertree height,
+    \item $d$: number of hypertree layers,
+    \item $(h_0, \ldots, h_{d-1})$: per-layer heights, $\sum_{i=0}^{d-1} h_i = h$,
+    \item $k$: number of FORS trees,
+    \item $t = 2^a$: leaves per FORS tree,
+    \item $m$: message digest length in bytes.
+\end{itemize}
+
+\subsection{Hypertree with Diverse Layer Heights}
+
+The hypertree consists of $d$ layers of XMSS trees, indexed from the bottom layer $0$ to the top layer $d-1$. Layer $i$ contains
+\[
+2^{h - \sum_{j=0}^{i} h_j}
+\]
+XMSS trees, each of height $h_i$. Since $\sum_{j=0}^{d-1}h_j=h$, the top layer contains a single XMSS tree.
+
+Each XMSS tree of height $h_i$ has $2^{h_i}$ leaves, which are CS-WOTS-TW public keys. Internal nodes are computed using $\Hfunc = \Th_2$. The root of each tree is signed by the CS-WOTS-TW instance of the layer above. The bottom layer's CS-WOTS-TW instances sign FORS public keys.
+
+The HT public key is the root of the unique XMSS tree at layer $d-1$. An HT signature on message $M$ at position $(\mathsf{idx}_{\mathsf{tree}}, \mathsf{idx}_{\mathsf{leaf}})$ consists of $d$ XMSS signatures. At layer $i$, the XMSS signature contains one CS-WOTS-TW signature of $\ell$ $n$-byte strings and an XMSS authentication path of $h_i$ $n$-byte nodes. The $\log t=a$ FORS authentication nodes belong only to $\sigma_{\mathsf{FORS}}$, not to every HT layer.
+
+\subsection{FORS and Full Kylin}
+
+FORS (Forest of Random Subsets) is identical to SPHINCS+~\cite{BHK+19}. The full scheme is:
+
+\begin{itemize}
+    \item $\mathsf{kylin\_keygen}$: sample
+    \[
+    \sk.\seed,\ \sk.\prf,\ \pk.\seed \xleftarrow{\$} \bits^\Nbits,
+    \]
+    compute $\pk.\mathsf{root}=\mathsf{ht\_PKgen}(\sk.\seed,\pk.\seed)$, and return
+    \[
+    \SK=(\sk.\seed,\sk.\prf,\pk.\seed,\pk.\mathsf{root}),
+    \qquad
+    \PK=(\pk.\seed,\pk.\mathsf{root}).
+    \]
+    \item $\mathsf{kylin\_sign}(M, \SK)$:
+    \begin{enumerate}
+        \item $R \gets \PRFmsg(\sk.\prf, \mathsf{opt}, M)$.
+        \item $(\mathsf{md}, \mathsf{idx}_{\mathsf{tree}}, \mathsf{idx}_{\mathsf{leaf}}) \gets \Hmsg(R, \pk.\seed, \pk.\mathsf{root}, M)$.
+        \item $\sigma_{\mathsf{FORS}} \gets \mathsf{fors\_sign}(\mathsf{md}, \sk.\seed, \pk.\seed, \ADRS_{\mathsf{FORS}}(\mathsf{idx}_{\mathsf{tree}}, \mathsf{idx}_{\mathsf{leaf}}))$.
+        \item $\pk_{\mathsf{FORS}} \gets \mathsf{fors\_pkFromSig}(\sigma_{\mathsf{FORS}}, \mathsf{md}, \pk.\seed, \ADRS_{\mathsf{FORS}})$.
+        \item $\sigma_{\mathsf{HT}} \gets \mathsf{ht\_sign}(\pk_{\mathsf{FORS}}, \sk.\seed, \pk.\seed, \mathsf{idx}_{\mathsf{tree}}, \mathsf{idx}_{\mathsf{leaf}})$.
+        \item Return $\sigma = (R, \sigma_{\mathsf{FORS}}, \sigma_{\mathsf{HT}})$.
+    \end{enumerate}
+    \item $\mathsf{kylin\_verify}(M, \sigma, \PK)$: Recompute digest and indices; recover $\pk_{\mathsf{FORS}}$ from $\sigma_{\mathsf{FORS}}$; verify $\mathsf{ht\_verify}(\pk_{\mathsf{FORS}}, \sigma_{\mathsf{HT}}, \pk.\seed, \mathsf{idx}_{\mathsf{tree}}, \mathsf{idx}_{\mathsf{leaf}}, \pk.\mathsf{root})$.
+\end{itemize}
+
+\subsection{Signature Size}
+
+With diverse layer heights, the signature size is
+\[
+|\sigma| = \bigl(1 + k(a+1) + h + d \cdot \ell\bigr)\, n \;\text{bytes}.
+\]
+Note that $h = \sum h_i$, so the total HT authentication-path size remains $h \cdot n$ bytes (equivalently, $h\Nbits$ bits) regardless of the distribution across layers.
+
+% ======================================================================
+\section{Security Reduction for Kylin}
+\label{sec:kylin-proof}
+% ======================================================================
+
+\begin{theorem}[EUF-CMA security of Kylin]
+\label{thm:kylin}
+For parameters $n,w,h,d,(h_0,\ldots,h_{d-1}),m,t,k,\ell$ as described, Kylin is EUF-CMA secure if the underlying primitives satisfy the required properties. Concretely, for any adversary $\mathcal{A}$ making $q_s$ signing queries:
+\begin{align}
+\InSec{EU\text{-}CMA}&(\mathsf{Kylin}; \tau, q_s) \;\le\;
+\InSec{prf}(\PRF; \tau, q_1)
++ \InSec{prf}(\PRFmsg; \tau, q_s) \nonumber\\
+&+ \InSec{itsr}(\Hmsg; \tau, q_s) \nonumber\\
+&+ w \cdot \InSec{sm\text{-}ud}(\F \in \boldsymbol{\Th}; \tau, q_2) \nonumber\\
+&+ \InSec{sm\text{-}tcr}(\F \in \boldsymbol{\Th}; \tau, q_3 + q_7)
++ \InSec{sm\text{-}pre}(\F \in \boldsymbol{\Th}; \tau, q_2) \nonumber\\
+&+ \InSec{sm\text{-}tcr}(\Hfunc \in \boldsymbol{\Th}; \tau, q_4)
++ \InSec{sm\text{-}tcr}(\T_k \in \boldsymbol{\Th}; \tau, q_5) \nonumber\\
+&+ \InSec{sm\text{-}tcr}(\T_\ell \in \boldsymbol{\Th}; \tau, q_6)
++ 3 \cdot \InSec{sm\text{-}tcr}(\F \in \boldsymbol{\Th}; \tau, q_8) \nonumber\\
+&+ \InSec{sm\text{-}dspr}(\F \in \boldsymbol{\Th}; \tau, q_8),
+\label{eq:kylin-bound}
+\end{align}
+where
+\begin{align*}
+q_1 &< 2^{h+1}(kt + \ell), &
+q_2 &< 2^{h+1} \cdot \ell, &
+q_3 &< 2^{h+1} \cdot \ell w, &
+q_4 &< 2^{h+1}k \cdot 2t, \\
+q_5 &< 2^h, &
+q_6 &< 2^{h+1}, &
+q_7 &< 2^{h+1}kt, &
+q_8 &< 2^h \cdot kt.
+\end{align*}
+\end{theorem}
+
+\begin{proof}
+We adapt the game sequence of~\cite[Theorem~3]{HK22}, which is in turn based on~\cite[Theorem~17]{BHK+19}. The bound for GAME.0--GAME.3 is identical to the SPHINCS+ proof and is only sketched; the main novelty is in GAME.3.4 $\to$ GAME.4, where we invoke the CS-WOTS-TW multi-instance bound (Theorem~\ref{thm:wots-tw-d}).
+
+\subsection*{GAME.0: The EUF-CMA Experiment}
+This is the standard EUF-CMA game for Kylin. The adversary receives a real public key and access to a signing oracle.
+
+\subsection*{GAME.0 $\to$ GAME.1: Replace PRF}
+All outputs of $\PRF(\sk.\seed,\cdot)$ (used to generate CS-WOTS-TW and FORS secret key elements) are replaced by independent uniformly random values. By the same argument as in~\cite[Eq.~(4)]{HK22}:
+\[
+|\Succ_{\GAME.0}(\mathcal{A}) - \Succ_{\GAME.1}(\mathcal{A})| \le \InSec{prf}(\PRF; \tau, q_1),
+\]
+with $q_1 < 2^{h+1}(kt + \ell)$ (accounting for all FORS instances and all CS-WOTS-TW instances across the hypertree).
+
+\subsection*{GAME.1 $\to$ GAME.2: Replace PRFmsg}
+$\PRFmsg(\sk.\prf,\cdot)$ is replaced by a truly random function. As in~\cite[Eq.~(5)]{HK22}:
+\[
+|\Succ_{\GAME.1}(\mathcal{A}) - \Succ_{\GAME.2}(\mathcal{A})| \le \InSec{prf}(\PRFmsg; \tau, q_s).
+\]
+
+\subsection*{GAME.2 $\to$ GAME.3: ITSR}
+The game is declared lost if the adversary outputs a forgery where the FORS signature contains only secret values previously revealed for the same FORS instance. As in~\cite[Eq.~(6)]{HK22}:
+\[
+|\Succ_{\GAME.2}(\mathcal{A}) - \Succ_{\GAME.3}(\mathcal{A})| \le \InSec{itsr}(\Hmsg; \tau, q_s).
+\]
+
+\subsection*{GAME.3: Decomposition into Sub-Cases}
+In GAME.3, any successful forgery must contain a FORS signature with at least one fresh leaf value. We decompose the remaining adversarial advantage into sub-cases based on where in the verification structure a collision or forgery occurs. Following~\cite{HK22}, we define intermediate games:
+
+\paragraph{GAME.3.1 (SM-TCR for $\Hfunc$, binary tree collisions)}
+The game is lost if a second preimage for an input to $\Hfunc$ is contained in the forged signature, occurring in any binary tree (Merkle tree) within the hypertree or FORS trees. As in~\cite[Eq.~(7)]{HK22}:
+\[
+|\Succ_{\GAME.3} - \Succ_{\GAME.3.1}| \le \InSec{sm\text{-}tcr}(\Hfunc \in \boldsymbol{\Th}; \tau, q_4),
+\]
+with $q_4 < 2^{h+1}k \cdot 2t$.
+
+\paragraph{GAME.3.2 (SM-TCR for $\T_k$, FORS root compression)}
+The game is lost if a second preimage for $\T_k$ (compressing $k$ FORS roots) is found. As in~\cite[Eq.~(8)]{HK22}:
+\[
+|\Succ_{\GAME.3.1} - \Succ_{\GAME.3.2}| \le \InSec{sm\text{-}tcr}(\T_k \in \boldsymbol{\Th}; \tau, q_5),
+\]
+with $q_5 < 2^h$.
+
+\paragraph{GAME.3.3 (SM-TCR for $\T_\ell$, CS-WOTS+ public key compression)}
+The game is lost if a second preimage for $\T_\ell$ (compressing $\ell$ CS-WOTS+ chain heads) is found. As in~\cite[Eq.~(9)]{HK22}:
+\[
+|\Succ_{\GAME.3.2} - \Succ_{\GAME.3.3}| \le \InSec{sm\text{-}tcr}(\T_\ell \in \boldsymbol{\Th}; \tau, q_6),
+\]
+with $q_6 < 2^{h+1}$.
+
+\paragraph{GAME.3.4 (SM-TCR for $\F$, FORS leaf values)}
+The game is lost if a second preimage for $\F$ is found outside the CS-WOTS-TW instances, i.e., in FORS leaf computations. As in~\cite[Eq.~(10)]{HK22}:
+\[
+|\Succ_{\GAME.3.3} - \Succ_{\GAME.3.4}| \le \InSec{sm\text{-}tcr}(\F \in \boldsymbol{\Th}; \tau, q_7),
+\]
+with $q_7 < 2^{h+1}kt$.
+
+\paragraph{GAME.3.4 $\to$ GAME.4 (CS-WOTS-TW multi-instance forgery)}
+After excluding all the above collision cases, the only remaining way to forge is to produce a valid CS-WOTS-TW signature for one of the fewer than $2^{h+1}$ virtual instances in the hypertree. Applying Theorem~\ref{thm:wots-tw-d}:
+\begin{align*}
+|\Succ_{\GAME.3.4} - \Succ_{\GAME.4}| \le \;
+&\InSec{sm\text{-}tcr}(\F \in \boldsymbol{\Th}; \tau, q_3)
++ \InSec{sm\text{-}pre}(\F \in \boldsymbol{\Th}; \tau, q_2) \\
+&+ w \cdot \InSec{sm\text{-}ud}(\F \in \boldsymbol{\Th}; \tau, q_2),
+\end{align*}
+where $q_2 < 2^{h+1}\ell$ and $q_3 < 2^{h+1}\ell w$.
+
+\subsection*{GAME.4: Final Bound}
+GAME.4 is exactly the situation analyzed in~\cite[Claim~23]{BHK+19} and~\cite[Eq.~(12)]{HK22}: the adversary must forge a FORS signature where the leaf value differs from the expected one (the ``second leaf case''). This reduces to SM-TCR and SM-DSPR of $\F$:
+\[
+\Succ_{\GAME.4}(\mathcal{A}) \le 3 \cdot \InSec{sm\text{-}tcr}(\F \in \boldsymbol{\Th}; \tau, q_8) + \InSec{sm\text{-}dspr}(\F \in \boldsymbol{\Th}; \tau, q_8),
+\]
+with $q_8 < 2^h \cdot kt$.
+
+\medskip
+Assembling all game transitions via the triangle inequality yields Eq.~\eqref{eq:kylin-bound}, completing the proof.
+\end{proof}
+
+\begin{remark}
+The diverse layer heights $(h_0,\ldots,h_{d-1})$ do not affect the security bound. The reduction uses the total height $h$ to bound the number of virtual leaves, virtual CS-WOTS-TW instances, and authentication-path targets. The per-layer distribution affects concrete performance through the tree-generation costs $\sum_i 2^{h_i}$, but it does not change the adversarial advantage terms in Eq.~\eqref{eq:kylin-bound}.
+\end{remark}
+
+
+
+
+% ======================================================================
+\section{Concrete Security Against Generic Attacks}
+\label{sec:concrete}
+% ======================================================================
+
+Following~\cite[Section~8]{HK22} and~\cite[Section~5]{BHK+19}, the tight reduction above is instantiated with generic attack estimates for random-function-like primitives. This concrete section is not a replacement for Theorem~\ref{thm:kylin}; it is the parameter-selection proxy used to compare Kylin instances once the primitive advantages in Eq.~\eqref{eq:kylin-bound} are interpreted generically.
+
+Let $q_s$ be the allowed number of signatures under one key, and let $t=2^a$. The dominant Kylin/SPHINCS+-style generic forgery term is
+\[
+p_{\mathsf{gen}}
+=2^{-\Nbits}
++\sum_{\gamma=0}^{q_s}
+\left(1-\left(1-\frac{1}{t}\right)^\gamma\right)^k
+\binom{q_s}{\gamma}
+\left(1-\frac{1}{2^h}\right)^{q_s-\gamma}
+2^{-h\gamma}.
+\]
+Here $\gamma$ is the number of previous signatures that hit the same hypertree leaf. Conditioned on such a hit count, the factor
+\[
+\left(1-\left(1-\frac{1}{t}\right)^\gamma\right)^k
+\]
+is the probability that each of the $k$ FORS trees exposes a reusable index. The leading term $2^{-\Nbits}=2^{-8n}$ accounts for the generic search probability against an $n$-byte primitive output.
+
+The classical and quantum generic bit-security proxies are therefore
+\[
+\mathsf{bitsec}_{\mathsf{cl}}=-\log_2 p_{\mathsf{gen}},
+\qquad
+\mathsf{bitsec}_{\mathsf{q}}=-\frac{1}{2}\log_2 p_{\mathsf{gen}},
+\]
+where small constant factors inside the logarithm are neglected, as in the Kylin parameter-selection script.
+
+The frozen Kylin profiles in \texttt{paper/data/para\_kylin\_final\_6profiles.csv} give the following classical exponents under this formula:
+\[
+\begin{array}{lcccccccc}
+\hline
+\text{Instance} & q_s & n & h & d & a & k & \ell & -\log_2 p_{\mathsf{gen}} \\
+\hline
+\text{Kylin-128}     & 2^{64} & 16 & 65 & 9  & 13 & 11 & 22  & 127.209 \\
+\text{Kylin-256}     & 2^{64} & 32 & 68 & 10 & 13 & 22 & 46  & 255.944 \\
+\text{Kylin-512}     & 2^{64} & 64 & 66 & 11 & 13 & 49 & 79  & 511.243 \\
+\text{Kylin-128-q24} & 2^{24} & 16 & 22 & 1  & 24 & 6  & 67  & 127.281 \\
+\text{Kylin-256-q24} & 2^{24} & 32 & 21 & 1  & 25 & 12 & 131 & 255.359 \\
+\text{Kylin-512-q24} & 2^{24} & 64 & 57 & 3  & 20 & 24 & 87  & 511.415 \\
+\hline
+\end{array}
+\]
+
+
+% ======================================================================
+\section{Comparison with the Tight SPHINCS+ Proof}
+\label{sec:comparison}
+% ======================================================================
+
+We summarize the key differences between this proof and~\cite[Theorem~3]{HK22}:
+
+\begin{enumerate}
+    \item \textbf{CS-WOTS+ encoding.} The proof of Theorem~\ref{thm:wots-tw} (GAME.4, Claim~4: Lemma~\ref{lem:cs-wots-uf}) replaces the checksum argument with the antichain property (Lemma~\ref{lem:antichain}). Specifically, the sentence ``By the properties of the checksum, there has to be at least one $i$ with $b_i' < b_i$'' becomes ``By Lemma~\ref{lem:cs-wots-uf} (antichain property of CS-WOTS+), there exists $j$ with $b_j' < b_j$.'' The rest of the SM-PRE extraction argument remains unchanged.
+    
+    \item \textbf{Parameter $\ell$.} Instead of $l = \lceil n/\log w\rceil + \lfloor\log(\lceil n/\log w\rceil \cdot (w-1))/\log w\rfloor + 1$, we use the minimal $\ell$ satisfying $D_{\ell, \lfloor \ell(w-1)/2\rfloor} \ge 2^\Nbits$. This changes the concrete values of $q_1,\ldots,q_8$ but not the proof structure.
+    
+    \item \textbf{Encoding algorithm.} CS-WOTS-TW uses $\mathsf{cs\text{-}wots\text{-}encode}$ based on combinatorial numbering via $D_{n,m}$ (Eq.~\eqref{eq:recurrence}) instead of the base-$w$ expansion with checksum. The encoding is used identically in signing and verification, so all game simulations remain valid.
+    
+    \item \textbf{Diverse layer heights.} The hypertree uses per-layer heights $(h_0,\ldots,h_{d-1})$ instead of uniform $h/d$. Since the bounds $q_1$--$q_8$ depend only on the total height $h$, not its distribution, the proof remains unchanged. The only modification is in the algorithmic description of $\mathsf{ht\_sign}$ and $\mathsf{ht\_verify}$ where the loop over layers uses variable tree heights.
+    
+    \item \textbf{SM-UD, SM-TCR, SM-PRE bounds.} All UD/TCR/PRE game transitions (Claims~2--4 of Theorem~\ref{thm:wots-tw}, and GAME.3.1--3.4 of Theorem~\ref{thm:kylin}) are \emph{completely unchanged} from~\cite{HK22}. The SM-UD hybrid argument depends only on the chain structure ($b_{\max} \le w-1$) and not on how $b_i$ are derived from the message.
+\end{enumerate}
+
+\begin{thebibliography}{99}
+
+\bibitem{HK22}
+Andreas H\"ulsing and Mikhail Kudinov.
+\newblock Recovering the Tight Security Proof of {SPHINCS+}.
+\newblock In \emph{Advances in Cryptology -- ASIACRYPT 2022}, LNCS 13793, pages 3--33. Springer, 2022.
+\newblock Full version: \texttt{https://eprint.iacr.org/2022/1018}.
+
+\bibitem{BHK+19}
+Daniel~J.\ Bernstein, Andreas H\"ulsing, Stefan K\"olbl, Ruben Niederhagen, Joost Rijneveld, and Peter Schwabe.
+\newblock The {SPHINCS+} Signature Framework.
+\newblock In \emph{ACM CCS 2019}, pages 2129--2146. ACM, 2019.
+
+\bibitem{KKF20}
+Mikhail~A.\ Kudinov, Ekaterina~O.\ Kiktenko, and Aleksey~K.\ Fedorov.
+\newblock Security Analysis of the {W-OTS$^+$} Signature Scheme: Updating Security Bounds.
+\newblock \emph{Mat. Vopr. Kriptogr.}, 12(2):129--145, 2021.
+\newblock \texttt{https://eprint.iacr.org/2020/1073}.
+
+\bibitem{kylin}
+Kylin Team.
+\newblock {Kylin} First-Stage {NGCC} Digital-Signature Submission Package.
+\newblock May 29, 2026.
+
+\bibitem{dilworth}
+Robert~P.\ Dilworth.
+\newblock A Decomposition Theorem for Partially Ordered Sets.
+\newblock \emph{Annals of Mathematics}, 51(1):161--166, 1950.
+
+\bibitem{DSS05}
+Chris Dods, Nigel~P.\ Smart, and Martijn Stam.
+\newblock Hash Based Digital Signature Schemes.
+\newblock In \emph{IMA Cryptography and Coding 2005}, LNCS 3796, pages 96--115. Springer, 2005.
+
+\bibitem{HRS16}
+Andreas H\"ulsing, Joost Rijneveld, and Fang Song.
+\newblock Mitigating Multi-target Attacks in Hash-Based Signatures.
+\newblock In \emph{PKC 2016}, LNCS 9614, pages 387--416. Springer, 2016.
+
+\bibitem{BH19a}
+Daniel~J.\ Bernstein and Andreas H\"ulsing.
+\newblock Decisional Second-Preimage Resistance: When Does {SPR} Imply {PRE}?
+\newblock In \emph{ASIACRYPT 2019}, LNCS 11921, pages 33--62. Springer, 2019.
+
+\bibitem{XY19}
+Mark~D.\ Zhandry.
+\newblock How to Record Quantum Queries, and Applications to Quantum Indifferentiability.
+\newblock In \emph{CRYPTO 2019}, LNCS 11693, pages 239--268. Springer, 2019.
+
+\bibitem{Zha12}
+Mark Zhandry.
+\newblock How to Construct Quantum Random Functions.
+\newblock In \emph{FOCS 2012}, pages 679--687. IEEE, 2012.
+
+\bibitem{KLM06}
+Eyal Kaplan, Sophie Laplante, and Fr\'ed\'eric Magniez.
+\newblock On the Power of Quantum Memory.
+\newblock \emph{arXiv:quant-ph/0601121}, 2006.
+
+\end{thebibliography}
+
+\end{document}
