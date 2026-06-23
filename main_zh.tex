@@ -70,9 +70,15 @@
   \textbf{\textit{关键词---}} #1
 }
 
-\setCJKmainfont[AutoFakeSlant=.2]{Noto Serif CJK SC}
-\setCJKsansfont[AutoFakeSlant=.2]{Noto Sans CJK SC}
-\setCJKmonofont{Noto Sans Mono CJK SC}
+\IfFontExistsTF{Noto Serif CJK SC}
+  {\setCJKmainfont[AutoFakeSlant=.2]{Noto Serif CJK SC}}
+  {\setCJKmainfont[AutoFakeSlant=.2]{AR PL UMing CN}}
+\IfFontExistsTF{Noto Sans CJK SC}
+  {\setCJKsansfont[AutoFakeSlant=.2]{Noto Sans CJK SC}}
+  {\setCJKsansfont[AutoFakeSlant=.2]{Droid Sans Fallback}}
+\IfFontExistsTF{Noto Sans Mono CJK SC}
+  {\setCJKmonofont{Noto Sans Mono CJK SC}}
+  {\setCJKmonofont{Droid Sans Fallback}}
 
 \input{paper/tex/defs_zh}
 

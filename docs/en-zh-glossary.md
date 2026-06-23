@@ -37,6 +37,20 @@ This glossary fixes the preferred wording for the bilingual submission document 
 | additional implementation | 附加实现 | For the `q=2^24` reference-only track. |
 | security statement | 安全性声明 |  |
 | security analysis | 安全性分析 |  |
+| security model | 安全模型 |  |
+| proof outline | 证明主线 | Use for concise proof-structure prose. |
+| game proof | game 证明 | Keep `game` in English when referring to game-hopping proof steps. |
+| reduction theorem | 归约定理 |  |
+| single-instance | 单实例 |  |
+| multi-instance | 多实例 |  |
+| constant-sum antichain | 常和反链 |  |
+| target-collision resistance | 目标碰撞抗性 |  |
+| preimage resistance | 原像抗性 |  |
+| undetectability | 不可检测性 |  |
+| decisional second-preimage resistance | 判定型第二原像抗性 |  |
+| interleaved target subset resilience | 交错目标子集韧性 | Keep `ITSR` token unchanged. |
+| generic attack | 通用攻击 |  |
+| bit security | bit-security | Keep English technical phrase in formulas/tables. |
 | design rationale | 设计依据 |  |
 | performance evaluation | 性能评估 |  |
 | feature statements | 特性说明 |  |

@@ -115,6 +115,15 @@
 
 ## 5. 进度日志
 
+### 2026-06-23 - Integrate Security Proof Into Main Paper (Done)
+
+- 将 `new-files/kylin_security_proof.tex` 的核心证明内容并入英文主文档 `paper/tex/security_statements_and_analyses.tex`，把原先简短安全声明扩展为完整安全性章节。
+- 新增并整理安全模型与符号、\WOTSCS\ 常和反链引理、CS-WOTS-TW 单实例 game proof、多实例 theorem、Kylin EUF-CMA 归约 theorem、HT proof-oriented 描述、concrete generic attack section，以及与 H\"ulsing--Kudinov 紧致 \SPHINCSP\ 证明的关系说明。
+- 统一证明符号口径：`n` 保持为字节安全参数，`N=8n` 表示比特长度；多实例数量使用 `D`，避免与超树层数 `d` 冲突；用本地 `\THFColl` 表示可调哈希函数族，避免嵌套已有 `\Th` 宏导致 LaTeX 条件分支错误。
+- concrete section 继续以 `paper/data/para_kylin_final_6profiles.csv` 为冻结参数源，并明确列出 classical 与 quantum generic bit-security proxy；其中 `Kylin-128` 的 generic quantum proxy 为 `63.605`，作为后续安全口径人工决策点保留。
+- 同步中文镜像 `paper/tex-zh/security_statements_and_analyses.tex`，补充 `docs/en-zh-glossary.md` 与 `docs/en-zh-sync-guide.md` 中的安全证明维护术语和流程；为 `main_zh.tex` 增加 CJK 字体 fallback，使缺少 Noto CJK 的环境可继续构建中文 PDF。
+- 验证：`make -C paper/build all` 通过并生成 46 页 `main.pdf`；`make -C paper/build zh` 通过并生成 54 页 `main_zh.pdf`。日志无 undefined references/citations 或 LaTeX errors；剩余 overfull/underfull 为既有排版项或小幅中文换行项。
+
 ### 2026-06-23 - Recheck English Paper Consistency (Done)
 
 - 重新检查 `main.tex` 实际输入的英文论文源，重点覆盖 `paper/tex/kylin.tex`、`paper/tex/security_statements_and_analyses.tex`、`paper/tex/design_rationale.tex` 与 `paper/tex/kylin-appendix.tex`。

@@ -1,62 +1,488 @@
 \section{Security Statements and Analyses}
 \label{sec:security-claims}
 
-This section serves as the security-claim section of the submission draft. For the digital-signature functionality specified in \cref{sec:spx-core}, we claim EUF-CMA security under the assumptions and instantiations discussed below. The recommended NGCC-aligned families are recorded in \cref{tab:ngcc-parameters}, and the packaged ICCS hash/XOF interface is described in \cref{sec:hashfunctions}.
+\providecommand{\InSec}[1]{\mathbf{InSec}^{\mathsf{#1}}}
+\providecommand{\csenc}{\mathsf{cs\text{-}wots\text{-}encode}}
+\providecommand{\Chain}{\mathsf{chain}}
+\providecommand{\THFColl}{\mathcal{T}_{\mathsf{H}}}
 
-\paragraph{Theoretical security.}
-Kylin follows the security-analysis framework of \SPHINCSP. As a result, the EUF-CMA security of the signature scheme is intended to reduce to the security of the tweakable hash-function families used for \hashmsg, \PRF, \PRFmsg, \hashF, \hashH, and \Th. In the usual analysis model, these primitives are treated as idealized random oracles or quantum-access random oracles, and the resulting bounds are interpreted against generic classical and quantum attacks.
+This section gives the security claim and proof outline for the Kylin signature
+scheme specified in \cref{sec:spx-core}.  The reduction follows the tight
+\SPHINCSP proof framework of H\"ulsing and Kudinov~\cite{AC:HulKud22}, while
+replacing the WOTS+ checksum argument by the constant-sum antichain argument of
+\WOTSCS~\cite{optimalwots}.  The recommended NGCC-aligned parameter families
+are recorded in \cref{tab:ngcc-parameters}, and the packaged ICCS hash/XOF
+interface is described in \cref{sec:hashfunctions}.
 
-In particular, the EUF-CMA security of the signature scheme relies on the following security properties of the underlying components:
+\subsection{Security Model and Notation}
+\label{sec:proof-model}
+
+Throughout this section, $n$ denotes the Kylin security parameter in bytes and
+$N=8n$ denotes the corresponding bit length.  All basic hash-chain values,
+secret-key elements, public-key elements, and Merkle-tree nodes are $n$-byte
+strings, i.e., elements of $\{0,1\}^{N}$.  The Winternitz parameter is $w$, the
+\WOTSCS chain count is $\ell=\wotslen$, the FORS parameters are $k$ and
+$t=2^a$, and the hypertree has total height $h$ split into per-layer heights
+$(h_0,\ldots,h_{d-1})$ with $\sum_{i=0}^{d-1}h_i=h$.
+
+The tweakable hash-function collection is parameterized by the public seed
+$\pk.\seed$ and by 32-byte addresses \ADRS.  In this collection, $\hashF$ maps
+one $n$-byte input to one $n$-byte output, $\hashH$ maps two $n$-byte inputs to
+one $n$-byte output, and $\Th_r$ compresses $r$ $n$-byte inputs to one
+$n$-byte output.  Kylin also uses the key-generation PRF \PRF, the message
+randomization PRF \PRFmsg, and the message digest function \hashmsg.
+
+For a primitive or scheme $X$, $\InSec{sec}(X;\tau,q)$ denotes the maximum
+advantage of any adversary of running time at most $\tau$ making at most $q$
+relevant oracle or target queries in the indicated security experiment.  The
+analysis assumes the standard post-quantum model used in the \SPHINCSP proof:
+the adversary may perform quantum computation, while the keyed signing and
+hashing oracles in the reduction are accessed classically.
+
+Kylin relies on the following properties.
 \begin{itemize}
-    \item The PRF security of \PRF and \PRFmsg,
-    \item The interleaved target subset resilience (ITSR) of \hashmsg,
-    \item The single function, multi-target undetectability (SM-UD), target-collision (SM-TCR), and decisional second-preimage resistance (SM-DSPR) of \hashF,
-    \item The SM-TCR of \hashH and $\Th_\ell$.
+    \item \PRF and \PRFmsg are pseudorandom functions.
+    \item \hashmsg satisfies interleaved target subset resilience (ITSR).
+    \item $\hashF$, as a member of the tweakable-hash collection, satisfies
+    single-function multi-target undetectability (SM-UD), target-collision
+    resistance (SM-TCR), preimage resistance (SM-PRE), and decisional
+    second-preimage resistance (SM-DSPR) for distinct tweaks.
+    \item $\hashH$, $\Th_k$, and $\Th_\ell$ satisfy SM-TCR for distinct tweaks.
 \end{itemize}
 
-\paragraph{Concrete security and failure probability.}
+The distinct-tweak condition is enforced by the address scheme in
+\cref{sec:addr}.  The reductions below only place targets at addresses that
+are fixed by a virtual FORS, XMSS, or \WOTSCS instance; all other evaluations
+are simulated using the same tweakable-hash collection.
 
-The security analysis is identical to \SPHINCSP. The classical security level, or bit security of \SPHINCSA\ against generic attacks can be computed as
-$$
-b=-\log\left(
-    \frac{1}{2^{8n}}+
-    \sum_{\gamma}
-        \left(1-\left(1-\frac{1}{t}\right)^{\gamma}\right)^{k}
-        \binom{q}{\gamma}
-        \left(1-\frac{1}{2^{h}}\right)^{q-\gamma}
-        \frac{1}{2^{h\gamma}}
-    \right) \enspace.
-$$
-The quantum security level, or bit security of \SPHINCSA\ against generic attacks can be computed as
-$$
-b=-\frac{1}{2}\log\left(
-    \frac{1}{2^{8n}}+
-    \sum_{\gamma}
-        \left(1-\left(1-\frac{1}{t}\right)^{\gamma}\right)^{k}
-        \binom{q}{\gamma}
-        \left(1-\frac{1}{2^{h}}\right)^{q-\gamma}
-        \frac{1}{2^{h\gamma}}
-    \right) \enspace.
-$$
-Here, we are neglecting the small constant factors inside the logarithm. 
+\subsection{Security of CS-WOTS-TW}
+\label{sec:proof-cswots}
 
-For the recommended NGCC submission families in \cref{tab:ngcc-parameters}, we instantiate these formulas with $q=2^{64}$ in order to match the call's explicit requirement that one key pair support at least $2^{64}$ signed messages.
+The one-time signature layer used in the proof is CS-WOTS-TW: the WOTS-TW
+scheme of~\cite{AC:HulKud22} with the \WOTSCS constant-sum encoding in place
+of the WOTS+ message-plus-checksum encoding.  This subsection records the
+encoding property and the single-instance and multi-instance reductions.
 
-\paragraph{Other security properties.}
-No additional formal security claims are made in this draft. In particular, the current first-stage text does not claim dedicated side-channel resistance, perfect forward security, a quantified multi-key reduction, or a separate security theorem for temporary key reuse beyond the stated single-key $q=2^{64}$ analysis.
+\subsubsection{The Constant-Sum Antichain Property}
+\label{sec:proof-antichain}
 
-\paragraph{Security of the ICCS hash/XOF instantiation.}
+Let $[w]=\{0,\ldots,w-1\}$, and define the product partial order on
+$[w]^\ell$ by
+\[
+    \mathbf{x}\preceq\mathbf{y}
+    \quad\Longleftrightarrow\quad
+    x_i\le y_i\text{ for every }i\in\{1,\ldots,\ell\}.
+\]
+For an integer $s$, define the constant-sum level
+\[
+    \mathcal{C}_s
+    =\left\{\mathbf{x}\in [w]^\ell:\sum_{i=1}^{\ell}x_i=s\right\}.
+\]
 
-The packaged NGCC implementation uses ICCS auxiliary functions
-\texttt{sm3hash}, \texttt{pseudohash}, and \texttt{pseudoXOF}. At the scheme
-level, \hashmsg, \PRF, \PRFmsg, \hashF, \hashH, and \Th\ are realized through
-domain-separated wrappers over \texttt{pseudoXOF} with explicit tags and
-seed/address separation in the input layout.
+\begin{lemma}[Constant-sum antichain]
+\label{lem:proof-antichain}
+For every $s$, the set $\mathcal{C}_s$ is an antichain in
+$([w]^\ell,\preceq)$.
+\end{lemma}
 
-Accordingly, the security claim in this draft is that the concrete instantiated
-functions provide the pseudorandomness, target-collision resistance, and related
-properties required by the \SPHINCSA\ proof framework at the selected parameter
-sizes. This submission text does not introduce an additional independent
-tightness claim specific to the ICCS helper internals beyond that standard
-generic-analysis interpretation.
+\begin{proof}
+Suppose $\mathbf{x},\mathbf{y}\in\mathcal{C}_s$, $\mathbf{x}\preceq
+\mathbf{y}$, and $\mathbf{x}\ne\mathbf{y}$.  Then at least one coordinate is
+strictly smaller in $\mathbf{x}$ while no coordinate is larger, so
+$\sum_i x_i<\sum_i y_i$, contradicting
+$\sum_i x_i=\sum_i y_i=s$.
+\end{proof}
 
+Let $D_{r,m}$ be the number of $r$-tuples in $\{0,\ldots,w-1\}^r$ whose
+coordinates sum to $m$.  The dynamic program used by the encoder is
+\begin{equation}
+\label{eq:proof-drm}
+    D_{0,0}=1,\qquad
+    D_{0,m}=0\;(m\ne0),\qquad
+    D_{r,m}=\sum_{i=0}^{w-1}D_{r-1,m-i},
+\end{equation}
+with $D_{r,m}=0$ outside the interval $0\le m\le r(w-1)$.  The Kylin parameter
+$\ell$ is selected so that, for
+$s^\star=\lfloor\ell(w-1)/2\rfloor$,
+\begin{equation}
+\label{eq:proof-len-condition}
+    D_{\ell,s^\star}\ge 2^N.
+\end{equation}
+The encoder ranks the first $2^N$ elements of $\mathcal{C}_{s^\star}$ using
+the recurrence in \cref{eq:proof-drm}.
+
+\begin{lemma}[\WOTSCS forgery direction]
+\label{lem:proof-cswots-direction}
+Let $M\ne M'$ be two $N$-bit inputs to the \WOTSCS encoder, and let
+$\mathbf{b}=\csenc(M)$ and $\mathbf{b}'=\csenc(M')$.  Then there exist indices
+$j$ and $j'$ such that $b'_j<b_j$ and $b_{j'}<b'_{j'}$.
+\end{lemma}
+
+\begin{proof}
+Both encoded vectors lie in the same constant-sum level
+$\mathcal{C}_{s^\star}$.  By \cref{lem:proof-antichain}, they are
+incomparable.  If no coordinate satisfied $b'_j<b_j$, then
+$\mathbf{b}\preceq\mathbf{b}'$, a contradiction.  The symmetric argument gives
+an index $j'$ with $b_{j'}<b'_{j'}$.
+\end{proof}
+
+This lemma is the only place where the Kylin proof differs from the WOTS-TW
+part of the tight \SPHINCSP proof.  In WOTS+, the checksum guarantees that a
+changed message decreases at least one chain index.  In \WOTSCS, the same
+``decreasing chain'' needed for preimage extraction follows directly from the
+antichain property.
+
+\subsubsection{Single-Instance Game Proof}
+\label{sec:proof-cswots-single}
+
+\begin{theorem}[Single-instance CS-WOTS-TW security]
+\label{thm:proof-cswots-single}
+Let $N=8n$, let $w=\operatorname{poly}(N)$, and let CS-WOTS-TW use $\ell$
+chains with the encoder above.  If \PRF is a PRF and $\hashF$ satisfies SM-UD,
+SM-TCR, and SM-PRE for distinct tweaks, then
+\begin{align}
+\InSec{EU\text{-}naCMA}(\mathsf{CS\text{-}WOTS\text{-}TW};\tau,1)
+\le{}&
+    \InSec{prf}(\PRF;\tau,\ell)
+    +\InSec{sm\text{-}tcr}(\hashF;\tau,\ell w) \notag\\
+&   +\InSec{sm\text{-}pre}(\hashF;\tau,\ell)
+    +w\cdot\InSec{sm\text{-}ud}(\hashF;\tau,\ell),
+\label{eq:proof-cswots-single}
+\end{align}
+up to the usual additive simulation time for at most $\ell w$ evaluations of
+$\hashF$.
+\end{theorem}
+
+\begin{proof}
+Let $\mathcal{A}=(\mathcal{A}_1,\mathcal{A}_2)$ be a one-time EU-naCMA
+adversary.  In the real game $\mathsf{G}_1$, $\mathcal{A}_1$ chooses one
+message $M$, the challenger generates one CS-WOTS-TW key pair under a context
+$(\pk.\seed,\ADRS)$, returns a signature on $M$, and $\mathcal{A}_2$ wins by
+outputting a valid signature on $M'\ne M$.
+
+\paragraph{Game $\mathsf{G}_1\to\mathsf{G}_2$: PRF replacement.}
+In $\mathsf{G}_2$, the $\ell$ secret chain starts
+$\PRF(\sk.\seed,\ADRS_i)$ are replaced by independent uniform $N$-bit strings.
+The address scheme makes the $\ell$ PRF inputs distinct, hence
+\[
+    \left|\Pr[\mathsf{G}_1]-\Pr[\mathsf{G}_2]\right|
+    \le \InSec{prf}(\PRF;\tau,\ell).
+\]
+
+\paragraph{Game $\mathsf{G}_2\to\mathsf{G}_3$: SM-UD hybrid.}
+Let $\mathbf{b}=\csenc(M)$.  In $\mathsf{G}_3$, the signature elements are
+generated from random hidden values one step before the revealed chain
+positions: for $b_i>0$, choose $u_i\leftarrow\{0,1\}^N$ and set
+$\sigma_i=\hashF(\pk.\seed,T_{i,b_i-1},u_i)$; for $b_i=0$, set
+$\sigma_i=u_i$.  The public key is then completed from these signature
+positions exactly as in verification.  A standard hybrid over the at most
+$w-1$ chain positions distinguishes real chain values from random values using
+$\ell$ SM-UD targets per hybrid step, and therefore
+\[
+    \left|\Pr[\mathsf{G}_2]-\Pr[\mathsf{G}_3]\right|
+    \le w\cdot\InSec{sm\text{-}ud}(\hashF;\tau,\ell).
+\]
+
+\paragraph{Game $\mathsf{G}_3\to\mathsf{G}_4$: excluding chain collisions.}
+Game $\mathsf{G}_4$ aborts if the forgery $(M',\sigma')$ contains an index
+$i$ with $b'_i<b_i$ for which
+\[
+    \Chain_{b'_i,b_i-b'_i}(\sigma'_i,i,\pk.\seed,\ADRS)=\sigma_i.
+\]
+If this event occurs, the adversarial chain and the simulated honest chain
+converge below the signed position.  Taking the first point at which the two
+paths differ but have the same image gives a valid SM-TCR solution for one of
+at most $\ell w$ targeted chain calls.  Thus
+\[
+    \left|\Pr[\mathsf{G}_3]-\Pr[\mathsf{G}_4]\right|
+    \le \InSec{sm\text{-}tcr}(\hashF;\tau,\ell w).
+\]
+
+\paragraph{Bounding $\mathsf{G}_4$: SM-PRE extraction.}
+If $\mathcal{A}$ wins in $\mathsf{G}_4$, then
+\cref{lem:proof-cswots-direction} gives an index $j$ with $b'_j<b_j$.  The
+abort condition tells us that the forged chain has not already reached the
+signed value $\sigma_j$ at position $b_j$, while verification tells us that it
+does reach the same chain head.  Hence the value
+\[
+    \Chain_{b'_j,b_j-b'_j-1}(\sigma'_j,j,\pk.\seed,\ADRS)
+\]
+is a preimage of the SM-PRE target
+$\sigma_j=\hashF(\pk.\seed,T_{j,b_j-1},u_j)$.  The extracted value is not the
+hidden preimage $u_j$, otherwise the paths would have met before the position
+excluded in $\mathsf{G}_4$.  Placing one SM-PRE challenge at each signed chain
+position yields
+\[
+    \Pr[\mathsf{G}_4]\le
+    \InSec{sm\text{-}pre}(\hashF;\tau,\ell).
+\]
+Combining the game transitions proves the theorem.
+\end{proof}
+
+\subsubsection{Multi-Instance Security}
+\label{sec:proof-cswots-multi}
+
+In Kylin, many CS-WOTS-TW instances share the same public seed but are
+separated by addresses.  We write $D$ for the number of one-time instances in
+this multi-instance experiment, avoiding the symbol $d$ reserved for hypertree
+layers.
+
+\begin{theorem}[Multi-instance CS-WOTS-TW security]
+\label{thm:proof-cswots-multi}
+Under the assumptions of \cref{thm:proof-cswots-single}, for $D$ addressed
+CS-WOTS-TW instances sharing the same public seed,
+\begin{align}
+\InSec{D\text{-}EU\text{-}naCMA}(\mathsf{CS\text{-}WOTS\text{-}TW};\tau,D)
+\le{}&
+    \InSec{prf}(\PRF;\tau,D\ell)
+    +\InSec{sm\text{-}tcr}(\hashF\in\THFColl;\tau,D\ell w) \notag\\
+&   +\InSec{sm\text{-}pre}(\hashF\in\THFColl;\tau,D\ell)
+    +w\cdot\InSec{sm\text{-}ud}(\hashF\in\THFColl;\tau,D\ell).
+\label{eq:proof-cswots-multi}
+\end{align}
+\end{theorem}
+
+\begin{proof}
+Run the four games of \cref{thm:proof-cswots-single} simultaneously over all
+$D$ addressed instances.  The PRF replacement uses $D\ell$ distinct inputs.
+The SM-UD hybrid still has at most $w-1$ chain-position hybrids, but each
+hybrid now contains $D\ell$ targets.  The SM-TCR placement covers at most
+$D\ell w$ chain calls.  Finally, if the adversary forges in instance $r$,
+\cref{lem:proof-cswots-direction} gives a decreasing chain coordinate in that
+same instance, and the SM-PRE extraction uses one of the $D\ell$ placed
+targets.  All non-challenge evaluations are simulated through the
+tweakable-hash collection, and address separation ensures disjoint tweaks.
+\end{proof}
+
+\subsection{Hypertree Security of Kylin}
+\label{sec:proof-kylin-ht}
+
+\subsubsection{Proof-Oriented Hypertree Description}
+\label{sec:proof-ht-description}
+
+The full Kylin signature scheme is specified in \cref{sec:spx-core}.  For the
+security proof, the relevant structure is the following.  The signer first
+computes
+\[
+    R\gets\PRFmsg(\sk.\prf,\mathsf{opt},M),
+    \qquad
+    (\md,\mathsf{idx}_{\mathsf{tree}},\mathsf{idx}_{\mathsf{leaf}})
+    \gets\hashmsg(R,\pk.\seed,\pk.\root,M).
+\]
+The digest \md is signed by FORS.  The recovered FORS public key is then signed
+by the bottom XMSS tree of the hypertree; each higher XMSS layer signs the root
+of the layer below.
+
+Layer $i$ has height $h_i$.  It therefore contributes one \WOTSCS signature and
+one authentication path of $h_i$ $n$-byte nodes to each hypertree signature.
+The number of XMSS trees at layer $i$ is
+\[
+    2^{\,h-\sum_{j=0}^{i}h_j},
+\]
+so the top layer contains one tree.  The total number of hypertree leaves is
+$2^h$, and the total authentication-path size across all layers is
+$hn$ bytes, independent of the distribution of the $h_i$.
+
+\subsubsection{Reduction Theorem}
+\label{sec:proof-kylin-reduction}
+
+\begin{theorem}[EUF-CMA security of Kylin]
+\label{thm:proof-kylin}
+Let Kylin use parameters $n,w,h,d,(h_0,\ldots,h_{d-1}),a,k,\ell$ as specified
+above, and let $t=2^a$.  For any adversary making at most $q_s$ signing
+queries,
+\begin{align}
+\InSec{EU\text{-}CMA}(\mathsf{Kylin};\tau,q_s)
+\le{}&
+    \InSec{prf}(\PRF;\tau,q_1)
+    +\InSec{prf}(\PRFmsg;\tau,q_s)
+    +\InSec{itsr}(\hashmsg;\tau,q_s) \notag\\
+&   +w\cdot\InSec{sm\text{-}ud}(\hashF\in\THFColl;\tau,q_2)
+    +\InSec{sm\text{-}pre}(\hashF\in\THFColl;\tau,q_2) \notag\\
+&   +\InSec{sm\text{-}tcr}(\hashF\in\THFColl;\tau,q_3+q_7)
+    +\InSec{sm\text{-}tcr}(\hashH\in\THFColl;\tau,q_4) \notag\\
+&   +\InSec{sm\text{-}tcr}(\Th_k\in\THFColl;\tau,q_5)
+    +\InSec{sm\text{-}tcr}(\Th_\ell\in\THFColl;\tau,q_6) \notag\\
+&   +3\cdot\InSec{sm\text{-}tcr}(\hashF\in\THFColl;\tau,q_8)
+    +\InSec{sm\text{-}dspr}(\hashF\in\THFColl;\tau,q_8),
+\label{eq:proof-kylin-bound}
+\end{align}
+where the target counts can be bounded by
+\begin{align*}
+q_1 &< 2^{h+1}(kt+\ell),&
+q_2 &< 2^{h+1}\ell,&
+q_3 &< 2^{h+1}\ell w,&
+q_4 &< 2^{h+1}k\cdot 2t,\\
+q_5 &< 2^h,&
+q_6 &< 2^{h+1},&
+q_7 &< 2^{h+1}kt,&
+q_8 &< 2^hkt.
+\end{align*}
+\end{theorem}
+
+\begin{proof}
+The proof adapts the tight \SPHINCSP game sequence of~\cite{AC:HulKud22} to
+the \WOTSCS layer.  The FORS, hypertree, PRF, message-randomization, and
+tweakable-hash parts are unchanged except for the target counts induced by
+$\ell$ and by the non-uniform height vector $(h_0,\ldots,h_{d-1})$.
+
+\paragraph{Game $\mathsf{G}_0$: real EUF-CMA experiment.}
+The adversary receives a real Kylin public key and may ask for up to $q_s$
+signatures.  It wins by outputting a valid signature on a message that was not
+queried.
+
+\paragraph{Game $\mathsf{G}_0\to\mathsf{G}_1$: replace \PRF.}
+All secret values derived from $\PRF(\sk.\seed,\cdot)$ in FORS and in the
+\WOTSCS instances are replaced by independent uniform values.  The number of
+possible targeted secret values in the virtual structure is bounded by
+$q_1<2^{h+1}(kt+\ell)$, giving the first PRF term in
+\cref{eq:proof-kylin-bound}.
+
+\paragraph{Game $\mathsf{G}_1\to\mathsf{G}_2$: replace \PRFmsg.}
+The message randomizer \PRFmsg is replaced by a random function on the at most
+$q_s$ signing queries.  This gives the
+$\InSec{prf}(\PRFmsg;\tau,q_s)$ term.
+
+\paragraph{Game $\mathsf{G}_2\to\mathsf{G}_3$: ITSR of \hashmsg.}
+The game aborts if the forgery avoids introducing a fresh FORS leaf while still
+corresponding to an unqueried message.  This is exactly the event controlled by
+interleaved target subset resilience of \hashmsg, giving
+$\InSec{itsr}(\hashmsg;\tau,q_s)$.
+
+\paragraph{Games $\mathsf{G}_{3.1}$--$\mathsf{G}_{3.4}$: excluding hash
+collisions outside WOTS.}
+The remaining successful forgery is decomposed by the first place where the
+verification computation diverges from the honestly generated virtual
+structure.
+\begin{itemize}
+    \item A second preimage in a FORS or XMSS binary tree reduces to SM-TCR of
+    $\hashH$ with at most $q_4<2^{h+1}k\cdot 2t$ targets.
+    \item A second preimage in the compression of the $k$ FORS roots reduces
+    to SM-TCR of $\Th_k$ with at most $q_5<2^h$ targets.
+    \item A second preimage in the compression of a \WOTSCS public key reduces
+    to SM-TCR of $\Th_\ell$ with at most $q_6<2^{h+1}$ targets.
+    \item A second preimage in a FORS leaf computation outside the WOTS
+    instances reduces to SM-TCR of $\hashF$ with at most
+    $q_7<2^{h+1}kt$ targets.
+\end{itemize}
+
+\paragraph{Game $\mathsf{G}_{3.4}\to\mathsf{G}_4$: WOTS forgery.}
+Once the above collision events are excluded, any remaining forgery in the
+hypertree must contain a valid new CS-WOTS-TW signature for one of fewer than
+$2^{h+1}$ addressed one-time instances.  Applying
+\cref{thm:proof-cswots-multi} with $D<2^{h+1}$ gives the SM-UD, SM-PRE, and
+SM-TCR terms with target counts $q_2$ and $q_3$.
+
+\paragraph{Final game: second FORS leaf case.}
+The only remaining case is the standard \SPHINCSP ``second leaf'' case for
+FORS: the forgery contains a fresh FORS leaf value that verifies under the same
+path but is not the expected leaf.  As in the tight \SPHINCSP proof, this
+reduces to three SM-TCR placements and one SM-DSPR term for $\hashF$, with
+$q_8<2^hkt$ targets.  Summing all transition losses proves
+\cref{eq:proof-kylin-bound}.
+\end{proof}
+
+\begin{remark}
+The height vector $(h_0,\ldots,h_{d-1})$ affects running time and memory through
+the cost of generating individual XMSS trees, but not the reduction structure.
+The security target counts above depend on the total number of virtual leaves,
+WOTS instances, FORS leaves, and authentication-path nodes, all bounded using
+the total height $h$.
+\end{remark}
+
+\subsection{Concrete Security Against Generic Attacks}
+\label{sec:proof-concrete}
+
+\Cref{thm:proof-kylin} is a reduction theorem.  For parameter selection, Kylin
+uses the usual \SPHINCSP generic-attack proxy for random-function-like
+instantiations.  Let $q_s$ be the allowed number of signatures under one key
+and $t=2^a$.  The dominant generic forgery probability is
+\begin{equation}
+\label{eq:proof-generic-prob}
+p_{\mathsf{gen}}
+=2^{-N}
++\sum_{\gamma=0}^{q_s}
+\left(1-\left(1-\frac{1}{t}\right)^\gamma\right)^k
+\binom{q_s}{\gamma}
+\left(1-\frac{1}{2^h}\right)^{q_s-\gamma}
+2^{-h\gamma}.
+\end{equation}
+Here $\gamma$ is the number of previous signatures that hit the same hypertree
+leaf as the forgery attempt.  Conditioned on this hit count, the first factor
+inside the sum is the probability that every one of the $k$ FORS trees exposes
+a reusable index.  The leading term $2^{-N}=2^{-8n}$ captures generic search
+against an $n$-byte primitive output.
+
+The corresponding classical and quantum generic bit-security proxies are
+\begin{equation}
+\label{eq:proof-bitsec}
+    \mathsf{bitsec}_{\mathsf{cl}}=-\log_2 p_{\mathsf{gen}},
+    \qquad
+    \mathsf{bitsec}_{\mathsf{q}}=-\frac{1}{2}\log_2 p_{\mathsf{gen}},
+\end{equation}
+where small constant factors inside the logarithm are neglected.  The profile
+names are submission names; the table below reports the exponents obtained by
+\cref{eq:proof-generic-prob,eq:proof-bitsec} for the frozen parameter file
+\texttt{paper/data/para\_kylin\_final\_6profiles.csv}.
+
+\begin{center}
+\begin{tabular}{lcccccccccc}
+\toprule
+Instance & $q_s$ & $n$ & $h$ & $d$ & $a$ & $k$ & $w$ & $\ell$ &
+$\mathsf{bitsec}_{\mathsf{cl}}$ & $\mathsf{bitsec}_{\mathsf{q}}$ \\
+\midrule
+Kylin-128     & $2^{64}$ & 16 & 65 & 9  & 13 & 11 & 73 & 22  & 127.209 & 63.605 \\
+Kylin-256     & $2^{64}$ & 32 & 68 & 10 & 13 & 22 & 54 & 46  & 255.944 & 127.972 \\
+Kylin-512     & $2^{64}$ & 64 & 66 & 11 & 13 & 49 & 97 & 79  & 511.243 & 255.622 \\
+Kylin-128-q24 & $2^{24}$ & 16 & 22 & 1  & 24 & 6  & 4  & 67  & 127.281 & 63.641 \\
+Kylin-256-q24 & $2^{24}$ & 32 & 21 & 1  & 25 & 12 & 4  & 131 & 255.359 & 127.680 \\
+Kylin-512-q24 & $2^{24}$ & 64 & 57 & 3  & 20 & 24 & 64 & 87  & 511.415 & 255.708 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Relation to the Tight \SPHINCSP Proof}
+\label{sec:proof-sphincs-comparison}
+
+The proof above inherits the tight \SPHINCSP structure of~\cite{AC:HulKud22}
+and changes only the WOTS-specific encoding argument.
+\begin{enumerate}
+    \item The \SPHINCSP WOTS+ checksum is replaced by
+    \cref{lem:proof-cswots-direction}.  This gives the decreasing chain
+    coordinate required for SM-PRE extraction.
+    \item The value of $\ell$ is no longer the base-$w$ message length plus a
+    checksum length.  Instead, it is the smallest integer satisfying
+    \cref{eq:proof-len-condition}.  This changes the concrete target counts
+    $q_1,q_2,q_3,q_6$ but not the game sequence.
+    \item The SM-UD, SM-TCR, and SM-PRE hybrids for WOTS chains are otherwise
+    the same as in WOTS-TW: they depend on chain positions and address
+    separation, not on how the message-to-chain-index vector was encoded.
+    \item The diverse hypertree heights change the algorithmic loops in
+    \texttt{ht\_sign} and \texttt{ht\_verify}, but the reduction uses the total
+    height $h$ to bound the number of virtual leaves and targets.
+\end{enumerate}
+
+\subsection{Other Security Properties}
+\label{sec:proof-other-properties}
+
+No additional formal security claims are made in this draft.  In particular,
+the current text does not claim dedicated side-channel resistance, perfect
+forward security, a quantified multi-key reduction beyond the single-key
+target counts above, or a separate theorem for temporary key reuse.
+
+\subsection{Security of the ICCS Hash/XOF Instantiation}
+\label{sec:proof-iccs-instantiation}
+
+The packaged NGCC implementation uses the ICCS auxiliary functions
+\texttt{sm3hash} and \texttt{pseudohash}, with XOF functionality provided by
+\texttt{pseudoXOF}.  At the scheme level, \hashmsg, \PRF, \PRFmsg, \hashF,
+\hashH, and \Th are realized through domain-separated wrappers over
+\texttt{pseudoXOF} with explicit tags and seed/address separation in the input
+layout.
+
+Accordingly, the security claim in this submission is that these instantiated
+functions provide the pseudorandomness, target-collision resistance, preimage
+resistance, and related tweakable-hash properties required by
+\cref{thm:proof-kylin} at the selected parameter sizes.  This document does not
+make an additional independent tightness claim about the internals of the ICCS
+helper functions beyond that standard generic-analysis interpretation.

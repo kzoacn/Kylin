@@ -46,6 +46,12 @@ This guide defines the maintenance workflow for the bilingual submission documen
 6. Rebuild both PDFs after medium-sized document changes.
 7. Record the result in `plan.md`.
 
+## Security-Proof Sections
+
+- When `paper/tex/security_statements_and_analyses.tex` changes, mirror the theorem, lemma, equation, and game-proof structure in `paper/tex-zh/security_statements_and_analyses.tex`.
+- Translate theorem-like titles and prose, but keep labels, citation keys, formulas, query-count symbols, primitive names, and instance names unchanged.
+- Keep `game proof`, `SM-UD`, `SM-TCR`, `SM-PRE`, `SM-DSPR`, `ITSR`, and `bit-security` tokens stable unless the glossary is deliberately updated.
+
 ## Review Checklist
 
 - Section and subsection ordering still matches the English document.

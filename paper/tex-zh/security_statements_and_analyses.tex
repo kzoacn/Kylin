@@ -2,55 +2,331 @@
 \section{安全性声明与分析}
 \label{sec:security-claims}
 
-本节作为提交草稿中的安全性声明部分。对于 \cref{sec:spx-core} 中规定的数字签名功能，我们在下述假设与实例化条件下声明其满足 EUF-CMA 安全性。推荐的 NGCC 对齐 Kylin 参数族列于 \cref{tab:ngcc-parameters}，打包代码中使用的 ICCS 哈希/XOF 接口说明见 \cref{sec:hashfunctions}。
+\providecommand{\InSec}[1]{\mathbf{InSec}^{\mathsf{#1}}}
+\providecommand{\csenc}{\mathsf{cs\text{-}wots\text{-}encode}}
+\providecommand{\Chain}{\mathsf{chain}}
+\providecommand{\THFColl}{\mathcal{T}_{\mathsf{H}}}
 
-\paragraph{理论安全性。}
-Kylin 延续了 \SPHINCSP\ 的安全分析框架。因此，该签名方案的 EUF-CMA 安全性应可归约到底层可调哈希函数族的安全性，这些函数族分别用于 \hashmsg、\PRF、\PRFmsg、\hashF、\hashH 和 \Th。在通常的分析模型中，这些原语被视为理想随机预言机或允许量子访问的随机预言机，相应得到的安全界被解释为针对通用经典攻击与通用量子攻击的安全界。
+本节给出 \cref{sec:spx-core} 中所规定 Kylin 签名方案的安全性声明与证明主线。该归约沿用
+H\"ulsing 与 Kudinov 的紧致 \SPHINCSP\ 证明框架~\cite{AC:HulKud22}，同时将 WOTS+
+中的校验和论证替换为 \WOTSCS~\cite{optimalwots} 的常和反链论证。推荐的 NGCC 对齐参数族列于
+\cref{tab:ngcc-parameters}，打包代码中使用的 ICCS 哈希/XOF 接口说明见 \cref{sec:hashfunctions}。
 
-具体来说，签名方案的 EUF-CMA 安全性依赖于以下底层组件的安全性质：
+\subsection{安全模型与符号}
+\label{sec:proof-model}
+
+本节中，$n$ 表示以字节计的 Kylin 安全参数，$N=8n$ 表示对应的比特长度。所有基本哈希链值、私钥元素、公钥元素以及 Merkle 树节点都是 $n$ 字节串，即 $\{0,1\}^{N}$ 中的元素。Winternitz 参数记为 $w$，\WOTSCS 链条数记为 $\ell=\wotslen$，FORS 参数为 $k$ 与 $t=2^a$，超树总高度为 $h$，并被划分为分层高度 $(h_0,\ldots,h_{d-1})$，满足 $\sum_{i=0}^{d-1}h_i=h$。
+
+可调哈希函数族由公有种子 $\pk.\seed$ 和 32 字节地址 \ADRS 参数化。在该函数族中，$\hashF$ 将一个 $n$ 字节输入映射为一个 $n$ 字节输出，$\hashH$ 将两个 $n$ 字节输入映射为一个 $n$ 字节输出，$\Th_r$ 将 $r$ 个 $n$ 字节输入压缩为一个 $n$ 字节输出。Kylin 还使用密钥生成伪随机函数 \PRF、消息随机化伪随机函数 \PRFmsg，以及消息摘要函数 \hashmsg。
+
+对于原语或方案 $X$，$\InSec{sec}(X;\tau,q)$ 表示运行时间至多为 $\tau$、相关预言机或目标询问至多为 $q$ 的任意敌手在相应安全实验中的最大优势。分析采用 \SPHINCSP 证明中使用的标准后量子模型：敌手可以执行量子计算，而归约中的带密钥签名与哈希预言机只允许经典访问。
+
+Kylin 依赖以下安全性质。
 \begin{itemize}
-    \item \PRF 与 \PRFmsg\ 的伪随机函数安全性；
-    \item \hashmsg\ 的交错目标子集韧性（ITSR）；
-    \item \hashF\ 的单函数多目标不可检测性（SM-UD）、目标碰撞抗性（SM-TCR）以及判定型第二原像抗性（SM-DSPR）；
-    \item \hashH\ 与 $\Th_\ell$ 的 SM-TCR。
+    \item \PRF 与 \PRFmsg 是伪随机函数。
+    \item \hashmsg 满足交错目标子集韧性（ITSR）。
+    \item 作为可调哈希函数族成员的 $\hashF$ 满足针对不同 tweak 的单函数多目标不可检测性（SM-UD）、目标碰撞抗性（SM-TCR）、原像抗性（SM-PRE）以及判定型第二原像抗性（SM-DSPR）。
+    \item $\hashH$、$\Th_k$ 与 $\Th_\ell$ 满足针对不同 tweak 的 SM-TCR。
 \end{itemize}
 
-\paragraph{具体安全性与失败概率。}
+不同 tweak 条件由 \cref{sec:addr} 中的地址方案保证。下述归约只在由虚拟 FORS、XMSS 或 \WOTSCS 实例固定的地址处放置目标；所有其他求值均通过同一个可调哈希函数族来模拟。
 
-这里的安全分析与 \SPHINCSP\ 完全一致。\SPHINCSA\ 在面对通用攻击时的经典安全级别（即 bit security）可由下式计算：
-$$
-b=-\log\left(
-    \frac{1}{2^{8n}}+
-    \sum_{\gamma}
-        \left(1-\left(1-\frac{1}{t}\right)^{\gamma}\right)^{k}
-        \binom{q}{\gamma}
-        \left(1-\frac{1}{2^{h}}\right)^{q-\gamma}
-        \frac{1}{2^{h\gamma}}
-    \right) \enspace.
-$$
-\SPHINCSA\ 在面对通用攻击时的量子安全级别可由下式计算：
-$$
-b=-\frac{1}{2}\log\left(
-    \frac{1}{2^{8n}}+
-    \sum_{\gamma}
-        \left(1-\left(1-\frac{1}{t}\right)^{\gamma}\right)^{k}
-        \binom{q}{\gamma}
-        \left(1-\frac{1}{2^{h}}\right)^{q-\gamma}
-        \frac{1}{2^{h\gamma}}
-    \right) \enspace.
-$$
-这里忽略了对数内部的小常数因子。
+\subsection{CS-WOTS-TW 的安全性}
+\label{sec:proof-cswots}
 
-对于 \cref{tab:ngcc-parameters} 中推荐的 NGCC 提交参数族，我们在这些公式中统一取 $q=2^{64}$，以匹配征集要求中“单个密钥对至少支持 $2^{64}$ 次签名”的明确约束。
+证明中使用的一次性签名层是 CS-WOTS-TW：它是~\cite{AC:HulKud22} 中 WOTS-TW 方案在把 WOTS+ 的消息加校验和编码替换为 \WOTSCS 常和编码后得到的版本。本小节记录编码性质，以及单实例和多实例归约。
 
-\paragraph{其他安全属性。}
-本草稿目前不额外声明其他形式化安全性质。尤其是，当前第一阶段文本不声明专门的侧信道抗性、完美前向安全性、量化的多密钥归约，或超出已声明单密钥 $q=2^{64}$ 分析范围之外的临时密钥重复使用安全定理。
+\subsubsection{常和反链性质}
+\label{sec:proof-antichain}
 
-\paragraph{ICCS 哈希/XOF 实例化的安全性。}
+令 $[w]=\{0,\ldots,w-1\}$，并在 $[w]^\ell$ 上定义乘积偏序
+\[
+    \mathbf{x}\preceq\mathbf{y}
+    \quad\Longleftrightarrow\quad
+    x_i\le y_i\text{ for every }i\in\{1,\ldots,\ell\}.
+\]
+对于整数 $s$，定义常和层
+\[
+    \mathcal{C}_s
+    =\left\{\mathbf{x}\in [w]^\ell:\sum_{i=1}^{\ell}x_i=s\right\}.
+\]
 
-已打包的 NGCC 实现使用 ICCS 辅助函数
-\texttt{sm3hash}、\texttt{pseudohash} 和 \texttt{pseudoXOF}。在方案层面，
-\hashmsg、\PRF、\PRFmsg、\hashF、\hashH 和 \Th\
-都通过基于 \texttt{pseudoXOF} 的域分离包装函数来实现，并在输入布局中显式区分标签以及 seed/address。
+\begin{lemma}[常和反链]
+\label{lem:proof-antichain}
+对任意 $s$，集合 $\mathcal{C}_s$ 都是 $([w]^\ell,\preceq)$ 中的反链。
+\end{lemma}
 
-因此，本草稿中的安全性声明是：在选定的参数规模下，这些具体实例化函数能够提供 \SPHINCSA\ 证明框架所需的伪随机性、目标碰撞抗性及相关性质。除这一标准的通用分析解释之外，本文本并未针对 ICCS 辅助函数内部实现单独提出额外的紧致性声明。
+\begin{proof}
+假设 $\mathbf{x},\mathbf{y}\in\mathcal{C}_s$、$\mathbf{x}\preceq
+\mathbf{y}$ 且 $\mathbf{x}\ne\mathbf{y}$。则 $\mathbf{x}$ 至少有一个坐标严格小于 $\mathbf{y}$，且没有任何坐标大于 $\mathbf{y}$，因此 $\sum_i x_i<\sum_i y_i$，这与 $\sum_i x_i=\sum_i y_i=s$ 矛盾。
+\end{proof}
+
+令 $D_{r,m}$ 表示 $\{0,\ldots,w-1\}^r$ 中坐标和为 $m$ 的 $r$ 元组个数。编码算法使用的动态规划为
+\begin{equation}
+\label{eq:proof-drm}
+    D_{0,0}=1,\qquad
+    D_{0,m}=0\;(m\ne0),\qquad
+    D_{r,m}=\sum_{i=0}^{w-1}D_{r-1,m-i},
+\end{equation}
+并约定当 $m$ 不在 $0\le m\le r(w-1)$ 范围内时 $D_{r,m}=0$。Kylin 的参数 $\ell$ 选取为满足如下条件的值：对
+$s^\star=\lfloor\ell(w-1)/2\rfloor$，
+\begin{equation}
+\label{eq:proof-len-condition}
+    D_{\ell,s^\star}\ge 2^N.
+\end{equation}
+编码器使用 \cref{eq:proof-drm} 中的递推式，对 $\mathcal{C}_{s^\star}$ 中的前 $2^N$ 个元素进行排序编号。
+
+\begin{lemma}[\WOTSCS 伪造方向]
+\label{lem:proof-cswots-direction}
+令 $M\ne M'$ 为输入 \WOTSCS 编码器的两个 $N$ 比特串，且令 $\mathbf{b}=\csenc(M)$、$\mathbf{b}'=\csenc(M')$。则存在指标 $j$ 和 $j'$，使得 $b'_j<b_j$ 且 $b_{j'}<b'_{j'}$。
+\end{lemma}
+
+\begin{proof}
+两个编码向量都位于同一个常和层 $\mathcal{C}_{s^\star}$ 中。由 \cref{lem:proof-antichain} 可知它们不可比较。若不存在坐标满足 $b'_j<b_j$，则有 $\mathbf{b}\preceq\mathbf{b}'$，矛盾。对称地，也存在指标 $j'$ 使得 $b_{j'}<b'_{j'}$。
+\end{proof}
+
+该引理是 Kylin 证明与紧致 \SPHINCSP 证明中 WOTS-TW 部分唯一实质不同之处。在 WOTS+ 中，校验和保证消息改变时至少有一个链指标下降。在 \WOTSCS 中，原像抽取所需的同一个“下降链”性质直接来自反链性质。
+
+\subsubsection{单实例 game 证明}
+\label{sec:proof-cswots-single}
+
+\begin{theorem}[CS-WOTS-TW 单实例安全性]
+\label{thm:proof-cswots-single}
+令 $N=8n$，令 $w=\operatorname{poly}(N)$，并令 CS-WOTS-TW 使用上述编码器给出的 $\ell$ 条链。若 \PRF 是伪随机函数，且 $\hashF$ 对不同 tweak 满足 SM-UD、SM-TCR 和 SM-PRE，则
+\begin{align}
+\InSec{EU\text{-}naCMA}(\mathsf{CS\text{-}WOTS\text{-}TW};\tau,1)
+\le{}&
+    \InSec{prf}(\PRF;\tau,\ell)
+    +\InSec{sm\text{-}tcr}(\hashF;\tau,\ell w) \notag\\
+&   +\InSec{sm\text{-}pre}(\hashF;\tau,\ell)
+    +w\cdot\InSec{sm\text{-}ud}(\hashF;\tau,\ell),
+\label{eq:proof-cswots-single}
+\end{align}
+其中只忽略至多 $\ell w$ 次 $\hashF$ 求值带来的通常模拟时间加项。
+\end{theorem}
+
+\begin{proof}
+令 $\mathcal{A}=(\mathcal{A}_1,\mathcal{A}_2)$ 为一个一次性 EU-naCMA 敌手。在真实游戏 $\mathsf{G}_1$ 中，$\mathcal{A}_1$ 选择一个消息 $M$，挑战者在上下文 $(\pk.\seed,\ADRS)$ 下生成一个 CS-WOTS-TW 密钥对，返回 $M$ 上的签名，而 $\mathcal{A}_2$ 若能输出 $M'\ne M$ 上的有效签名则获胜。
+
+\paragraph{游戏 $\mathsf{G}_1\to\mathsf{G}_2$：替换 PRF。}
+在 $\mathsf{G}_2$ 中，$\ell$ 个秘密链起点 $\PRF(\sk.\seed,\ADRS_i)$ 被替换为相互独立的均匀 $N$ 比特串。地址方案使得这 $\ell$ 个 PRF 输入互不相同，因此
+\[
+    \left|\Pr[\mathsf{G}_1]-\Pr[\mathsf{G}_2]\right|
+    \le \InSec{prf}(\PRF;\tau,\ell).
+\]
+
+\paragraph{游戏 $\mathsf{G}_2\to\mathsf{G}_3$：SM-UD 混合。}
+令 $\mathbf{b}=\csenc(M)$。在 $\mathsf{G}_3$ 中，签名元素由已公开链位置前一格的随机隐藏值生成：当 $b_i>0$ 时，选取 $u_i\leftarrow\{0,1\}^N$ 并令
+$\sigma_i=\hashF(\pk.\seed,T_{i,b_i-1},u_i)$；当 $b_i=0$ 时，令
+$\sigma_i=u_i$。随后公钥完全按照验证算法从这些签名位置继续计算得到。对至多 $w-1$ 个链位置做标准混合论证，每一步使用 $\ell$ 个 SM-UD 目标来区分真实链值与随机值，因此
+\[
+    \left|\Pr[\mathsf{G}_2]-\Pr[\mathsf{G}_3]\right|
+    \le w\cdot\InSec{sm\text{-}ud}(\hashF;\tau,\ell).
+\]
+
+\paragraph{游戏 $\mathsf{G}_3\to\mathsf{G}_4$：排除链碰撞。}
+若伪造 $(M',\sigma')$ 中存在指标 $i$ 满足 $b'_i<b_i$ 且
+\[
+    \Chain_{b'_i,b_i-b'_i}(\sigma'_i,i,\pk.\seed,\ADRS)=\sigma_i,
+\]
+则游戏 $\mathsf{G}_4$ 中止。若该事件发生，则敌手链与被模拟的诚实链在签名位置下方已经汇合。取两条路径第一次不同但映射到相同像的位置，就得到至多 $\ell w$ 个目标链调用之一上的有效 SM-TCR 解。因此
+\[
+    \left|\Pr[\mathsf{G}_3]-\Pr[\mathsf{G}_4]\right|
+    \le \InSec{sm\text{-}tcr}(\hashF;\tau,\ell w).
+\]
+
+\paragraph{界定 $\mathsf{G}_4$：SM-PRE 抽取。}
+若 $\mathcal{A}$ 在 $\mathsf{G}_4$ 中获胜，则 \cref{lem:proof-cswots-direction} 给出一个指标 $j$ 使得 $b'_j<b_j$。中止条件说明伪造链在位置 $b_j$ 之前尚未到达签名值 $\sigma_j$，而验证正确性说明它最终到达了同一个链头。因此
+\[
+    \Chain_{b'_j,b_j-b'_j-1}(\sigma'_j,j,\pk.\seed,\ADRS)
+\]
+是 SM-PRE 目标 $\sigma_j=\hashF(\pk.\seed,T_{j,b_j-1},u_j)$ 的一个原像。该抽取值不等于隐藏原像 $u_j$，否则两条路径会在 $\mathsf{G}_4$ 所排除的位置之前已经汇合。在每个被签名链位置放置一个 SM-PRE 挑战，可得
+\[
+    \Pr[\mathsf{G}_4]\le
+    \InSec{sm\text{-}pre}(\hashF;\tau,\ell).
+\]
+合并以上游戏跃迁即得定理。
+\end{proof}
+
+\subsubsection{多实例安全性}
+\label{sec:proof-cswots-multi}
+
+在 Kylin 中，许多 CS-WOTS-TW 实例共享同一个公有种子，但通过地址相互分离。这里用 $D$ 表示多实例实验中的一次性实例个数，以避免与表示超树层数的符号 $d$ 混淆。
+
+\begin{theorem}[CS-WOTS-TW 多实例安全性]
+\label{thm:proof-cswots-multi}
+在 \cref{thm:proof-cswots-single} 的假设下，对于共享同一公有种子的 $D$ 个带地址 CS-WOTS-TW 实例，有
+\begin{align}
+\InSec{D\text{-}EU\text{-}naCMA}(\mathsf{CS\text{-}WOTS\text{-}TW};\tau,D)
+\le{}&
+    \InSec{prf}(\PRF;\tau,D\ell)
+    +\InSec{sm\text{-}tcr}(\hashF\in\THFColl;\tau,D\ell w) \notag\\
+&   +\InSec{sm\text{-}pre}(\hashF\in\THFColl;\tau,D\ell)
+    +w\cdot\InSec{sm\text{-}ud}(\hashF\in\THFColl;\tau,D\ell).
+\label{eq:proof-cswots-multi}
+\end{align}
+\end{theorem}
+
+\begin{proof}
+在所有 $D$ 个带地址实例上并行运行 \cref{thm:proof-cswots-single} 中的四个游戏。PRF 替换使用 $D\ell$ 个不同输入。SM-UD 混合仍然只需要至多 $w-1$ 个链位置混合，但每个混合现在包含 $D\ell$ 个目标。SM-TCR 放置覆盖至多 $D\ell w$ 次链调用。最后，若敌手在实例 $r$ 中伪造，\cref{lem:proof-cswots-direction} 在同一实例中给出一个下降链坐标，SM-PRE 抽取使用 $D\ell$ 个已放置目标之一。所有非挑战求值均通过可调哈希函数族模拟，而地址分离保证 tweak 不相交。
+\end{proof}
+
+\subsection{Kylin 的超树安全性}
+\label{sec:proof-kylin-ht}
+
+\subsubsection{面向证明的超树描述}
+\label{sec:proof-ht-description}
+
+完整的 Kylin 签名方案已在 \cref{sec:spx-core} 中给出。对于安全性证明，相关结构如下。签名者首先计算
+\[
+    R\gets\PRFmsg(\sk.\prf,\mathsf{opt},M),
+    \qquad
+    (\md,\mathsf{idx}_{\mathsf{tree}},\mathsf{idx}_{\mathsf{leaf}})
+    \gets\hashmsg(R,\pk.\seed,\pk.\root,M).
+\]
+摘要 \md 由 FORS 签名。恢复出的 FORS 公钥随后由超树底层 XMSS 树签名；每个更高 XMSS 层签名其下一层的根。
+
+第 $i$ 层高度为 $h_i$。因此，每个超树签名中该层贡献一个 \WOTSCS 签名和一条由 $h_i$ 个 $n$ 字节节点组成的认证路径。第 $i$ 层的 XMSS 树数量为
+\[
+    2^{\,h-\sum_{j=0}^{i}h_j},
+\]
+所以顶层只包含一棵树。超树叶子总数为 $2^h$，所有层认证路径的总大小为 $hn$ 字节，与 $h_i$ 的分布无关。
+
+\subsubsection{归约定理}
+\label{sec:proof-kylin-reduction}
+
+\begin{theorem}[Kylin 的 EUF-CMA 安全性]
+\label{thm:proof-kylin}
+令 Kylin 使用上述参数 $n,w,h,d,(h_0,\ldots,h_{d-1}),a,k,\ell$，并令 $t=2^a$。对于任意至多进行 $q_s$ 次签名询问的敌手，
+\begin{align}
+\InSec{EU\text{-}CMA}(\mathsf{Kylin};\tau,q_s)
+\le{}&
+    \InSec{prf}(\PRF;\tau,q_1)
+    +\InSec{prf}(\PRFmsg;\tau,q_s)
+    +\InSec{itsr}(\hashmsg;\tau,q_s) \notag\\
+&   +w\cdot\InSec{sm\text{-}ud}(\hashF\in\THFColl;\tau,q_2)
+    +\InSec{sm\text{-}pre}(\hashF\in\THFColl;\tau,q_2) \notag\\
+&   +\InSec{sm\text{-}tcr}(\hashF\in\THFColl;\tau,q_3+q_7)
+    +\InSec{sm\text{-}tcr}(\hashH\in\THFColl;\tau,q_4) \notag\\
+&   +\InSec{sm\text{-}tcr}(\Th_k\in\THFColl;\tau,q_5)
+    +\InSec{sm\text{-}tcr}(\Th_\ell\in\THFColl;\tau,q_6) \notag\\
+&   +3\cdot\InSec{sm\text{-}tcr}(\hashF\in\THFColl;\tau,q_8)
+    +\InSec{sm\text{-}dspr}(\hashF\in\THFColl;\tau,q_8),
+\label{eq:proof-kylin-bound}
+\end{align}
+其中目标数量可由下式界定：
+\begin{align*}
+q_1 &< 2^{h+1}(kt+\ell),&
+q_2 &< 2^{h+1}\ell,&
+q_3 &< 2^{h+1}\ell w,&
+q_4 &< 2^{h+1}k\cdot 2t,\\
+q_5 &< 2^h,&
+q_6 &< 2^{h+1},&
+q_7 &< 2^{h+1}kt,&
+q_8 &< 2^hkt.
+\end{align*}
+\end{theorem}
+
+\begin{proof}
+该证明将~\cite{AC:HulKud22} 中紧致 \SPHINCSP game 序列适配到 \WOTSCS 层。FORS、超树、PRF、消息随机化以及可调哈希部分除由 $\ell$ 和非均匀高度向量 $(h_0,\ldots,h_{d-1})$ 导致的目标数量变化外均保持不变。
+
+\paragraph{游戏 $\mathsf{G}_0$：真实 EUF-CMA 实验。}
+敌手获得真实 Kylin 公钥，并可进行至多 $q_s$ 次签名询问。若其能对未询问过的消息输出有效签名，则获胜。
+
+\paragraph{游戏 $\mathsf{G}_0\to\mathsf{G}_1$：替换 \PRF。}
+FORS 和 \WOTSCS 实例中所有由 $\PRF(\sk.\seed,\cdot)$ 派生的秘密值都被替换为相互独立的均匀值。虚拟结构中可能被作为目标的秘密值数量由
+$q_1<2^{h+1}(kt+\ell)$ 界定，给出 \cref{eq:proof-kylin-bound} 中第一个 PRF 项。
+
+\paragraph{游戏 $\mathsf{G}_1\to\mathsf{G}_2$：替换 \PRFmsg。}
+消息随机化函数 \PRFmsg 在至多 $q_s$ 次签名询问上被替换为随机函数。这给出
+$\InSec{prf}(\PRFmsg;\tau,q_s)$ 项。
+
+\paragraph{游戏 $\mathsf{G}_2\to\mathsf{G}_3$：\hashmsg 的 ITSR。}
+若伪造在对应未询问消息的同时避免引入新的 FORS 叶子，则游戏中止。该事件正是由 \hashmsg 的交错目标子集韧性控制的事件，因此得到
+$\InSec{itsr}(\hashmsg;\tau,q_s)$。
+
+\paragraph{游戏 $\mathsf{G}_{3.1}$--$\mathsf{G}_{3.4}$：排除 WOTS 外部的哈希碰撞。}
+剩余成功伪造可按验证计算第一次偏离诚实生成虚拟结构的位置进行分解。
+\begin{itemize}
+    \item FORS 或 XMSS 二叉树中的第二原像归约到 $\hashH$ 的 SM-TCR，目标数至多为 $q_4<2^{h+1}k\cdot 2t$。
+    \item $k$ 个 FORS 根压缩中的第二原像归约到 $\Th_k$ 的 SM-TCR，目标数至多为 $q_5<2^h$。
+    \item \WOTSCS 公钥压缩中的第二原像归约到 $\Th_\ell$ 的 SM-TCR，目标数至多为 $q_6<2^{h+1}$。
+    \item WOTS 实例外部 FORS 叶子计算中的第二原像归约到 $\hashF$ 的 SM-TCR，目标数至多为 $q_7<2^{h+1}kt$。
+\end{itemize}
+
+\paragraph{游戏 $\mathsf{G}_{3.4}\to\mathsf{G}_4$：WOTS 伪造。}
+一旦排除了上述碰撞事件，超树中任何剩余伪造都必须包含对少于 $2^{h+1}$ 个带地址一次性实例之一的有效新 CS-WOTS-TW 签名。将 \cref{thm:proof-cswots-multi} 应用于 $D<2^{h+1}$，即可得到目标数量为 $q_2$ 和 $q_3$ 的 SM-UD、SM-PRE 与 SM-TCR 项。
+
+\paragraph{最终游戏：第二 FORS 叶子情形。}
+唯一剩余情形是标准 \SPHINCSP 证明中的 FORS“第二叶子”情形：伪造包含一个新的 FORS 叶子值，该值沿同一路径通过验证，但并非期望叶子。与紧致 \SPHINCSP 证明中相同，这可归约到 $\hashF$ 上的三个 SM-TCR 放置和一个 SM-DSPR 项，目标数量满足 $q_8<2^hkt$。将所有游戏跃迁损失求和，即得 \cref{eq:proof-kylin-bound}。
+\end{proof}
+
+\begin{remark}
+高度向量 $(h_0,\ldots,h_{d-1})$ 会通过单棵 XMSS 树的生成成本影响运行时间和内存，但不改变归约结构。上面的安全目标数量依赖于虚拟叶子、WOTS 实例、FORS 叶子以及认证路径节点的总数，这些数量均由总高度 $h$ 来界定。
+\end{remark}
+
+\subsection{针对通用攻击的具体安全性}
+\label{sec:proof-concrete}
+
+\Cref{thm:proof-kylin} 是归约定理。参数选择时，Kylin 对类随机函数实例化采用通常的 \SPHINCSP 通用攻击代理估计。令 $q_s$ 表示单密钥下允许的签名次数，并令 $t=2^a$。主导的通用伪造概率为
+\begin{equation}
+\label{eq:proof-generic-prob}
+p_{\mathsf{gen}}
+=2^{-N}
++\sum_{\gamma=0}^{q_s}
+\left(1-\left(1-\frac{1}{t}\right)^\gamma\right)^k
+\binom{q_s}{\gamma}
+\left(1-\frac{1}{2^h}\right)^{q_s-\gamma}
+2^{-h\gamma}.
+\end{equation}
+其中 $\gamma$ 表示先前签名中与伪造尝试命中同一超树叶子的次数。在该命中次数条件下，求和式中的第一个因子表示 $k$ 棵 FORS 树中每一棵都暴露可重用索引的概率。前导项 $2^{-N}=2^{-8n}$ 刻画对 $n$ 字节原语输出的通用搜索概率。
+
+对应的经典与量子通用 bit-security 代理为
+\begin{equation}
+\label{eq:proof-bitsec}
+    \mathsf{bitsec}_{\mathsf{cl}}=-\log_2 p_{\mathsf{gen}},
+    \qquad
+    \mathsf{bitsec}_{\mathsf{q}}=-\frac{1}{2}\log_2 p_{\mathsf{gen}},
+\end{equation}
+其中忽略对数内部的小常数因子。实例名称是提交命名；下表报告冻结参数文件
+\texttt{paper/data/}\allowbreak\texttt{para\_kylin\_final\_6profiles.csv} 在
+\cref{eq:proof-generic-prob,eq:proof-bitsec} 下得到的指数。
+
+\begin{center}
+\begin{tabular}{lcccccccccc}
+\toprule
+Instance & $q_s$ & $n$ & $h$ & $d$ & $a$ & $k$ & $w$ & $\ell$ &
+$\mathsf{bitsec}_{\mathsf{cl}}$ & $\mathsf{bitsec}_{\mathsf{q}}$ \\
+\midrule
+Kylin-128     & $2^{64}$ & 16 & 65 & 9  & 13 & 11 & 73 & 22  & 127.209 & 63.605 \\
+Kylin-256     & $2^{64}$ & 32 & 68 & 10 & 13 & 22 & 54 & 46  & 255.944 & 127.972 \\
+Kylin-512     & $2^{64}$ & 64 & 66 & 11 & 13 & 49 & 97 & 79  & 511.243 & 255.622 \\
+Kylin-128-q24 & $2^{24}$ & 16 & 22 & 1  & 24 & 6  & 4  & 67  & 127.281 & 63.641 \\
+Kylin-256-q24 & $2^{24}$ & 32 & 21 & 1  & 25 & 12 & 4  & 131 & 255.359 & 127.680 \\
+Kylin-512-q24 & $2^{24}$ & 64 & 57 & 3  & 20 & 24 & 64 & 87  & 511.415 & 255.708 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{与紧致 \SPHINCSP 证明的关系}
+\label{sec:proof-sphincs-comparison}
+
+上述证明继承了~\cite{AC:HulKud22} 的紧致 \SPHINCSP 结构，并且只改变了 WOTS 相关的编码论证。
+\begin{enumerate}
+    \item \SPHINCSP 中的 WOTS+ 校验和被 \cref{lem:proof-cswots-direction} 替代。该引理给出 SM-PRE 抽取所需的下降链坐标。
+    \item $\ell$ 的取值不再是 base-$w$ 消息长度加校验和长度，而是满足 \cref{eq:proof-len-condition} 的最小整数。这会改变具体目标数量 $q_1,q_2,q_3,q_6$，但不改变 game 序列。
+    \item WOTS 链的 SM-UD、SM-TCR 与 SM-PRE 混合除此之外与 WOTS-TW 中相同：它们依赖链位置与地址分离，而不依赖消息到链指标向量的编码方式。
+    \item 分层高度多样化会改变 \texttt{ht\_sign} 与 \texttt{ht\_verify} 中的算法循环，但归约使用总高度 $h$ 来界定虚拟叶子和目标数量。
+\end{enumerate}
+
+\subsection{其他安全属性}
+\label{sec:proof-other-properties}
+
+本草稿目前不额外声明其他形式化安全性质。尤其是，当前文本不声明专门的侧信道抗性、完美前向安全性、超出上述单密钥目标数量的量化多密钥归约，或临时密钥重用情况下的独立定理。
+
+\subsection{ICCS 哈希/XOF 实例化的安全性}
+\label{sec:proof-iccs-instantiation}
+
+已打包的 NGCC 实现使用 ICCS 辅助函数 \texttt{sm3hash} 和 \texttt{pseudohash}，并由 \texttt{pseudoXOF} 提供 XOF 功能。在方案层面，\hashmsg、\PRF、\PRFmsg、\hashF、\hashH 和 \Th 均通过基于 \texttt{pseudoXOF} 的域分离包装函数实现，并在输入布局中显式区分标签以及 seed/address。
+
+因此，本提交中的安全性声明是：在选定的参数规模下，这些实例化函数提供 \cref{thm:proof-kylin} 所需的伪随机性、目标碰撞抗性、原像抗性以及相关可调哈希性质。除这一标准通用分析解释之外，本文档不针对 ICCS 辅助函数内部实现提出额外的独立紧致性声明。
