@@ -14,20 +14,27 @@ At the design level, Kylin's dominant costs are hash and XOF calls. Key generati
     \begin{tabular}{l r r r r}
     \toprule
     Instance & KeyGen hash calls & Sign hash calls & Verify hash calls & Signature bytes \\ \midrule
-    Kylin-128 & 417279 & BPORS+HT & BPORS+HT & 6472 \\
-    Kylin-256 & 324095 & BPORS+HT & BPORS+HT & 25576 \\
-    Kylin-512 & 495615 & BPORS+HT & BPORS+HT & 95432 \\
+    Kylin-128 & 417279 & 2389373 & 7362 & 6472 \\
+    Kylin-256 & 324095 & 3382025 & 11405 & 25352 \\
+    Kylin-512 & 519295 & 6493104 & 44418 & 91528 \\
     \bottomrule
     \end{tabular}
 \end{table}
 
 \paragraph{Benchmark platform.}
-The software implementation is written in ISO C and is compiled with GCC 13.3.0. The reference implementations keep their default \texttt{-O2} ISO C build with warning checks enabled. The optimized 64-bit PC implementations use per-directory builds centered on \texttt{-O3 -march=native}; \texttt{Kylin-128} additionally enables link-time optimization, omitted frame pointers, loop unrolling, and \texttt{-fno-plt}. The benchmark host is an x86-64 64-bit PC environment: AMD Ryzen 7 7800X3D 8-Core Processor, 8 physical cores and 16 hardware threads, approximately 4.192 GHz as reported by \texttt{/proc/cpuinfo}, 30 GiB RAM, Ubuntu 24.04.3 LTS on Linux 6.6.87.2-microsoft-standard-WSL2. The implementation uses the ICCS auxiliary hash/XOF interfaces \texttt{sm3hash}, \texttt{pseudohash}, and \texttt{pseudoXOF}; no external cryptographic library is required for the reported package benchmarks.
+The software implementation is written in ISO C and is compiled with GCC 13.3.0. The reference implementations keep their default \texttt{-O2} ISO C build with warning checks enabled. The optimized 64-bit PC implementations use per-directory builds centered on \texttt{-O3 -march=native}; \texttt{Kylin-128} additionally enables link-time optimization, omitted frame pointers, loop unrolling, and \texttt{-fno-plt}. The benchmark host is an x86-64 64-bit PC environment: AMD Ryzen 7 7800X3D 8-Core Processor, 8 physical cores and 16 hardware threads, approximately 4.192 GHz as reported by \texttt{/proc/cpuinfo}, 30 GiB RAM, Ubuntu 24.04.3 LTS on Linux 6.18.33.1-microsoft-standard-WSL2. The implementation uses the ICCS auxiliary hash/XOF interfaces \texttt{sm3hash}, \texttt{pseudohash}, and \texttt{pseudoXOF}; no external cryptographic library is required for the reported package benchmarks.
 
 \paragraph{Software performance, transmission, and storage cost.}
 The automated package measurements in \cref{tab:kylin-package-bench} are produced from the current implementation tree by the package benchmark driver. The table reports the median of 9 measured host-local wall-clock timings on a 32-byte message after 3 warm-up iterations, and includes the public-key, secret-key, and signature sizes in bytes. Because these are repository-local wall-clock measurements, the absolute values should be interpreted as host-specific data points rather than cross-platform claims.
 
-In the current rerun, the optimized implementations remain consistently faster than the reference ones. For \texttt{Kylin-128}, \texttt{Kylin-256}, and \texttt{Kylin-512}, the measured signing speedups are approximately $3.06\times$, $2.84\times$, and $3.16\times$, respectively; the key-generation speedups are approximately $3.85\times$, $4.28\times$, and $5.89\times$; and the verification speedups are approximately $2.58\times$, $2.75\times$, and $3.77\times$.
+In the current rerun, the optimized implementations remain faster than the
+reference ones, although the retuned BPORS+FP parameters change the relative
+signing gains. For \texttt{Kylin-128}, \texttt{Kylin-256}, and
+\texttt{Kylin-512}, the measured signing speedups are approximately
+$3.39\times$, $1.30\times$, and $2.60\times$, respectively; the key-generation
+speedups are approximately $3.92\times$, $4.27\times$, and $6.10\times$; and
+the verification speedups are approximately $2.59\times$, $2.66\times$, and
+$3.93\times$.
 
 \begin{table}[H]
     \centering

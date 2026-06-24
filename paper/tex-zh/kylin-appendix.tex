@@ -16,35 +16,33 @@
     \caption{冻结的 $q=2^{24}$ Kylin 附加参数配置（仅供参考的额外实现）。}
     \label{tab:q24-parameters}
     \scriptsize
-    \begin{tabular}{l c c c c c c c c c c c c}
+    \resizebox{\linewidth}{!}{%
+    \begin{tabular}{l c c c c l c c c c c c}
     \toprule
-    参数族 & NGCC 等级 & $n$ & $h$ & $d$ & $\log t$ & $k$ & $w$ & $l$ & bitsec & pk & sk & sig \\ \midrule
-    Kylin-128-q24 & 128/80 & 16 & 22 & 1 & 24 & 6 & 4 & 67 & 127 & 32 & 64 & 3840 \\
-    Kylin-256-q24 & 256/128 & 32 & 21 & 1 & 25 & 12 & 4 & 131 & 255 & 64 & 128 & 14880 \\
-    Kylin-512-q24 & 512/256 & 64 & 57 & 3 & 20 & 24 & 64 & 87 & 511 & 128 & 256 & 52672 \\
+    参数族 & NGCC 等级 & $n$ & $h/d$ & $(h_0,\ldots,h_{d-1})$ & $(K,B,t,k,m_{\max})$ & $w$ & $l$ & bitsec & pk & sk & sig \\ \midrule
+    Kylin-128-q24 & 128/80 & 16 & 18/1 & $(18)$ & $(2,15,2048,6,93)$ & 4 & 67 & 127.445 & 32 & 64 & 3064 \\
+    Kylin-256-q24 & 256/128 & 32 & 18/1 & $(18)$ & $(4,15,1024,7,202)$ & 3 & 165 & 255.638 & 64 & 128 & 13256 \\
+    Kylin-512-q24 & 512/256 & 64 & 32/2 & $(16,16)$ & $(6,13,1120,9,362)$ & 96 & 80 & 511.296 & 128 & 256 & 38984 \\
     \bottomrule
-    \end{tabular}
+    \end{tabular}%
+    }
 \end{table}
 
-\cref{tab:q24-benchmarks} 中的基准行同步自
-\texttt{package\_bench.csv} 中的 $q=2^{24}$ 条目。
+\cref{tab:q24-kat-digests} 中的 companion KAT 行由重新调参后的
+$q=2^{24}$ 实现目录生成。由于重新调参后的 BPORS+FP q24 KAT 与 benchmark
+均属于长时间任务，完整墙钟 benchmark 刷新与主 package benchmark 表分开维护。
 
 \begin{table}[htbp]
     \centering
-    \caption{$q=2^{24}$ Kylin 附加实现的打包基准结果。时间单位为 32 字节消息上的毫秒；签名尺寸单位为字节。}
-    \label{tab:q24-benchmarks}
+    \caption{$q=2^{24}$ Kylin 附加实现生成的 KAT 摘要。}
+    \label{tab:q24-kat-digests}
     \scriptsize
-    \begin{tabular}{l r r r r r}
+    \begin{tabular}{l r l}
     \toprule
-    参数族 & 实现 & 密钥生成 (ms) & 签名 (ms) & 验证 (ms) & 签名 (B) \\ \midrule
-    Kylin-128-q24 & ref & 853,437 & 1,072,184 & 0.201 & 3,840 \\
-    Kylin-128-q24 & opt & 344,659 & 546,652 & 0.147 & 3,840 \\
-    \midrule
-    Kylin-256-q24 & ref & 859,058 & 1,875,189 & 0.522 & 14,880 \\
-    Kylin-256-q24 & opt & 348,092 & 1,259,275 & 0.385 & 14,880 \\
-    \midrule
-    Kylin-512-q24 & ref & 2,731,243 & 6,623,944 & 8.286 & 52,672 \\
-    Kylin-512-q24 & opt & 1,092,497 & 3,311,972 & 5.524 & 52,672 \\
+    参数族 & 行数 & SHA-256 \\ \midrule
+    Kylin-128-q24 & 120 & \texttt{2b0e47c4f0a7cce7dc5b1f068c000277c3050fdcdd94ea0017662255bcb8030d} \\
+    Kylin-256-q24 & 120 & \texttt{5542877e457f79ae96b57a9652e52c834fbea895c0bc4b8a3226b65941499a2a} \\
+    Kylin-512-q24 & 120 & \texttt{c873a1a1dedda8432202a346c86cb21b356fef81703938177c0c27beedce6c08} \\
     \bottomrule
     \end{tabular}
 \end{table}

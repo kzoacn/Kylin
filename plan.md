@@ -115,6 +115,14 @@
 
 ## 5. 进度日志
 
+### 2026-06-24 - Retune BPORS Parameters and Regenerate KATs (Done)
+
+- 将 Kylin 的底层少次签名层迁移后的参数重新搜索并冻结到 `paper/data/para_kylin_final_6profiles.csv`；新增 `paper/code/search_bpors_kylin_params.py` 作为 BPORS+FP-aware 复现实验脚本，并保留旧 FORS baseline 到 `paper/data/para_fors_baseline_6profiles.csv` 作为 105% sign/verify hash-call cap 的比较源。
+- 最终主提交参数为：`Kylin-128` 6472 字节，`Kylin-256` 25352 字节，`Kylin-512` 91528 字节；q24 companion 参数为：`Kylin-128-q24` 3064 字节，`Kylin-256-q24` 13256 字节，`Kylin-512-q24` 38984 字节。q24 搜索加入 practical forced-pruning floor `tau>=5e-7`，避免 KAT 生成落入上亿次 counter trial 的不可交付区间。
+- 同步 12 个实现目录的 `params.h`，修复 q24 `Makefile` KAT 输出路径，并修复 `Implementations/tools/collect_metrics.py` 对嵌套 q24 Reference/Optimized 目录的发现与 impl 标注。
+- 清理英文和中文构造章节中的旧 FORS 活跃内容，更新 BPORS+FP 地址说明、参数表、concrete security 表、hash-call performance 表、q24 appendix、test-vector SHA-256 表、`Implementations/README`、术语表、EN->ZH 同步指南，并新增 `docs/bpors-retune-impact.md`。
+- 验证：`python3 paper/code/check_bpors_profiles.py` 通过；主 q64 Ref/Opt 六组 `make test` 通过；q24 Ref/Opt 六组 `make test` 通过；六个 profile 的 KAT 文件已重新生成到 `Test_Vectors/`，每个 120 行并记录 SHA-256；主 q64 package benchmark/memory 通过 `python3 Implementations/tools/collect_metrics.py` 刷新。
+
 ### 2026-06-23 - Integrate Security Proof Into Main Paper (Done)
 
 - 将 `new-files/kylin_security_proof.tex` 的核心证明内容并入英文主文档 `paper/tex/security_statements_and_analyses.tex`，把原先简短安全声明扩展为完整安全性章节。

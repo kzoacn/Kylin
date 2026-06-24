@@ -23,11 +23,11 @@ runtime-dispatched hash-path acceleration and reduced allocation overhead.
 Current frozen packaged parameters are:
 
 - `Kylin-128`: `q=2^64, h=65, d=9, h_vec=[7,7,7,7,7,7,7,8,8], BPORS=(K=5,B=6,t=132,k=4,mmax=120), w=73, len=22`
-- `Kylin-256`: `q=2^64, h=68, d=10, h_vec=[6,6,7,7,7,7,7,7,7,7], BPORS=(K=7,B=7,t=280,k=5,mmax=235), w=54, len=46`
-- `Kylin-512`: `q=2^64, h=66, d=11, h_vec=[6,6,6,6,6,6,6,6,6,6,6], BPORS=(K=13,B=7,t=512,k=5,mmax=490), w=97, len=79`
-- `Kylin-128-q24`: `q=2^24, h=22, d=1, h_vec=[22], BPORS=(K=2,B=13,t=736,k=7,mmax=112), w=4, len=67`
-- `Kylin-256-q24`: `q=2^24, h=21, d=1, h_vec=[21], BPORS=(K=3,B=13,t=3456,k=8,mmax=235), w=4, len=131`
-- `Kylin-512-q24`: `q=2^24, h=57, d=3, h_vec=[19,19,19], BPORS=(K=5,B=12,t=3456,k=9,mmax=420), w=64, len=87`
+- `Kylin-256`: `q=2^64, h=58, d=9, h_vec=[6,7,7,7,6,6,6,6,7], BPORS=(K=8,B=7,t=384,k=6,mmax=271), w=54, len=46`
+- `Kylin-512`: `q=2^64, h=66, d=11, h_vec=[6,6,6,6,6,6,6,6,6,6,6], BPORS=(K=13,B=6,t=320,k=6,mmax=427), w=103, len=78`
+- `Kylin-128-q24`: `q=2^24, h=18, d=1, h_vec=[18], BPORS=(K=2,B=15,t=2048,k=6,mmax=93), w=4, len=67`
+- `Kylin-256-q24`: `q=2^24, h=18, d=1, h_vec=[18], BPORS=(K=4,B=15,t=1024,k=7,mmax=202), w=3, len=165`
+- `Kylin-512-q24`: `q=2^24, h=32, d=2, h_vec=[16,16], BPORS=(K=6,B=13,t=1120,k=9,mmax=362), w=96, len=80`
 
 The packaged NGCC wrappers accept messages up to `2^60` bytes, i.e. `2^63`
 bits, matching the submission bound recorded in the specification.

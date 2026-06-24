@@ -50,8 +50,8 @@ stack_usage:
 
 kat: KAT_SIG
 	./KAT_SIG
-	mkdir -p ../../../Test_Vectors
-	cp output/KAT_SIG_$(INSTANCE).txt ../../../Test_Vectors/
+	mkdir -p ../../../../Test_Vectors
+	cp output/KAT_SIG_$(INSTANCE).txt ../../../../Test_Vectors/
 
 clean:
 	$(RM) KAT_SIG test_sig bench_sig

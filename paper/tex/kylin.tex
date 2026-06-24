@@ -531,7 +531,6 @@ HT signature verification (\cref{alg:htverify}) can be summarized as $d$ calls t
 \end{algorithm}
 \section{BPORS+FP: Bucket-Thinned Few-Time Signatures}
 \label{sec:bpors}
-\label{sec:fors}
 
 The \SPHINCSA\ hypertree HT is not used to sign the original message directly.
 Instead, the randomized message hash selects a bottom HT leaf and gives an
@@ -633,123 +632,12 @@ the $K$ outer roots.  This is shown in \cref{alg:bporspkfromsig}.
     \label{alg:bporspkfromsig}
 \end{algorithm}
 
-\iffalse
-\section{FORS: Forest Of Random Subsets}
-\label{sec:fors}
-
-The \SPHINCSA\ hypertree HT is not used to sign the actual messages but the public keys of FORS instances which in turn are used to sign message digests. FORS, short for forest of random subsets, is a few-time signature scheme (FTS). FORS is an improvement of HORST \cite{EC:BHHLNP15} which in turn is a variant of HORS \cite{EPRINT:ReyRey02}. For security it is essential that the input to FORS is the output of a hash function. In the following we describe FORS as acting on bit strings.
-
-FORS uses parameters $k$ and $t=2^{a}$ (example parameters are $t=2^{15}, k=10$). FORS signs strings of length $ka$ bits. Here, we deviate from defining sizes in bytes as the message length in bits might not be a multiple of eight. The private key consists of $kt$ random {\it n}- byte strings grouped into $k$ sets, each containing $t n$-byte strings. The private key values are pseudorandomly generated from the main private seed \sk.\seed in the \SPHINCSA\ private key. In \SPHINCSA, the FORS private key values are only temporarily generated as an intermediate result when computing the public key or a signature.
-
-The FORS public key is a single $n$-byte hash value. It is computed as the tweakable hash of the root nodes of $k$ binary hash trees. Each of these binary hash trees has height $a$ and is used to authenticate the $t$ private key values of one of the $k$ sets. Accordingly, the leaves of a tree are the (tweakable) hashes of the values in its private key set.
-
-A signature on a string $M$ consists of $k$ private key values --- one per set of private key elements --- and the associated authentication paths. To compute the signature, $\md$ is split into $k$ a-bit strings. As \md is a sequence of bytes, we first convert to a bit-string by enumerating the bytes in $\md$, internally enumerating the bits within a byte from least to most significant. Next, each of these bit strings is interpreted as an integer between $0$ and $t-1$. Each of these integers is used to select one private key value from a set. I.e., if the first integer is $i$, the $i$-th private key element of the first set gets selected and so on. The signature consists of the selected private key elements and the associated authentication paths.
-
-\SPHINCSA\ uses implicit verification for FORS, only using a method to compute a candidate public key from a signature. This is done by computing root nodes of the $k$ trees using the indices computed from the input string as well as the private key values and authentication paths form the signature. The tweakable hash of these roots is then returned as candidate public key.
-
-We now describe the parameters and algorithms for FORS.
-
-\subsection{FORS Parameters}
-\label{sec:forspara}
-FORS uses the parameters $n, k$, and $t$; they all take positive integer values. These parameters are summarized as follows:
-
-\begin{itemize}
-    \item $ n$: the security parameter; it is the length of a private key, public key, or signature element in bytes.
-
-    \item $ k$: the number of private key sets, trees and indices computed from the input string.
-    
-    \item $ t$: the number of elements per private key set, number of leaves per hash tree and upper bound on the index values. The parameter $t$ MUST be a power of 2. If $t=2^{a}$, then the trees have height $a$ and the input string is split into bit strings of length $a.$
-\end{itemize}
-
-
-Inputs to FORS are bit strings of length $k\log t.$
-
-\begin{figure}[ht]
-    \centering
-    \includegraphics[width=.8\linewidth]{paper/figure/fors.eps}
-    %\includegraphics[width=.8\linewidth]{paper/spx-fig/Figure12.pdf}
-    \caption{FORS trees and PK.} \label{fig:spx12}
-\end{figure}
-
-\subsection{FORS Private Key (Function \texttt{fors\_SKgen})}
-
-In the context of \SPHINCSA, a FORS private key is the single private seed \sk.\seed contained in the \SPHINCSA\ private key. It is used to generate the $kt$ $n$-byte private key values using \PRF with a FORS key generation address. While these values are logically grouped into a two-dimensional array, for implementations it makes sense to assume they are in a one dimensional array of length $kt$. The jth element of the $i$-th set is then stored at $\sk[it+j].$ To generate one of these elements, a FORS key generation address skADRS is used, that encodes the position of the FORS key pair within \SPHINCSA\ and has tree height set to $0$ and leaf index set to $it+j$:
-
-\begin{algorithm}
-    \inputminted[breaklines,linenos,tabsize=2,mathescape,escapeinside=||]{C}{paper/code/fors_SKgen.cs}
-    \caption{\texttt{fors\_SKgen} --- Computing a FORS private key value.}
-    \label{alg:forsskgen}
-\end{algorithm}
-
-\subsection{FORS TreeHash (Function \texttt{fors\_treehash})}
-
-Before coming to the FORS public key, we have to discuss computation of the trees. For the computation of the $n$-byte nodes in the FORS hash trees, the subroutine \texttt{fors\_treehash} is used. It is essentially the same algorithm as \texttt{treehash} (\cref{alg:treehash}) in \cref{sec:xmss}. The two differences are how the leaf nodes are computed and how addresses are handled. However, as the addresses are similar, an implementation can implement both algorithms in the same routine easily.
-
-Algorithm \texttt{fors\_treehash} accepts a secret seed \sk.\seed, a public seed $\pk.\seed$, an unsigned integer $s$ (the start index), an unsigned integer $z$ (the target node height), and an address \ADRS that encodes the address of the FORS key pair. As for \texttt{treehash}, the \texttt{fors\_treehash} algorithm returns the root node of a tree of height $z$ with the leftmost leaf being the hash of the private key element at index $s$. Here, $s$ is ranging over the whole $kt$ private key elements. It is REQUIRED that $s$ \% $2^{z}=0$, i.e. that the leaf at index $s$ is a leftmost leaf of a sub-tree of height $z$. Otherwise the algorithm fails as it would compute non-existent nodes.
-
-\begin{algorithm}
-    \inputminted[breaklines,linenos,tabsize=2,mathescape,escapeinside=||]{C}{paper/code/fors_treehash.cs}
-    \caption{The \texttt{fors\_treehash algorithm.}}
-    \label{alg:forstreehash}
-\end{algorithm}
-
-\subsection{FORS Public Key (Function \texttt{fors\_PKgen})}
-
-In the context of \SPHINCSA, the FORS public key is never generated alone. It is only generated together with a signature. We include \texttt{fors\_PKgen} for completeness, a better understanding, and testing. Algorithm \texttt{fors\_PKgen} takes a private seed \sk.\seed, a public seed $\pk.\seed$, and a FORS address \ADRS. The latter encodes the position of the FORS instance within \SPHINCSA. It outputs a FORS public key.
-
-\begin{algorithm}
-    \inputminted[breaklines,linenos,tabsize=2,mathescape,escapeinside=||]{C}{paper/code/fors_PKgen.cs}
-    \caption{\texttt{ fors\_PKgen } --- Generate a FORS public key. }
-    \label{alg:forspkgen}
-\end{algorithm}
-
-
-\subsection{FORS Signature Generation (Function \texttt{fors\_sign})}
-
-A FORS signature is a length $k(\log t+1)$ array of $n$-byte strings. It contains $k$ private key values, $n$-bytes each, and their associated authentication paths, $\log t$ $n$-byte values each.
-
-The algorithm \texttt{fors\_sign} takes a $(k\log t)$-bit string $M$, a private seed \sk.\seed, a public seed $\pk.\seed$, and an address \ADRS. The latter encodes the position of the FORS instance within \SPHINCSA. It outputs a FORS signature $\sigfors$.
-
-\begin{algorithm}
-    \inputminted[breaklines,linenos,tabsize=2,mathescape,escapeinside=||]{C}{paper/code/fors_sign.cs}
-    \caption{\texttt{ fors\_sign } --- Generate a FORS signature on string $M$. }
-    \label{alg:forssign}
-\end{algorithm}
-
-The data format for a signature is given in \cref{fig:spx13}.
-
-\begin{figure}[ht]
-    \centering
-    \begin{bytefield}[bitwidth=1.1em,bitheight=2em]{16}
-        \wordbox{1}{Private Key Value (Tree 0)} \\
-        \wordbox{1}{$\mathbf{AUTH}$ (Tree 0)} \\
-        \wordbox[lrt]{1}{...} \\
-        \skippedwords \\
-        \wordbox[lrb]{1}{...} \\
-        \wordbox{1}{Private Key Value (Tree $k-1$)} \\
-        \wordbox{1}{$\mathbf{AUTH}$ (Tree $k-1$)} \\
-    \end{bytefield}
-    %\includegraphics[width=.4\linewidth]{paper/spx-fig/Figure13.pdf}
-    \caption{FORS Signature.} \label{fig:spx13}
-\end{figure}
-
-\subsection{FORS Compute Public Key from Signature (Function \texttt{fors\_pkFromSig})}
-
-\SPHINCSA\ makes use of implicit signature verification of FORS signatures. A FORS signature is used to compute a candidate FORS public key. This public key is used in further computations (message for the signature of the XMSS tree above) and implicitly verified by the outcome of that computation. Hence, this specification does not contain a \texttt{fors\_verify} method but the method \texttt{fors\_pkFromSig}.
-
-The method \texttt{fors\_pkFromSig} takes a $ k\log t$-bit string $M$, a FORS signature $\sigfors$, a public seed \pk.\seed, and an address \ADRS. The latter encodes the position of the FORS instance within the virtual structure of the \SPHINCSA\ key pair. First, the roots of the $k$ binary hash trees are computed using \texttt{fors\_treehash}. Afterwards the roots are hashed using the tweakable hash function $\mathrm{T}_{k}$. The algorithm \texttt{fors\_pkFromSig} is given as \cref{alg:forspkfromsig}. The method \texttt{fors\_pkFromSig} makes use of functions \sigfors.\texttt{getSK(i)} and \sigfors.\texttt{getAUTH(i)}. The former returns the $i$-th secret key element stored in the signature, the latter returns the $i$-th authentication path stored in the signature.
-
-\begin{algorithm}
-    \inputminted[breaklines,linenos,tabsize=2,mathescape,escapeinside=||]{C}{paper/code/fors_pkFromSig.cs}
-    \caption{\texttt{ fors\_pkFromSig } --- Compute a FORS public key from a FORS signature. }
-    \label{alg:forspkfromsig}
-\end{algorithm}
-
-\fi
 
 \section{The Full Kylin Signature Scheme}
 \label{sec:spx-core}
-We now have all ingredients to describe our main construction \SPHINCSA. Essentially, \SPHINCSA\ follows the fundamental structure of \SPHINCSA\ with the only difference being the one-time signature component.
+We now have all ingredients to describe our main construction \SPHINCSA.  It
+keeps the SPHINCS-style hypertree structure, but uses \WOTSCS\ one-time
+signatures and BPORS+FP as the bottom few-time signature component.
 
 \subsection{\SPHINCSA\ Parameters}
 
@@ -1015,8 +903,8 @@ As explained in the previous subsection, even for a fixed security level the des
     \toprule
     Family & NGCC lvl & $q$ & $n$ & $h/d$ & $(h_0,\ldots,h_{d-1})$ & $(K,B,t,k,m_{\max})$ & $w$ & $\wotslen$ & bitsec & pk & sk & sig \\ \midrule
     Kylin-128 & 128/80 & $2^{64}$ & 16 & 65/9 & $(7,7,7,7,7,7,7,8,8)$ & $(5,6,132,4,120)$ & 73 & 22 & 127 & 32 & 64 & 6472 \\
-    Kylin-256 & 256/128 & $2^{64}$ & 32 & 68/10 & $(6,6,7,7,7,7,7,7,7,7)$ & $(7,7,280,5,235)$ & 54 & 46 & 256 & 64 & 128 & 25576 \\
-    Kylin-512 & 512/256 & $2^{64}$ & 64 & 66/11 & $(6,6,6,6,6,6,6,6,6,6,6)$ & $(13,7,512,5,490)$ & 97 & 79 & 511 & 128 & 256 & 95432 \\
+    Kylin-256 & 256/128 & $2^{64}$ & 32 & 58/9 & $(6,7,7,7,6,6,6,6,7)$ & $(8,7,384,6,271)$ & 54 & 46 & 255 & 64 & 128 & 25352 \\
+    Kylin-512 & 512/256 & $2^{64}$ & 64 & 66/11 & $(6,6,6,6,6,6,6,6,6,6,6)$ & $(13,6,320,6,427)$ & 103 & 78 & 511 & 128 & 256 & 91528 \\
     \bottomrule
     \end{tabular}%
     }

@@ -6,14 +6,14 @@
 #define SPX_NAMESPACE(s) SPX_##s
 
 #define SPX_N 16
-#define SPX_FULL_HEIGHT 22
+#define SPX_FULL_HEIGHT 18
 #define SPX_D 1
 #define SPX_BPORS_K 2
-#define SPX_BPORS_B 13
-#define SPX_BPORS_T 736
-#define SPX_BPORS_CHILD_HEIGHT 10
-#define SPX_BPORS_CH_K 7
-#define SPX_BPORS_MMAX 112
+#define SPX_BPORS_B 15
+#define SPX_BPORS_T 2048
+#define SPX_BPORS_CHILD_HEIGHT 11
+#define SPX_BPORS_CH_K 6
+#define SPX_BPORS_MMAX 93
 #define SPX_BPORS_CTR_BYTES 8
 #define SPX_WOTS_W 4
 #define SPX_WOTS_LEN 67
@@ -28,12 +28,13 @@
 #error This implementation currently requires explicit per-layer heights for SPX_D == 1
 #endif
 
-#define SPX_TREE_HEIGHT_0 22
+#define SPX_TREE_HEIGHT_0 18
 
 #define SPX_BOTTOM_TREE_HEIGHT SPX_TREE_HEIGHT_0
 #define SPX_TOP_TREE_HEIGHT SPX_TREE_HEIGHT_0
 
-#define SPX_LAYER_HEIGHT_SUM (SPX_TREE_HEIGHT_0)
+#define SPX_LAYER_HEIGHT_SUM \
+    (SPX_TREE_HEIGHT_0)
 
 #if SPX_LAYER_HEIGHT_SUM != SPX_FULL_HEIGHT
 #error Sum of per-layer heights must equal SPX_FULL_HEIGHT

@@ -105,9 +105,9 @@
 
 地址 \ADRS 是一个 32 字节值，具有规定的结构，并配套提供若干 set 方法来操作地址。后续各节在使用这些地址时会说明具体生成方式。其本质是：所有函数都必须跟踪当前上下文，并在每次哈希调用之后更新地址。
 
-针对不同用途，一共定义了七种不同类型的地址。其中一种用于 \WOTSCS\ 中的哈希，一种用于 \WOTSCS\ 公钥压缩，第三种用于主 Merkle 树中的哈希，第四种用于 FORS 中 Merkle 树内的哈希，第五种用于 FORS 树根压缩，最后两种分别用于 \WOTSCS\ 与 FORS 的私钥值生成。这些地址大多共享相同的总体格式，下面将详细说明。
+针对不同用途，一共定义了八种不同类型的地址。其中一种用于 \WOTSCS\ 中的哈希，一种用于 \WOTSCS\ 公钥压缩，第三种用于主 Merkle 树中的哈希，两种用于 BPORS+FP 子树哈希与 BPORS+FP 根压缩，一种用于 \WOTSCS\ 私钥值生成，一种用于 BPORS+FP 子秘密值生成，最后一种用于 BPORS+FP 外层桶树哈希。这些地址大多共享相同的总体格式，下面将详细说明。
 
-地址结构遵循字边界；在这里，一个字宽为 32 位。只有 tree address（即主树中特定子树的索引）长度过长，无法放入单个字，因此我们为它保留三个字。总体而言，地址结构如下：最高位开始是一个字的 layer address，后接三个字的 tree address。这两个字段描述了一棵树在超树中的位置。layer address 描述该树在超树中的层高位置，自底层树开始记为第 0 层；tree address 描述该层中具体是哪一棵树，从最左边的树开始编号为 0。其后一个字表示地址类型：\WOTSCS\ 哈希地址取 0，\WOTSCS\ 公钥压缩取 1，哈希树地址取 2，FORS 地址取 3，FORS 树根压缩取 4。
+地址结构遵循字边界；在这里，一个字宽为 32 位。只有 tree address（即主树中特定子树的索引）长度过长，无法放入单个字，因此我们为它保留三个字。总体而言，地址结构如下：最高位开始是一个字的 layer address，后接三个字的 tree address。这两个字段描述了一棵树在超树中的位置。layer address 描述该树在超树中的层高位置，自底层树开始记为第 0 层；tree address 描述该层中具体是哪一棵树，从最左边的树开始编号为 0。其后一个字表示地址类型：\WOTSCS\ 哈希地址取 0，\WOTSCS\ 公钥压缩取 1，哈希树地址取 2，BPORS+FP 子树地址取 3，BPORS+FP 根压缩取 4，\WOTSCS\ 私钥生成取 5，BPORS+FP 子秘密值生成取 6，BPORS+FP 外层树哈希取 7。
 
 我们先介绍 \WOTSCS\ 地址（\cref{fig:spx2}）。在这种情况下，类型字之后是 key pair address，用来编码指定树内 \WOTSCS\ 密钥对的索引。再下一个字编码 chain address（即 \WOTSCS\ 内链的索引），最后一个字编码该链内部哈希函数调用的位置。需要注意的是，基于 \sk.\seed\ 生成私钥时使用的是另一种地址类型（见后文）。
 
@@ -156,7 +156,7 @@
     \label{fig:spx4}
 \end{figure}
 
-下一种类型（\cref{fig:spx5}）格式相似，用于描述 FORS 树中的哈希函数。其类型字取 3。key pair address 用于标识使用的是哪一个 FORS 密钥对，其含义与 \WOTSCS\ 哈希地址中的 key pair address 相同；它的值等于用于认证该 FORS 密钥对的 \WOTSCS\ 密钥对的索引，即其在指定树中的叶子编号。tree height 与 tree index 字段则用于定位 FORS 树内的哈希调用，方式与主树中的哈希类似，只是这里的 tree index 在不同 FORS 树之间连续编号。基于 \sk.\seed\ 生成叶节点时，使用另一种地址类型（见后文）。
+下一种类型（\cref{fig:spx5}）格式相似，用于描述 BPORS+FP 子树中的哈希函数。其类型字取 3。key pair address 用于标识底层 BPORS+FP 密钥对，其含义与 \WOTSCS\ 哈希地址中的 key pair address 相同。剩余字段按实现中的地址设置函数编码 BPORS 坐标、桶、tree height 与 tree index。基于 \sk.\seed\ 生成子秘密值时，使用另一种地址类型（见后文）。
 
 \begin{figure}[ht]
     \centering
@@ -168,11 +168,11 @@
         \bitbox{8}{Tree Height} &
         \bitbox{8}{Tree Index}
     \end{bytefield}
-    \caption{FORS 树地址。}
+    \caption{BPORS+FP 子树地址。}
     \label{fig:spx5}
 \end{figure}
 
-再下一种类型（\cref{fig:spx6}）用于压缩 FORS 树根。其类型字取 4。与 \WOTSCS\ 公钥压缩地址类似，它只包含 FORS 密钥对地址，其余部分补零至完整长度。
+再下一种类型（\cref{fig:spx6}）用于压缩 BPORS+FP 外层根。其类型字取 4。与 \WOTSCS\ 公钥压缩地址类似，它只包含 BPORS+FP 密钥对地址，其余部分补零至完整长度。
 
 \begin{figure}[ht]
     \centering
@@ -183,11 +183,11 @@
         \bitbox{8}{Key Pair Address} &
         \bitbox{16}{Padding = 0}
     \end{bytefield}
-    \caption{FORS 树根压缩地址。}
+    \caption{BPORS+FP 根压缩地址。}
     \label{fig:spx6}
 \end{figure}
 
-最后两种类型分别用于 \WOTSCS\ 和 FORS 的私钥值生成。\WOTSCS\ 私钥生成地址（\cref{fig:spx7}）与 \WOTSCS\ 哈希地址相同，仅有两点不同：其一，类型字取 5；其二，hash address 字恒设为 $0$。当为某条链生成私钥值时，其余各字段必须与该链对应的 \WOTSCS\ 哈希地址保持一致。
+类型值 5 与 6 分别用于 \WOTSCS\ 和 BPORS+FP 的私钥值生成。\WOTSCS\ 私钥生成地址（\cref{fig:spx7}）与 \WOTSCS\ 哈希地址相同，仅有两点不同：其一，类型字取 5；其二，hash address 字恒设为 $0$。当为某条链生成私钥值时，其余各字段必须与该链对应的 \WOTSCS\ 哈希地址保持一致。
 
 \begin{figure}[ht]
     \centering
@@ -203,11 +203,11 @@
     \label{fig:spx7}
 \end{figure}
 
-类似地，FORS 私钥生成类型（\cref{fig:spx8}）与 FORS 树地址类型相同，只是类型字取 6，且 tree height 字恒设为 $0$。和 \WOTSCS\ 私钥生成地址一样，其余字段必须与处理该值时所用 FORS 树地址保持一致。
+类似地，BPORS+FP 子秘密值生成类型（\cref{fig:spx8}）与 BPORS+FP 子树地址类型相同，只是类型字取 6，且 tree height 字恒设为 $0$。和 \WOTSCS\ 私钥生成地址一样，其余字段必须与处理该值时所用 BPORS+FP 子树地址保持一致。类型值 7 用于哈希完整的 BPORS+FP 外层桶树。
 
 地址中的所有字段都编码无符号整数。描述地址生成时，我们使用 set 方法：它接受正整数，并将某一字段的比特设置为该整数的大端二进制表示。本文统一采用如下约定：当改变地址的类型字（即调用 \texttt{setType()} 方法）时，后续三个字会被初始化为 0。
 
-为了便于在后续伪代码中跟踪这些地址类型，我们分别用常量 \verb|WOTS_HASH|、\verb|WOTS_PK|、\verb|TREE|、\verb|FORS_TREE|、\verb|FORS_ROOTS|、\verb|WOTS_PRF| 和 \verb|FORS_PRF| 来引用它们。
+为了便于在后续伪代码中跟踪这些地址类型，我们分别用常量 \verb|WOTS_HASH|、\verb|WOTS_PK|、\verb|TREE|、\verb|BPORS_CHILD_TREE|、\verb|BPORS_ROOTS|、\verb|WOTS_PRF|、\verb|BPORS_CHILD_PRF| 和 \verb|BPORS_OUTER| 来引用它们。
 
 \begin{figure}[ht]
     \centering
@@ -219,7 +219,7 @@
         \bitbox{8}{Tree Height = 0} &
         \bitbox{8}{Tree Index}
     \end{bytefield}
-    \caption{FORS 私钥生成地址。}
+    \caption{BPORS+FP 子秘密值生成地址。}
     \label{fig:spx8}
 \end{figure}
 
@@ -426,7 +426,7 @@ XMSS 签名是一个长度为 $((\wotslen+h_{\mathrm{XMSS}})\cdot n)$ 字节的�
 
 \subsection{HT：超树}
 
-\SPHINCSA\ 的超树 HT 是 \XMSSMT\ 的一个变体。本质上，它是一棵由 XMSS 实例构成的认证树。HT 由多层 XMSS 树组成：顶层和中间层的树用来签名其下一层 XMSS 树的公钥（即根节点），而最底层的树则用于签名实际消息；在 \SPHINCSA\ 中，这里的“实际消息”具体是 FORS 公钥。
+\SPHINCSA\ 的超树 HT 是 \XMSSMT\ 的一个变体。本质上，它是一棵由 XMSS 实例构成的认证树。HT 由多层 XMSS 树组成：顶层和中间层的树用来签名其下一层 XMSS 树的公钥（即根节点），而最底层的树则用于签名实际消息；在 \SPHINCSA\ 中，这里的“实际消息”具体是 BPORS+FP 公钥。
 
 考虑一棵总高度为 $h$ 的 HT，其包含 $d$ 层 XMSS 树，自底向上的层高分别为 $(h_0,\ldots,h_{d-1})$，满足 $\sum_{i=0}^{d-1} h_i = h$。那么第 $d-1$ 层包含一棵 XMSS 树。一般地，第 $i$ 层包含 $2^{\sum_{j=i+1}^{d-1} h_j}$ 棵 XMSS 树。最后，第 $0$ 层包含 $2^{h-h_0}$ 棵 XMSS 树。
 
@@ -488,7 +488,6 @@ HT 签名验证（\cref{alg:htverify}）可以概括为：调用 $d$ 次 \texttt
 \end{algorithm}
 \section{BPORS+FP：桶稀疏少次签名}
 \label{sec:bpors}
-\label{sec:fors}
 
 \SPHINCSA\ 的超树 HT 并不直接签名原始消息。随机化消息哈希首先选择一个底层 HT 叶子，并给出一个 $n$ 字节摘要 \md。Kylin 使用 BPORS+FP 对该摘要签名；BPORS+FP 是基于 bucket thinning 的少次签名组件~\cite{bucketthinning}。随后，底层 XMSS 树对恢复出的 BPORS+FP 公钥进行签名。
 
@@ -555,119 +554,10 @@ Kylin 对 BPORS+FP 采用隐式验证。验证者根据 \sigbpors 与 \md 重新
     \label{alg:bporspkfromsig}
 \end{algorithm}
 
-\iffalse
-\section{FORS：随机子集森林}
-\label{sec:fors}
-
-\SPHINCSA\ 的超树 HT 并不直接签名原始消息，而是签名 FORS 实例的公钥；而 FORS 公钥又用于签名消息摘要。FORS（forest of random subsets，随机子集森林）是一种少次签名方案（FTS）。FORS 改进自 HORST \cite{EC:BHHLNP15}，而 HORST 本身又是 HORS \cite{EPRINT:ReyRey02} 的一个变体。从安全性角度看，FORS 的输入必须是哈希函数的输出。下文将 FORS 描述为作用在比特串上的签名方案。
-
-FORS 使用参数 $k$ 和 $t=2^{a}$（例如可取 $t=2^{15}, k=10$）。FORS 对长度为 $ka$ 比特的字符串进行签名。这里我们不再统一使用字节作为长度单位，因为消息长度的比特数未必是 8 的倍数。私钥由 $kt$ 个随机的 $n$ 字节串构成，并分成 $k$ 组，每组包含 $t$ 个 $n$ 字节串。私钥值通过 \SPHINCSA\ 私钥中的主秘密种子 \sk.\seed\ 伪随机生成。在 \SPHINCSA\ 中，FORS 私钥值仅作为计算公钥或签名时的中间结果被临时生成。
-
-FORS 公钥是一个单独的 $n$ 字节哈希值。它通过对 $k$ 棵二叉哈希树的根节点做可调哈希压缩得到。这 $k$ 棵二叉哈希树的高度均为 $a$，每棵树用于认证一组中的 $t$ 个私钥值。因此，树的叶子就是其私钥组中各值的（可调）哈希。
-
-一个对字符串 $M$ 的签名由 $k$ 个私钥值及其对应的认证路径组成，每组私钥元素恰取一个。为生成签名，首先将 $\md$ 划分为 $k$ 个长度为 $a$ 比特的字符串。由于 \md\ 是字节序列，我们先按字节枚举，再在每个字节内部按从低位到高位的顺序将其展开为比特串。随后，将这些比特串分别解释为介于 $0$ 与 $t-1$ 之间的整数。每个整数都用于在对应私钥组中选择一个私钥值。也就是说，若第一个整数是 $i$，则选取第一组中的第 $i$ 个私钥元素，依此类推。最终签名由这些被选中的私钥元素及其认证路径组成。
-
-\SPHINCSA\ 对 FORS 使用隐式验证：它只提供一个根据签名恢复候选公钥的方法。恢复过程是：利用输入字符串计算得到的索引、签名中的私钥值以及认证路径，计算出 $k$ 棵树的根节点；再对这些根节点做可调哈希，得到候选公钥并返回。
-
-下面开始描述 FORS 的参数与算法。
-
-\subsection{FORS 参数}
-\label{sec:forspara}
-FORS 使用参数 $n, k$ 和 $t$；它们均为正整数。参数含义如下：
-
-\begin{itemize}
-    \item $ n$：安全参数，即私钥、公钥或签名元素的字节长度。
-
-    \item $ k$：私钥集合的个数、树的个数，以及从输入字符串中计算出的索引个数。
-
-    \item $ t$：每个私钥集合中的元素个数、每棵哈希树的叶子个数，以及索引值的上界。参数 $t$ \textbf{必须} 是 2 的幂。若 $t=2^{a}$，则对应树高为 $a$，输入字符串会被切分成长度为 $a$ 的比特串。
-\end{itemize}
-
-FORS 的输入是长度为 $k\log t$ 的比特串。
-
-\begin{figure}[ht]
-    \centering
-    \includegraphics[width=.8\linewidth]{paper/figure/fors.eps}
-    \caption{FORS 树与公钥。} \label{fig:spx12}
-\end{figure}
-
-\subsection{FORS 私钥（函数 \texttt{fors\_SKgen})}
-
-在 \SPHINCSA\ 的上下文中，FORS 私钥就是 \SPHINCSA\ 私钥中的单一秘密种子 \sk.\seed。利用 FORS 私钥生成地址和 \PRF，可以由该种子生成 $kt$ 个 $n$ 字节私钥值。虽然从逻辑上看这些值应当分组为一个二维数组，但在实现时通常可以将其视为一个长度为 $kt$ 的一维数组。此时，第 $i$ 组中的第 $j$ 个元素存放在 $\sk[it+j]$。为了生成其中某个元素，需要使用一个 FORS 私钥生成地址 \texttt{skADRS}，该地址编码了 FORS 密钥对在 \SPHINCSA\ 中的位置，并将 tree height 设为 $0$，leaf index 设为 $it+j$：
-
-\begin{algorithm}
-    \inputminted[breaklines,linenos,tabsize=2,mathescape,escapeinside=||]{C}{paper/code/fors_SKgen.cs}
-    \caption{\texttt{fors\_SKgen} --- 计算 FORS 私钥值。}
-    \label{alg:forsskgen}
-\end{algorithm}
-
-\subsection{FORS TreeHash（函数 \texttt{fors\_treehash})}
-
-在讨论 FORS 公钥之前，我们先说明树的计算方式。为了计算 FORS 哈希树中的 $n$ 字节节点，使用子程序 \texttt{fors\_treehash}。它本质上与 \cref{sec:xmss} 中的 \texttt{treehash}（\cref{alg:treehash}）是同一个算法，区别只在于叶节点如何计算以及地址如何处理。不过由于地址结构非常相似，实现时完全可以较容易地将两者合并为一个通用例程。
-
-算法 \texttt{fors\_treehash} 接受以下输入：秘密种子 \sk.\seed、公有种子 $\pk.\seed$、无符号整数 $s$（起始索引）、无符号整数 $z$（目标节点高度），以及编码 FORS 密钥对地址的 \ADRS。与 \texttt{treehash} 类似，\texttt{fors\_treehash} 返回一棵高度为 $z$ 的树的根节点，其中最左叶子对应索引 $s$ 的私钥元素经哈希后的值。这里的 $s$ 是在整个 $kt$ 个私钥元素上连续编号的。并且 \textbf{要求} $s$ \% $2^{z}=0$，即索引为 $s$ 的叶子必须是某棵高度为 $z$ 子树的最左叶；否则算法会失败，因为它将尝试计算并不存在的节点。
-
-\begin{algorithm}
-    \inputminted[breaklines,linenos,tabsize=2,mathescape,escapeinside=||]{C}{paper/code/fors_treehash.cs}
-    \caption{\texttt{fors\_treehash} 算法。}
-    \label{alg:forstreehash}
-\end{algorithm}
-
-\subsection{FORS 公钥（函数 \texttt{fors\_PKgen})}
-
-在 \SPHINCSA\ 的上下文中，FORS 公钥从不会被单独生成；它只会与签名一起出现。我们在此保留 \texttt{fors\_PKgen}，主要是为了完整性、便于理解以及测试。算法 \texttt{fors\_PKgen} 输入秘密种子 \sk.\seed、公有种子 $\pk.\seed$ 和一个 FORS 地址 \ADRS；后者编码该 FORS 实例在 \SPHINCSA\ 中的位置。算法输出一个 FORS 公钥。
-
-\begin{algorithm}
-    \inputminted[breaklines,linenos,tabsize=2,mathescape,escapeinside=||]{C}{paper/code/fors_PKgen.cs}
-    \caption{\texttt{ fors\_PKgen } --- 生成 FORS 公钥。}
-    \label{alg:forspkgen}
-\end{algorithm}
-
-\subsection{FORS 签名生成（函数 \texttt{fors\_sign})}
-
-FORS 签名是一个长度为 $k(\log t+1)$ 的 $n$ 字节串数组。它包含 $k$ 个私钥值（每个 $n$ 字节），以及与之对应的认证路径（每条路径包含 $\log t$ 个 $n$ 字节值）。
-
-算法 \texttt{fors\_sign} 的输入是一个长度为 $(k\log t)$ 比特的字符串 $M$、秘密种子 \sk.\seed、公有种子 $\pk.\seed$ 和地址 \ADRS。该地址编码了 FORS 实例在 \SPHINCSA\ 中的位置。算法输出一个 FORS 签名 $\sigfors$。
-
-\begin{algorithm}
-    \inputminted[breaklines,linenos,tabsize=2,mathescape,escapeinside=||]{C}{paper/code/fors_sign.cs}
-    \caption{\texttt{ fors\_sign } --- 对字符串 $M$ 生成 FORS 签名。}
-    \label{alg:forssign}
-\end{algorithm}
-
-签名数据格式见 \cref{fig:spx13}。
-
-\begin{figure}[ht]
-    \centering
-    \begin{bytefield}[bitwidth=1.1em,bitheight=2em]{16}
-        \wordbox{1}{Private Key Value (Tree 0)} \\
-        \wordbox{1}{$\mathbf{AUTH}$ (Tree 0)} \\
-        \wordbox[lrt]{1}{...} \\
-        \skippedwords \\
-        \wordbox[lrb]{1}{...} \\
-        \wordbox{1}{Private Key Value (Tree $k-1$)} \\
-        \wordbox{1}{$\mathbf{AUTH}$ (Tree $k-1$)} \\
-    \end{bytefield}
-    \caption{FORS 签名。} \label{fig:spx13}
-\end{figure}
-
-\subsection{由签名恢复 FORS 公钥（函数 \texttt{fors\_pkFromSig})}
-
-\SPHINCSA\ 对 FORS 签名采用隐式验证方式。一个 FORS 签名会被用来恢复一个候选 FORS 公钥。该公钥将继续参与后续计算（作为上层 XMSS 树签名的消息），并在后续计算结果中被隐式验证。因此，本规范不包含 \texttt{fors\_verify} 方法，而是提供 \texttt{fors\_pkFromSig} 方法。
-
-\texttt{fors\_pkFromSig} 的输入包括：一个长度为 $ k\log t$ 比特的字符串 $M$、一个 FORS 签名 $\sigfors$、公有种子 \pk.\seed\ 以及地址 \ADRS。该地址编码了 FORS 实例在 \SPHINCSA\ 密钥对虚拟结构中的位置。算法首先利用 \texttt{fors\_treehash} 计算出 $k$ 棵二叉哈希树的根节点，随后再用可调哈希函数 $\mathrm{T}_{k}$ 对这些根节点做压缩。 \texttt{fors\_pkFromSig} 算法见 \cref{alg:forspkfromsig}。该方法会调用 \sigfors.\texttt{getSK(i)} 与 \sigfors.\texttt{getAUTH(i)}：前者返回签名中存储的第 $i$ 个私钥元素，后者返回签名中存储的第 $i$ 条认证路径。
-
-\begin{algorithm}
-    \inputminted[breaklines,linenos,tabsize=2,mathescape,escapeinside=||]{C}{paper/code/fors_pkFromSig.cs}
-    \caption{\texttt{ fors\_pkFromSig } --- 由 FORS 签名恢复 FORS 公钥。}
-    \label{alg:forspkfromsig}
-\end{algorithm}
-
-\fi
 
 \section{完整的 Kylin 签名方案}
 \label{sec:spx-core}
-到这里，我们已经具备描述主构造 \SPHINCSA\ 所需的全部组件。本质上，\SPHINCSA\ 沿用了 \SPHINCSA\ 的基础结构，唯一的差异在于其一次性签名组件。
+到这里，我们已经具备描述主构造 \SPHINCSA\ 所需的全部组件。它保留 SPHINCS 风格的超树结构，同时使用 \WOTSCS\ 一次性签名，并以 BPORS+FP 作为底层少次签名组件。
 
 \subsection{\SPHINCSA\ 参数}
 
@@ -865,8 +755,8 @@ Winternitz 参数 $w$ 决定了每个 \WOTSCS\ 实例中哈希链的条数与长
     \toprule
     参数族 & NGCC 等级 & $q$ & $n$ & $h/d$ & $(h_0,\ldots,h_{d-1})$ & $(K,B,t,k,m_{\max})$ & $w$ & $\wotslen$ & bitsec & pk & sk & sig \\ \midrule
     Kylin-128 & 128/80 & $2^{64}$ & 16 & 65/9 & $(7,7,7,7,7,7,7,8,8)$ & $(5,6,132,4,120)$ & 73 & 22 & 127 & 32 & 64 & 6472 \\
-    Kylin-256 & 256/128 & $2^{64}$ & 32 & 68/10 & $(6,6,7,7,7,7,7,7,7,7)$ & $(7,7,280,5,235)$ & 54 & 46 & 256 & 64 & 128 & 25576 \\
-    Kylin-512 & 512/256 & $2^{64}$ & 64 & 66/11 & $(6,6,6,6,6,6,6,6,6,6,6)$ & $(13,7,512,5,490)$ & 97 & 79 & 511 & 128 & 256 & 95432 \\
+    Kylin-256 & 256/128 & $2^{64}$ & 32 & 58/9 & $(6,7,7,7,6,6,6,6,7)$ & $(8,7,384,6,271)$ & 54 & 46 & 255 & 64 & 128 & 25352 \\
+    Kylin-512 & 512/256 & $2^{64}$ & 64 & 66/11 & $(6,6,6,6,6,6,6,6,6,6,6)$ & $(13,6,320,6,427)$ & 103 & 78 & 511 & 128 & 256 & 91528 \\
     \bottomrule
     \end{tabular}%
     }

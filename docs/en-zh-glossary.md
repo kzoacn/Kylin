@@ -21,6 +21,8 @@ This glossary fixes the preferred wording for the bilingual submission document 
 | bucket thinning | bucket thinning（桶稀疏） | Keep English term on first use when naming the technique. |
 | BPORS+FP | BPORS+FP | Do not translate component acronym. |
 | forced pruning | forced pruning | Keep English technical term; explain as `强制剪枝` only if needed. |
+| forced-pruning acceptance probability | forced-pruning 接受概率 | Table/checker prose can use `tau` unchanged. |
+| counter | counter | Keep English in BPORS+FP algorithm prose and code-facing descriptions. |
 | Octopus authentication set | Octopus 认证集合 | Keep `Octopus` unchanged. |
 | hypertree | 超树 | Keep `HT` token unchanged when used as an algorithm/component name. |
 | layer height | 层高 | `layer heights` -> `分层高度`. |

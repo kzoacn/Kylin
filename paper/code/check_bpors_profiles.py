@@ -10,6 +10,7 @@ not a broad parameter search.
 from __future__ import annotations
 
 import csv
+import math
 from math import comb
 from pathlib import Path
 
@@ -17,6 +18,9 @@ import mpmath as mp
 
 ROOT = Path(__file__).resolve().parents[2]
 CSV = ROOT / "paper/data/para_kylin_final_6profiles.csv"
+COST_SLACK = 1.05
+TAU_FLOOR = 1.0e-8
+Q24_TAU_FLOOR = 5.0e-7
 
 mp.mp.dps = 170
 
@@ -77,6 +81,14 @@ def signature_bytes(row: dict[str, str]) -> int:
     return n + ctr + (K * k + mmax) * n + d * wots_len * n + h * n
 
 
+def ceil_log2(x: int) -> int:
+    return (x - 1).bit_length()
+
+
+def tau_floor_for_name(name: str) -> float:
+    return Q24_TAU_FLOOR if name.endswith("-q24") else TAU_FLOOR
+
+
 def main() -> int:
     with CSV.open(newline="") as f:
         for row in csv.DictReader(f):
@@ -93,10 +105,25 @@ def main() -> int:
             )
             print(
                 f"{row['name']}: sig={got_sig} "
-                f"bitsec={mp.nstr(bitsec, 12)}"
+                f"bitsec={mp.nstr(bitsec, 12)} "
+                f"tau={row['tau']} "
+                f"sign={row['sign_hashcalls']}/{row['baseline_sign_hashcalls']} "
+                f"verify={row['verify_hashcalls']}/{row['baseline_verify_hashcalls']}"
             )
             if got_sig != want_sig:
                 raise SystemExit(f"signature-size mismatch for {row['name']}")
+            if bitsec + mp.mpf("1e-9") < mp.mpf(row["target_bits"]):
+                raise SystemExit(f"BPORS cover estimate below target for {row['name']}")
+            if float(row["tau"]) + 1e-18 < tau_floor_for_name(row["name"]):
+                raise SystemExit(f"forced-pruning tau below floor for {row['name']}")
+            if int(row["bpors_child_height"]) != ceil_log2(int(row["bpors_t"])):
+                raise SystemExit(f"child-height mismatch for {row['name']}")
+            sign_cap = math.floor(COST_SLACK * int(row["baseline_sign_hashcalls"]))
+            verify_cap = math.floor(COST_SLACK * int(row["baseline_verify_hashcalls"]))
+            if int(row["sign_hashcalls"]) > sign_cap:
+                raise SystemExit(f"sign hash-call cap exceeded for {row['name']}")
+            if int(row["verify_hashcalls"]) > verify_cap:
+                raise SystemExit(f"verify hash-call cap exceeded for {row['name']}")
     return 0
 
 

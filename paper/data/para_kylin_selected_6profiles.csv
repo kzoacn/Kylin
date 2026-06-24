@@ -1,7 +1,7 @@
-name,q,n,target_bits,h,d,h_profile,h0,bpors_K,bpors_B,bpors_t,bpors_k,bpors_mmax,bpors_ctr_bytes,w,len,sig,bitsec,notes
-Kylin-128,2^64,16,127.0,65,9,"[7,7,7,7,7,7,7,8,8]",7,5,6,132,4,120,8,73,22,6472,127.999038,"BPORS+FP replaces FORS; concrete cover by bucket thinning"
-Kylin-256,2^64,32,255.0,68,10,"[6,6,7,7,7,7,7,7,7,7]",6,7,7,280,5,235,8,54,46,25576,255.999999,"BPORS+FP replaces FORS; concrete cover by bucket thinning"
-Kylin-512,2^64,64,511.0,66,11,"[6,6,6,6,6,6,6,6,6,6,6]",6,13,7,512,5,490,8,97,79,95432,512.000000,"BPORS+FP replaces FORS; concrete cover by bucket thinning"
-Kylin-128-q24,2^24,16,127.0,22,1,[22],22,2,13,736,7,112,8,4,67,3464,127.140831,"Additional q=2^24 companion profile"
-Kylin-256-q24,2^24,32,255.0,21,1,[21],21,3,13,3456,8,235,8,4,131,13192,255.025552,"Additional q=2^24 companion profile"
-Kylin-512-q24,2^24,64,511.0,57,3,"[19,19,19]",19,5,12,3456,9,420,8,64,87,50184,511.999992,"Additional q=2^24 companion profile"
+name,q,n,target_bits,h,d,h_profile,h0,bpors_K,bpors_B,bpors_t,bpors_child_height,bpors_k,bpors_mmax,bpors_ctr_bytes,w,len,sig,bitsec,tau,keygen_hashcalls,sign_hashcalls,verify_hashcalls,baseline_sign_hashcalls,baseline_verify_hashcalls,notes
+Kylin-128,2^64,16,127.0,65,9,"[7,7,7,7,7,7,7,8,8]",7,5,6,132,8,4,120,8,73,22,6472,127.999038,0.658494833454,417279,2389373,7362,2442880,7357,BPORS+FP retuned under old-FORS 105% sign/verify hashcall caps
+Kylin-256,2^64,32,255.0,58,9,"[6,7,7,7,6,6,6,6,7]",6,8,7,384,9,6,271,8,54,46,25352,255.479725,7.41485256599e-06,324095,3382025,11405,3223168,12449,BPORS+FP retuned under old-FORS 105% sign/verify hashcall caps
+Kylin-512,2^64,64,511.0,66,11,"[6,6,6,6,6,6,6,6,6,6,6]",6,13,6,320,9,6,427,8,103,78,91528,511.039464,2.64852229743e-05,519295,6493104,44418,6198272,43009,BPORS+FP retuned under old-FORS 105% sign/verify hashcall caps
+Kylin-128-q24,2^24,16,127.0,18,1,[18],18,2,15,2048,11,6,93,8,4,67,3064,127.444703,5.71961928854e-07,88342527,474918287,237,1329594368,226,BPORS+FP retuned under old-FORS 105% sign/verify hashcall caps
+Kylin-256-q24,2^24,32,255.0,18,1,[18],18,4,15,1024,10,7,202,8,3,165,13256,255.638134,5.75992858253e-07,173539327,534412737,442,1268776960,430,BPORS+FP retuned under old-FORS 105% sign/verify hashcall caps
+Kylin-512-q24,2^24,64,511.0,32,2,"[16,16]",16,6,13,1120,11,9,362,8,96,80,38984,511.295952,5.15316309911e-07,508690431,1173855302,8104,1164963840,8584,BPORS+FP retuned under old-FORS 105% sign/verify hashcall caps
