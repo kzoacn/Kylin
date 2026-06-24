@@ -115,6 +115,14 @@
 
 ## 5. 进度日志
 
+### 2026-06-24 - Rebuild Electronic Package After Citation Update (Done)
+
+- 重新构建英文算法文本：`make -C paper/build all` 通过，并将最新 `main.pdf` 复制为 `build/算法文本.pdf`；包内算法文本已包含 Abri--Katz ePrint 2025/2069 引用。
+- 重建 fresh `build/` 电子提交树，根目录包含 `算法基本信息.pdf`、`算法文本.pdf`、`知识产权声明.pdf`、`Implementations/` 与 `Test_Vectors/`；主提交 Ref/Opt 六个实例保留在对应目录，q24 companion 从 `Additional_Implementation/Optimized_Implementation/Kylin-*-q24` 提升为扁平 `Additional_Implementation/Kylin-*-q24`。
+- 重写包内 `build/Implementations/README`，并清理包内 Makefile，使其只依赖随包源码并提供 `all/test/kat/clean` 目标，不引用仓库本地 `tools/`、benchmark 或 stack-usage 目标。
+- 生成 `build/Kylin-0624.zip`，大小约 7.8 MB，SHA-256 为 `2abbed7d13a2b965bc8e29aac99e2538e6398d74b95187489ebeb7d26550e32d`。
+- 验证：源树主提交 Ref/Opt 六个 q64 实例 `make clean all test` 通过；包内主提交 Ref/Opt 六个 q64 实例 `make clean all test` 通过；包内 q24 Additional 三个实例 `make clean all` 通过，q24 `make test` 仍按默认打包策略跳过；六个 KAT 文件均为 120 行且与仓库根 `Test_Vectors/` 逐字节一致；zip 清单为 321 项，不含 `tools/`、`benchmarks/`、`output/`、`.stack-usage/`、对象文件、栈报告、生成可执行文件或嵌套 Additional 实现层级。
+
 ### 2026-06-24 - Cite Forced-Pruning Hash-Signature Work (Done)
 
 - 在英文主文档的无状态哈希签名相关工作、设计差异、BPORS+FP 构造说明、设计依据与安全性证明入口处引用 Abri--Katz 的 ePrint 2025/2069 `Shorter Hash-Based Signatures Using Forced Pruning`，使用现有 CryptoBib key `EPRINT:AbrKat25`。
