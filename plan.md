@@ -790,3 +790,13 @@
   - q24 Additional 三个包内实例 `make clean all` 通过；q24 `make test` 未作为默认打包烟测；
   - 六个 KAT 文件均在 `build/Test_Vectors/` 中，每个 120 行，SHA-256 与仓库根 `Test_Vectors/` 一致；
   - `zipinfo` 检查确认压缩包不含自身、`tools/`、`benchmarks/`、`output/`、`.stack-usage/`、对象文件、栈报告或生成的可执行文件，且 Additional q24 没有嵌套 `Reference_Implementation/` 或 `Optimized_Implementation/` 层级。
+
+### 2026-06-24 - Refresh Table 1 and Rebuild Electronic Package (Done)
+
+- 更新英文 `paper/figure/sha256-simple-comp.tex` 及中文镜像 `paper/figure-zh/sha256-simple-comp.tex` 中的 Table 1，使三组主实例的 KeyGen/Sign/Verify hashcall 与签名大小对齐最终 BPORS retuned 参数：
+  - `Kylin-128`: `417279 / 2389373 / 7362`, signature `6472` bytes；
+  - `Kylin-256`: `324095 / 3382025 / 11405`, signature `25352` bytes；
+  - `Kylin-512`: `519295 / 6493104 / 44418`, signature `91528` bytes。
+- 重新构建英文与中文论文：`make -C paper/build all && make -C paper/build zh` 通过；`pdftotext -layout` 抽查确认 `main.pdf` 和 `build/算法文本.pdf` 中的 Table 1 已显示新值。
+- 重新生成电子提交包 `build/Kylin-0624.zip`，SHA-256 为 `8fef9179b5355723e33ce0f35dceeca771c366bc1752ee8e046b7fa103c8fa73`。
+- 验证：主提交 Ref/Opt 六个包内实例 `make clean all test` 通过；q24 Additional 三个包内实例 `make clean all` 通过；zip 清单仍为 321 项且不含 `tools/`、`benchmarks/`、`output/`、`.stack-usage/`、对象文件、栈报告、生成的可执行文件或嵌套 Additional 实现层级。
