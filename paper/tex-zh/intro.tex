@@ -5,7 +5,7 @@
 
 \paragraph{有状态签名。} Ralph Merkle 提出了建立在 Lamport 一次性签名（OTS）之上的基于哈希的签名方案 \cite{C:Merkle89a,Lamport79}。随后，对有状态签名的改进工作发展出了扩展 Merkle 签名方案（XMSS）~\cite{hulsing2018xmss} 和 Leighton-Micali 签名（LMS）~\cite{mcgrew2019leighton}，并分别被 NIST~\cite{cooper2020recommendation} 与 IETF 标准化。
 
-\paragraph{无状态签名。} 在典型的有状态签名中，例如 Merkle 签名方案（MSS），签名者必须记录哪些 OTS 私钥已经使用过，以避免重复使用带来的安全问题。但在许多实际场景中，这样的状态维护并不总是可行。Goldreich 提出了无状态的基于哈希的签名构造~\cite{C:Goldreich86a,Goldreich04}，消除了本地状态的需求，但代价是签名长度极大。近年来，这一研究方向重新受到关注。通过引入超树结构，SPHINCS~\cite{EC:BHHLNP15} 给出了 Goldreich 风格无状态哈希签名的一个实用化实例。SPHINCS 进一步成为 NIST PQC 标准化过程中多个后续方案的基础，包括 Gravity-SPHINCS~\cite{RSA:AumEnd18}、SPHINCS-Simpira~\cite{EPRINT:GueMou17} 以及 \SPHINCSP\ \cite{CCS:BHKNRS19}。更近期的优化与分析工作包括 SPHINCS+C~\cite{SP:HKRY23}、针对超树结构的更优尺寸-时间折中~\cite{C:KhoKudWag25}、可变层高/链长框架扩展~\cite{EPRINT:QinSun25}，以及重新审视常和 Winternitz 一次性签名并将其应用于 SPHINCS+ 与 XMSS 的 SPHINCS-alpha 工作~\cite{optimalwots}。NIST 还发布了无状态哈希签名的最终联邦标准 FIPS 205（SLH-DSA）~\cite{NIST:FIPS205}。
+\paragraph{无状态签名。} 在典型的有状态签名中，例如 Merkle 签名方案（MSS），签名者必须记录哪些 OTS 私钥已经使用过，以避免重复使用带来的安全问题。但在许多实际场景中，这样的状态维护并不总是可行。Goldreich 提出了无状态的基于哈希的签名构造~\cite{C:Goldreich86a,Goldreich04}，消除了本地状态的需求，但代价是签名长度极大。近年来，这一研究方向重新受到关注。通过引入超树结构，SPHINCS~\cite{EC:BHHLNP15} 给出了 Goldreich 风格无状态哈希签名的一个实用化实例。SPHINCS 进一步成为 NIST PQC 标准化过程中多个后续方案的基础，包括 Gravity-SPHINCS~\cite{RSA:AumEnd18}、SPHINCS-Simpira~\cite{EPRINT:GueMou17} 以及 \SPHINCSP\ \cite{CCS:BHKNRS19}。更近期的优化与分析工作包括 SPHINCS+C~\cite{SP:HKRY23}、用于缩短 SPHINCS+ 风格少次签名组件的 forced-pruning 技术~\cite{EPRINT:AbrKat25}、针对超树结构的更优尺寸-时间折中~\cite{C:KhoKudWag25}、可变层高/链长框架扩展~\cite{EPRINT:QinSun25}，以及重新审视常和 Winternitz 一次性签名并将其应用于 SPHINCS+ 与 XMSS 的 SPHINCS-alpha 工作~\cite{optimalwots}。NIST 还发布了无状态哈希签名的最终联邦标准 FIPS 205（SLH-DSA）~\cite{NIST:FIPS205}。
 
 \input{paper/figure-zh/sha256-simple-comp}
 

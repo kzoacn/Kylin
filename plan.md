@@ -115,6 +115,12 @@
 
 ## 5. 进度日志
 
+### 2026-06-24 - Cite Forced-Pruning Hash-Signature Work (Done)
+
+- 在英文主文档的无状态哈希签名相关工作、设计差异、BPORS+FP 构造说明、设计依据与安全性证明入口处引用 Abri--Katz 的 ePrint 2025/2069 `Shorter Hash-Based Signatures Using Forced Pruning`，使用现有 CryptoBib key `EPRINT:AbrKat25`。
+- 同步中文镜像章节，补齐 `paper/tex-zh/construction.tex` 中对 BPORS+FP 与超树分层高度两项改进的概述，使其与英文构造概览保持一致。
+- 验证：`make -C paper/build all` 与 `make -C paper/build zh` 均通过；日志未发现未解析 citation/reference 或 LaTeX error，剩余为既有 overfull/underfull 与中文字体 fallback warning。
+
 ### 2026-06-24 - Retune BPORS Parameters and Regenerate KATs (Done)
 
 - 将 Kylin 的底层少次签名层迁移后的参数重新搜索并冻结到 `paper/data/para_kylin_final_6profiles.csv`；新增 `paper/code/search_bpors_kylin_params.py` 作为 BPORS+FP-aware 复现实验脚本，并保留旧 FORS baseline 到 `paper/data/para_fors_baseline_6profiles.csv` 作为 105% sign/verify hash-call cap 的比较源。

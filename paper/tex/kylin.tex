@@ -535,9 +535,9 @@ HT signature verification (\cref{alg:htverify}) can be summarized as $d$ calls t
 The \SPHINCSA\ hypertree HT is not used to sign the original message directly.
 Instead, the randomized message hash selects a bottom HT leaf and gives an
 $n$-byte digest \md.  Kylin signs this digest with BPORS+FP, a bucket-thinned
-few-time signature component based on the construction in
-\cite{bucketthinning}.  The resulting BPORS+FP public key is then signed by the
-bottom XMSS tree of the hypertree.
+few-time signature component based on the construction in~\cite{bucketthinning}
+and on forced-pruning style size control~\cite{EPRINT:AbrKat25}.  The resulting
+BPORS+FP public key is then signed by the bottom XMSS tree of the hypertree.
 
 BPORS+FP has an outer bucketing layer and a child PORS layer.  The outer layer
 contains $K$ coordinates.  Each coordinate contains $2^B$ buckets, and each

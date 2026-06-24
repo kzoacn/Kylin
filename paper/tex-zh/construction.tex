@@ -1,8 +1,9 @@
 % Source mirror: `paper/tex/construction.tex`.
 \section{相较 \SPHINCSP\ 的主要设计差异} \label{sec:balanced wotsp}\label{sec:wots-optimization}
 
-本节重点说明我们相较原始 \SPHINCSP\ 方案的改进，核心在于其一次性签名组件。
-我们的优化方案 \WOTSCS\ 相比原始 \WOTSP\ 方案，能够提供更大的消息空间/签名尺寸比，从而缩小一次性签名的尺寸。由此，整个基于哈希的签名方案可以重新调参，在不显著增加计算时间的前提下进一步减小签名长度。
+本节重点说明我们相较原始 \SPHINCSP\ 方案的主要改进：\WOTSCS\ 一次性签名组件、作为底层少次签名组件的 BPORS+FP，以及超树分层高度选择。
+我们的优化方案 \WOTSCS\ 相比原始 \WOTSP\ 方案，能够提供更大的消息空间/签名尺寸比，从而缩小一次性签名的尺寸。
+BPORS+FP 进一步通过 bucket thinning 和固定全局认证节点预算减少底层少次签名载荷，这与近期用于 SPHINCS+ 风格少次签名层的 forced-pruning 技术方向一致~\cite{EPRINT:AbrKat25}。由此，整个基于哈希的签名方案可以重新调参，在不显著增加计算时间的前提下进一步减小签名长度。
 此外，Kylin 在超树上采用了更灵活的分层高度布局，使得在 $h$ 不能被 $d$ 整除时，打包参数仍能保持良好平衡。
 
 本节将解释这些优化的细节，并给出若干技术性证明。

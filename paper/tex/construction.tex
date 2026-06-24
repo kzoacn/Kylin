@@ -6,12 +6,13 @@ few-time component, and the hypertree layer-height selection.  Our optimized
 \WOTSCS scheme allows a larger message space / signature size ratio as compared
 to the original \WOTSP\ scheme, allowing a smaller one-time signature size.
 BPORS+FP further reduces the bottom few-time payload through bucket thinning and
-a fixed global authentication-node budget.  As a result, the parameters of the
-hash-based signature scheme can be re-tuned to reduce the signature size
-without exacerbating the computation time.  In addition, Kylin uses a more
-flexible hypertree layout with diverse per-layer heights, which lets the
-packaged parameter sets remain well balanced even when $h$ is not divisible by
-$d$.
+a fixed global authentication-node budget, in the same spirit as recent
+forced-pruning techniques for SPHINCS+-style few-time layers~\cite{EPRINT:AbrKat25}.
+As a result, the parameters of the hash-based signature scheme can be re-tuned
+to reduce the signature size without exacerbating the computation time.  In
+addition, Kylin uses a more flexible hypertree layout with diverse per-layer
+heights, which lets the packaged parameter sets remain well balanced even when
+$h$ is not divisible by $d$.
 
 We explain the details of our optimization as well as some technical proofs in this section.
 

@@ -489,7 +489,7 @@ HT 签名验证（\cref{alg:htverify}）可以概括为：调用 $d$ 次 \texttt
 \section{BPORS+FP：桶稀疏少次签名}
 \label{sec:bpors}
 
-\SPHINCSA\ 的超树 HT 并不直接签名原始消息。随机化消息哈希首先选择一个底层 HT 叶子，并给出一个 $n$ 字节摘要 \md。Kylin 使用 BPORS+FP 对该摘要签名；BPORS+FP 是基于 bucket thinning 的少次签名组件~\cite{bucketthinning}。随后，底层 XMSS 树对恢复出的 BPORS+FP 公钥进行签名。
+\SPHINCSA\ 的超树 HT 并不直接签名原始消息。随机化消息哈希首先选择一个底层 HT 叶子，并给出一个 $n$ 字节摘要 \md。Kylin 使用 BPORS+FP 对该摘要签名；BPORS+FP 是基于 bucket thinning 构造~\cite{bucketthinning} 和 forced-pruning 风格尺寸控制~\cite{EPRINT:AbrKat25} 的少次签名组件。随后，底层 XMSS 树对恢复出的 BPORS+FP 公钥进行签名。
 
 BPORS+FP 包含一个外层桶结构和一个子 PORS 层。外层有 $K$ 个坐标；每个坐标包含 $2^B$ 个桶，每个桶存放一个独立子 PORS 实例的公钥。子 PORS 实例包含 $t$ 个叶子，并通过左填充 Merkle 树上的 Octopus 认证集合打开一个 $k$ 元子集。Kylin 采用全局 forced-pruning 阈值 $m_{\max}$：签名者使用显式 counter 反复执行 BPORS 编码哈希，直到总认证节点数不超过 $m_{\max}$；这里的总数同时包括 $KB$ 个外层认证节点和所有子 Octopus 节点。
 
