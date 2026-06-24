@@ -775,3 +775,18 @@
   - q24 Reference/Optimized 六个实例 `make clean && make` 全部通过，且 `Optimized_Implementation/Kylin-128-q24 make test` 通过；其余 q24 测试因 size-first 参数耗时较长，未纳入默认收口验证；
   - `make -C paper/build all` 与 `make -C paper/build zh` 均通过；
   - `git diff --check` 通过，活跃实现代码中未检出 `FORS/SPX_FORS/fors` 残留。
+
+### 2026-06-24 - Build BPORS-Retuned NGCC Electronic Submission Package (Done)
+
+- 按 `docs/公钥密码算法提交要求.md` 重新构建电子版提交材料：
+  - `make -C paper/build all` 通过，并将最新英文 `main.pdf` 复制为 `build/算法文本.pdf`；
+  - fresh `build/` 根目录包含 `算法基本信息.pdf`、`算法文本.pdf`、`知识产权声明.pdf`、`Implementations/`、`Test_Vectors/`；
+  - 主提交 `Kylin-128/256/512` 保留在 `Reference_Implementation/` 与 `Optimized_Implementation/`；
+  - q24 伴随实现从源码树 `Additional_Implementation/Optimized_Implementation/Kylin-*-q24` 提升为包内扁平 `Additional_Implementation/Kylin-*-q24`。
+- 重写包内 `build/Implementations/README`，只描述最终 shipped 树与实例源文件；同时清理包内 Makefile，使其不再引用仓库本地 `tools/`、benchmark 或 stack-usage 目标，最终包内实例可独立 `make`、`make test`、`make kat`。
+- 生成最终压缩包 `build/Kylin-0624.zip`，大小约 7.8 MB，SHA-256 为 `06ccdc7804472c0ced999f65f9c9f544df493b603698fed1dce8a24d35699fa2`。
+- 验证：
+  - 主提交 Ref/Opt 六个包内实例 `make clean all test` 通过，包括 `Kylin-512`；
+  - q24 Additional 三个包内实例 `make clean all` 通过；q24 `make test` 未作为默认打包烟测；
+  - 六个 KAT 文件均在 `build/Test_Vectors/` 中，每个 120 行，SHA-256 与仓库根 `Test_Vectors/` 一致；
+  - `zipinfo` 检查确认压缩包不含自身、`tools/`、`benchmarks/`、`output/`、`.stack-usage/`、对象文件、栈报告或生成的可执行文件，且 Additional q24 没有嵌套 `Reference_Implementation/` 或 `Optimized_Implementation/` 层级。
