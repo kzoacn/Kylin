@@ -115,6 +115,13 @@
 
 ## 5. 进度日志
 
+### 2026-06-24 - Clean Submission Worktree State (Done)
+
+- 将根目录受管的 `算法文本.pdf` 刷新为当前英文 `main.pdf` 内容，避免继续保留旧 42 页算法文本或删除状态；当前根目录算法文本与本次打包使用的 `build/算法文本.pdf` 同源。
+- 纳入当前 11 页 `知识产权声明.pdf` 以及 BPORS 迁移来源材料 `new-files/Shorter Hash-based Signatures via Bucket Thinning.pdf` 与 `new-files/Shorter_Hash-based_Signatures_via_Bucket_Thinning.md`，使先前未跟踪/未提交的提交材料和迁移依据进入版本管理。
+- 将根目录生成物 `main.pdf` 加入 `.gitignore`，保留本地构建产物但不再让它污染工作区状态。
+- 验证：`算法文本.pdf` 与当前 `main.pdf` 的 SHA-256 一致；`pdftotext 算法文本.pdf` 可检出 Abri--Katz ePrint 2025/2069 引用；`git diff --check` 通过。
+
 ### 2026-06-24 - Rebuild Electronic Package After Citation Update (Done)
 
 - 重新构建英文算法文本：`make -C paper/build all` 通过，并将最新 `main.pdf` 复制为 `build/算法文本.pdf`；包内算法文本已包含 Abri--Katz ePrint 2025/2069 引用。
