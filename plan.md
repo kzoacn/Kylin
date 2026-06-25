@@ -835,3 +835,18 @@
 - 重要约束说明：在包含 `2^{-8n}` 直接猜测项的 checker 模型下，q64 profile 的指数从下方逼近 `128/256/512`；checker 采用 `1e-12` 高精度数值容差验证精确 target 标签。q24 profile 改用 legacy `127/255/511` 目标后，`Kylin-128-q24` 签名尺寸从 exact-q24 的 `3928` 字节降至 `2632` 字节，同时仍满足 SP 800-230 的 keygen/sign/verify/signature cap。`Kylin-512-q24` 需要反推更大的 `Kylin-256-q24` 支撑 profile，因此 `Kylin-256-q24` 最终采用 `11816` 字节而不是初选的 `10888` 字节。
 - 已完成：`paper/data/para_kylin_final_6profiles.csv`、`para_kylin_selected_6profiles.csv`、12 个实现目录的 `params.h`、英文/中文参数表、安全表、性能 hashcall 表、实现 README、`AGENTS.md` 与 impact note 同步更新。
 - 验证：`python3 -m py_compile paper/code/search_sphincs_compare_params.py paper/code/search_bpors_kylin_params.py paper/code/check_bpors_profiles.py` 通过；`python3 paper/code/check_bpors_profiles.py` 通过；12 个 Reference/Optimized/Additional 实现目录 `make clean all` 通过；`make -C paper/build all` 与 `make -C paper/build zh` 均通过；`git diff --check` 通过。q24 KAT 生成、wall-clock benchmark 刷新和提交包重打包仍待单独长任务收口。
+
+### 2026-06-25 - Correct SPHINCS-alpha Hashcall Cap Interpretation (Blocked)
+
+- 复查 SPHINCS-alpha 2022/059 / NIST 提交版后确认：`537,033,762` 与 `764,352,612` 来自 SPHINCS-alpha SHA2 AVX2 benchmark 表，单位是 CPU cycles，不是 parameter-search hashcall。
+- 修正 `paper/code/search_sphincs_compare_params.py`：q64 SPHINCS-alpha cap 改为按 Section 8.1.1 / Appendix A 的理论 hashcall proxy 从参数公式计算，避免再次把 cycle 表误用为 hashcall cap。
+- 修正后的 SPHINCS-alpha theoretical proxy caps 为：
+  - `SPHINCS-alpha-128s`: signature `6880`, keygen `208639`, sign `2047872`, verify `7369`;
+  - `SPHINCS-alpha-256s`: signature `27232`, keygen `215167`, sign `2713408`, verify `18418`.
+- 重新搜索严格目标 `q64 exact 128/256/512`, `q24 legacy 127/255/511`, `Kylin-512 <= 4x Kylin-256` 时，`Kylin-128` 已无可行解：在 `sig<=6880`, `keygen<=208639`, `sign<=2047872`, `verify<=7369`, `bitsec>=128` 下 full BPORS 宽搜索失败。
+- 约束剥离诊断：
+  - 放开 keygen cap 仍无解；
+  - 保持 `sig<=6880` 时，满足精确 128 安全的最小 sign proxy 仍约为 `7.69e29`，问题来自 BPORS+FP forced-pruning 的 `1/tau` 项；
+  - 放开 signature cap、保留 keygen/sign/verify cap 与精确 128 安全时，最小签名为 `8616` bytes；
+  - 同样放开 signature cap 的精确 256 诊断点为 `28840` bytes。
+- 结论：严格“所有 q64 指标均不超过 SPHINCS-alpha small-signature theoretical hashcall proxy 且安全精确达标”与当前 BPORS+FP 构造冲突；因此本次未静默改写 `paper/data/para_kylin_final_6profiles.csv` 或实现参数，等待明确选择放宽 signature cap、sign cap 或改回其他对标口径。

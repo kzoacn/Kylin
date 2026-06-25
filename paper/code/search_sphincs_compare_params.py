@@ -215,52 +215,12 @@ EXTERNAL_CAPS = {
 }
 
 
+# SPHINCS-alpha Table 5 reports CPU cycles.  For Kylin parameter search we use
+# the theoretical hash-call proxy from SPHINCS-alpha Section 8.1.1 / Appendix A:
+#   sign = 2*k*2^a + d*2^(h/d)*(len*w+1)
+# and the analogous key-generation / verification formulas below.  These values
+# must not be replaced by the cycle counts from the benchmark table.
 SPHINCS_ALPHA_CAPS = {
-    "Kylin-128": CapProfile(
-        "SPHINCS-alpha-SHA2-128s",
-        bp.Baseline(
-            name="Kylin-128",
-            q_sigs=2**64,
-            n=16,
-            target_bits=TARGETS["Kylin-128"],
-            h=63,
-            d=9,
-            h_vec=(7,) * 9,
-            a=13,
-            k=12,
-            w=73,
-            length=22,
-            sig=6880,
-            sign_hashcalls=537033762,
-            verify_hashcalls=2689650,
-        ),
-        51421086,
-        False,
-    ),
-    "Kylin-256": CapProfile(
-        "SPHINCS-alpha-SHA2-256s",
-        bp.Baseline(
-            name="Kylin-256",
-            q_sigs=2**64,
-            n=32,
-            target_bits=TARGETS["Kylin-256"],
-            h=66,
-            d=11,
-            h_vec=(6,) * 11,
-            a=13,
-            k=23,
-            w=79,
-            length=42,
-            sig=27232,
-            sign_hashcalls=764352612,
-            verify_hashcalls=6005448,
-        ),
-        52048332,
-        False,
-    ),
-}
-
-SPHINCS_ALPHA_PARAMETER_PROXY_CAPS = {
     "Kylin-128": alpha_cap(
         name="Kylin-128",
         label="SPHINCS-alpha-128s",
