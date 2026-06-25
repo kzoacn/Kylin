@@ -862,3 +862,17 @@
   - q24 rows remain `Kylin-128-q24 sig=2632`, `Kylin-256-q24 sig=11816`, `Kylin-512-q24 sig=46280` under the prior legacy/support-profile logic.
 - 已同步：`paper/data/para_kylin_final_6profiles.csv`、`para_kylin_selected_6profiles.csv`、primary Ref/Opt `params.h`、`AGENTS.md`、`Implementations/README`、hashcall/package-bench CSV、英文/中文 Table 1、参数表、安全表、性能表与 impact note。
 - 验证：`python3 -m py_compile paper/code/search_sphincs_compare_params.py paper/code/search_bpors_kylin_params.py paper/code/check_bpors_profiles.py` 通过；`python3 paper/code/check_bpors_profiles.py` 通过；主提交 Reference/Optimized 三档 `make clean all test` 均通过，包括 `Kylin-512`；`make -C paper/build all` 与 `make -C paper/build zh` 均通过；`git diff --check` 通过。KAT/Test Vectors 与 package rebuild 仍需后续长任务刷新。
+
+### 2026-06-25 - SLH-DSA/SP 800-230 Legacy 127/255/511 Retune (Done)
+
+- 按最新要求将安全阈值切回 legacy `127/255/511`，并重新搜索六组 BPORS+FP 参数。约束口径为：q64 `Kylin-128/256` 对标 SLH-DSA SHAKE sign/verify hashcall cap，q24 `Kylin-128-q24/256-q24` 对标 SP 800-230 limited-signature-use sign/verify cap；keygen 不作为硬约束；q64 `Kylin-512` 不超过所选 `Kylin-256` 的 4 倍 sign/verify cap；`Kylin-512-q24` 直接对标外部 SP 800-230 `Kylin-256-q24` profile 的 4 倍 sign/verify cap，未反推放大 `Kylin-256-q24`。
+- 本轮还修正了 HT frontier pruning：支配关系现在要求 retained HT profile 的总高度 `h` 不小于被剪枝 profile，避免低高度 profile 错误剪掉高高度可行候选。
+- 当前冻结参数更新为：
+  - `Kylin-128`: `h=62,d=7,h_vec=[8,9,9,9,9,9,9], BPORS=(4,7,128,6,95), w=17, len=33, sig=6616`, `bitsec=127.054520`, `sign/verify=2113168/2060`;
+  - `Kylin-256`: `h=65,d=8,h_vec=[8,8,8,8,8,8,8,9], BPORS=(9,8,66,5,187), w=16, len=66, sig=26440`, `bitsec=255.155647`, `sign/verify=2912473/4310`;
+  - `Kylin-512`: `h=64,d=8,h_vec=[8,8,8,8,8,8,8,8], BPORS=(14,8,256,5,415), w=43, len=96, sig=84360`, `bitsec=511.663268`, `sign/verify=11566744/16755`;
+  - `Kylin-128-q24`: `h=21,d=1,h_vec=[21], BPORS=(2,16,560,7,76), w=7, len=48, sig=2568`, `bitsec=127.163327`, `sign/verify=1289759302/270`;
+  - `Kylin-256-q24`: `h=20,d=1,h_vec=[20], BPORS=(3,15,2944,8,184), w=7, len=94, sig=10344`, `bitsec=255.321235`, `sign/verify=1783882624/535`;
+  - `Kylin-512-q24`: `h=38,d=2,h_vec=[19,19], BPORS=(7,16,216,10,313), w=12, len=145, sig=45576`, `bitsec=511.529371`, `sign/verify=7342274265/2089`.
+- 已同步：`paper/data/para_kylin_final_6profiles.csv`、`para_kylin_selected_6profiles.csv`、12 个实现目录 `params.h`、`AGENTS.md`、`Implementations/README`、hashcall/package-bench CSV、英文/中文参数表、安全表、q24 附录、性能表、Table 1 figure 源与 impact note。
+- 验证：`python3 -m py_compile paper/code/search_sphincs_compare_params.py paper/code/search_bpors_kylin_params.py paper/code/check_bpors_profiles.py` 通过；`python3 paper/code/check_bpors_profiles.py` 通过；主提交 Reference/Optimized 三档 `make clean all test` 均通过，包括 `Kylin-512`；q24 Reference/Optimized 六个目录 `make clean all` 通过；`make -C paper/build all` 与 `make -C paper/build zh` 均通过；`git diff --check` 通过。q24 `make test`、KAT/Test Vectors、wall-clock benchmark 与 package rebuild 仍需后续长任务刷新。

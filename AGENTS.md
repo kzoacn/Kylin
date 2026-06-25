@@ -18,12 +18,12 @@
 - Companion `q=2^24` variants (`Kylin-128-q24`, `Kylin-256-q24`, `Kylin-512-q24`) are maintained in the source tree under `Implementations/Additional_Implementation/{Reference_Implementation,Optimized_Implementation}/`; final packaging promotes the optimized q24 instance directories to flat `build/Implementations/Additional_Implementation/Kylin-*-q24`.
 - Frozen parameter source of truth is `paper/data/para_kylin_final_6profiles.csv`.
 - Frozen parameter set (do not retune unless explicitly requested):
-  - `Kylin-128`: `q=2^64, n=16, h=56, d=8, h_vec=[7,7,7,7,7,7,7,7], BPORS=(K=6,B=8,t=192,k=5,mmax=158), w=43, len=25`
-  - `Kylin-256`: `q=2^64, n=32, h=58, d=10, h_vec=[5,6,6,6,6,6,6,6,5,6], BPORS=(K=9,B=7,t=256,k=6,mmax=281), w=71, len=43`
-  - `Kylin-512`: `q=2^64, n=64, h=62, d=9, h_vec=[7,7,7,7,7,7,7,7,6], BPORS=(K=15,B=7,t=320,k=5,mmax=457), w=103, len=78`
-  - `Kylin-128-q24`: `q=2^24, n=16, h=18, d=1, h_vec=[18], BPORS=(K=2,B=15,t=2048,k=6,mmax=85), w=7, len=48`
-  - `Kylin-256-q24`: `q=2^24, n=32, h=18, d=1, h_vec=[18], BPORS=(K=5,B=16,t=224,k=8,mmax=197), w=5, len=113`
-  - `Kylin-512-q24`: `q=2^24, n=64, h=32, d=2, h_vec=[16,16], BPORS=(K=7,B=12,t=768,k=8,mmax=344), w=12, len=145`
+  - `Kylin-128`: `q=2^64, n=16, h=62, d=7, h_vec=[8,9,9,9,9,9,9], BPORS=(K=4,B=7,t=128,k=6,mmax=95), w=17, len=33`
+  - `Kylin-256`: `q=2^64, n=32, h=65, d=8, h_vec=[8,8,8,8,8,8,8,9], BPORS=(K=9,B=8,t=66,k=5,mmax=187), w=16, len=66`
+  - `Kylin-512`: `q=2^64, n=64, h=64, d=8, h_vec=[8,8,8,8,8,8,8,8], BPORS=(K=14,B=8,t=256,k=5,mmax=415), w=43, len=96`
+  - `Kylin-128-q24`: `q=2^24, n=16, h=21, d=1, h_vec=[21], BPORS=(K=2,B=16,t=560,k=7,mmax=76), w=7, len=48`
+  - `Kylin-256-q24`: `q=2^24, n=32, h=20, d=1, h_vec=[20], BPORS=(K=3,B=15,t=2944,k=8,mmax=184), w=7, len=94`
+  - `Kylin-512-q24`: `q=2^24, n=64, h=38, d=2, h_vec=[19,19], BPORS=(K=7,B=16,t=216,k=10,mmax=313), w=12, len=145`
 - `Kylin-512` usually runs slowly; for quick smoke tests it may be skipped temporarily, but final-result validation must run `Kylin-512` in practice.
 - Companion `q=2^24` instance tests can take 10 minutes or more; do not run q24 `make test` as part of default packaging smoke tests unless explicitly requested.
 - Use NGCC SIG API files and names: `SIG_AlgorithmInstance.h`, `SIG_AlgorithmInstance.c`, and `KAT_SIG.c`.

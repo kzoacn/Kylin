@@ -711,19 +711,12 @@ def search_scenario(scenario: Scenario, keep_per_scenario: int) -> tuple[Candida
         wrapper, ht_sign, ht_verify, h = row[:4]
         dominated = False
         for kept in frontier:
-            if scenario.name == "Kylin-512":
-                is_dominated = (
-                    kept[0] <= wrapper
-                    and kept[1] <= ht_sign
-                    and kept[2] <= ht_verify
-                    and kept[3] >= h
-                )
-            else:
-                is_dominated = (
-                    kept[0] <= wrapper
-                    and kept[1] <= ht_sign
-                    and kept[2] <= ht_verify
-                )
+            is_dominated = (
+                kept[0] <= wrapper
+                and kept[1] <= ht_sign
+                and kept[2] <= ht_verify
+                and kept[3] >= h
+            )
             if is_dominated:
                 dominated = True
                 break

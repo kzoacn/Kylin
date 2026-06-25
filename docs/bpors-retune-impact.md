@@ -11,16 +11,15 @@ bottom few-time layer is BPORS+FP and the six packaged profiles are retuned.
   the SPHINCS-comparison profile selection.
 - Independent checker: `paper/code/check_bpors_profiles.py`.
 - Current frozen q=2^64 rows use the legacy 127/255/511 target labels.  The
-  q=2^64 128/256 rows retain the corrected SPHINCS-alpha theoretical
-  keygen/sign/verify hash-call caps from ePrint 2022/059 / the NIST
-  submission, while the SPHINCS-alpha signature-size caps are relaxed and
-  Kylin signature size is minimized under those time caps.  The 512 row is
-  capped at the configured multiple of the selected 256 row.
+  q=2^64 128/256 rows are constrained against the comparable SLH-DSA SHAKE
+  sign/verify hash-call caps, key-generation caps are not enforced, and Kylin
+  signature size is minimized under those time caps.  The 512 row is capped at
+  the configured multiple of the selected 256 row.
 - Current frozen q=2^24 companion rows use the legacy 127/255/511 target
   labels requested for limited-signature-use profiles.  The q=2^24 128/256
   companion rows are capped against the SP 800-230 limited-signature-use
-  metrics where feasible, and the q=2^24 512 row is capped at the configured
-  multiple of the selected q=2^24 256 row.
+  sign/verify metrics where feasible, and the q=2^24 512 row is capped against
+  4x the external SP 800-230 q=2^24 256-bit sign/verify metrics.
   `paper/data/para_fors_baseline_6profiles.csv` remains a historical
   comparison baseline.
 

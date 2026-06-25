@@ -416,6 +416,7 @@ def configure_search(
     notes: str,
     fallbacks: dict[str, dict[str, object]] | None = None,
     lower_bounds: dict[str, dict[str, int]] | None = None,
+    enforce_keygen_caps: bool = True,
 ) -> None:
     bp.ACTIVE_BASELINES = {name: cap.baseline for name, cap in active_caps.items()}
     bp.ACTIVE_FALLBACKS = fallbacks if fallbacks is not None else dict(bp.SECURE_BPORS_FALLBACKS)
@@ -430,19 +431,22 @@ def configure_search(
         name: (cap.baseline.sig, cap.strict_signature)
         for name, cap in active_caps.items()
     }
-    bp.ACTIVE_KEYGEN_CAPS = {
-        name: cap.keygen_hashcalls for name, cap in active_caps.items()
-    }
+    bp.ACTIVE_KEYGEN_CAPS = (
+        {name: cap.keygen_hashcalls for name, cap in active_caps.items()}
+        if enforce_keygen_caps
+        else {}
+    )
     bp.ACTIVE_METRIC_LOWER_BOUNDS = lower_bounds if lower_bounds is not None else {}
     bp.ACTIVE_NOTES = notes
 
 
-def print_caps(active_caps: dict[str, CapProfile]) -> None:
+def print_caps(active_caps: dict[str, CapProfile], enforce_keygen_caps: bool = True) -> None:
     for name, cap in active_caps.items():
         sig_op = "<" if cap.strict_signature else "<="
+        keygen = f"keygen<={cap.keygen_hashcalls}" if enforce_keygen_caps else "keygen unconstrained"
         print(
             f"[cap] {name}: {cap.label}, sig {sig_op} {cap.baseline.sig}, "
-            f"keygen<={cap.keygen_hashcalls}, "
+            f"{keygen}, "
             f"sign<={cap.baseline.sign_hashcalls}, "
             f"verify<={cap.baseline.verify_hashcalls}",
             flush=True,
@@ -457,12 +461,13 @@ def search_with_seed(
     notes: str,
     keep: int,
     lower_bounds: dict[str, dict[str, int]] | None = None,
+    enforce_keygen_caps: bool = True,
 ) -> tuple[bp.Candidate, list[bp.Candidate]]:
     best: bp.Candidate | None = None
     merged: list[bp.Candidate] = []
     for round_idx in range(1, 11):
         print(f"[search] {name} focused round {round_idx}", flush=True)
-        configure_search(active_caps, notes, fallbacks, lower_bounds)
+        configure_search(active_caps, notes, fallbacks, lower_bounds, enforce_keygen_caps)
         bp.ACTIVE_WIDE_BPORS = False
         current, kept = bp.search_scenario(scenario, keep)
         merged.extend(kept)
@@ -522,6 +527,21 @@ def main() -> int:
         default=1.3,
         help="temporary search upper bound multiplier for relaxed q=2^64 signature caps",
     )
+    parser.add_argument(
+        "--no-keygen-cap",
+        action="store_true",
+        help="do not enforce key-generation hash-call caps; sign/verify caps remain enforced",
+    )
+    parser.add_argument(
+        "--q24-512-external-multipliers",
+        type=int,
+        nargs="+",
+        default=None,
+        help=(
+            "try Kylin-512-q24 caps against these multiples of the external "
+            "SP 800-230 256-q24 profile, instead of tying it to selected Kylin-256-q24"
+        ),
+    )
     args = parser.parse_args()
 
     targets = mixed_targets(
@@ -532,14 +552,25 @@ def main() -> int:
     selected: dict[str, bp.Candidate] = {}
     kept_rows: list[bp.Candidate] = []
     fallbacks: dict[str, dict[str, object]] = dict(bp.SECURE_BPORS_FALLBACKS)
+    enforce_keygen_caps = not args.no_keygen_cap
 
     q64_caps = SPHINCS_ALPHA_CAPS if args.q64_cap_source == "sphincs-alpha" else EXTERNAL_CAPS
     q64_label = "SPHINCS-alpha 2022/059" if args.q64_cap_source == "sphincs-alpha" else "SLH-DSA"
     notes = (
         f"BPORS+FP retuned against {q64_label}/SP 800-230 comparison caps; "
         + (
+            "keygen caps are not enforced; "
+            if args.no_keygen_cap
+            else ""
+        )
+        + (
             "q64 signature-size caps relaxed while retaining keygen/sign/verify caps; "
             if args.relax_q64_signature_caps
+            else ""
+        )
+        + (
+            "Kylin-512-q24 is capped against external SP 800-230 256-q24 multiples; "
+            if args.q24_512_external_multipliers
             else ""
         )
         + (
@@ -547,7 +578,7 @@ def main() -> int:
             if args.q24_legacy_targets
             else ""
         )
-        + f"Kylin-512 profiles are capped at {args.tier512_multiplier}x "
+        + f"q64 Kylin-512 profile is capped at {args.tier512_multiplier}x "
         "the selected Kylin-256 profile"
     )
 
@@ -571,13 +602,19 @@ def main() -> int:
         "Kylin-128-q24": cap_with_target(EXTERNAL_CAPS["Kylin-128-q24"], targets["Kylin-128-q24"]),
         "Kylin-256-q24": cap_with_target(EXTERNAL_CAPS["Kylin-256-q24"], targets["Kylin-256-q24"]),
     }
-    configure_search(active_caps, notes, fallbacks)
-    print_caps(active_caps)
+    configure_search(active_caps, notes, fallbacks, enforce_keygen_caps=enforce_keygen_caps)
+    print_caps(active_caps, enforce_keygen_caps)
 
     for name in ("Kylin-128", "Kylin-256", "Kylin-128-q24", "Kylin-256-q24"):
         try:
             best, kept = search_with_seed(
-                name, scenario_map[name], active_caps, fallbacks, notes, args.keep
+                name,
+                scenario_map[name],
+                active_caps,
+                fallbacks,
+                notes,
+                args.keep,
+                enforce_keygen_caps=enforce_keygen_caps,
             )
         except RuntimeError:
             if name != "Kylin-128-q24" or targets[name] != EXACT_TARGETS[name]:
@@ -594,7 +631,13 @@ def main() -> int:
                 "signature cap relaxed for exact classical security",
             )
             best, kept = search_with_seed(
-                name, scenario_map[name], active_caps, fallbacks, notes, args.keep
+                name,
+                scenario_map[name],
+                active_caps,
+                fallbacks,
+                notes,
+                args.keep,
+                enforce_keygen_caps=enforce_keygen_caps,
             )
         selected[name] = best
         fallbacks[name] = candidate_fallback(best)
@@ -615,10 +658,16 @@ def main() -> int:
     active_caps["Kylin-512"] = cap_from_candidate(
         "Kylin-512", selected["Kylin-256"], args.tier512_multiplier, targets
     )
-    configure_search(active_caps, notes, fallbacks)
-    print_caps({"Kylin-512": active_caps["Kylin-512"]})
+    configure_search(active_caps, notes, fallbacks, enforce_keygen_caps=enforce_keygen_caps)
+    print_caps({"Kylin-512": active_caps["Kylin-512"]}, enforce_keygen_caps)
     best, kept = search_with_seed(
-        "Kylin-512", scenario_map["Kylin-512"], active_caps, fallbacks, notes, args.keep
+        "Kylin-512",
+        scenario_map["Kylin-512"],
+        active_caps,
+        fallbacks,
+        notes,
+        args.keep,
+        enforce_keygen_caps=enforce_keygen_caps,
     )
     selected["Kylin-512"] = best
     fallbacks["Kylin-512"] = candidate_fallback(best)
@@ -636,82 +685,119 @@ def main() -> int:
         flush=True,
     )
 
-    active_caps["Kylin-512-q24"] = cap_from_candidate(
-        "Kylin-512-q24", selected["Kylin-256-q24"], args.tier512_multiplier, targets
-    )
-    configure_search(active_caps, notes, fallbacks)
-    print_caps({"Kylin-512-q24": active_caps["Kylin-512-q24"]})
-    try:
-        best, kept = search_with_seed(
-            "Kylin-512-q24",
-            scenario_map["Kylin-512-q24"],
-            active_caps,
-            fallbacks,
-            notes,
-            args.keep,
-        )
-    except RuntimeError:
-        print(
-            "[support] Kylin-512-q24 needs a larger Kylin-256-q24 support profile",
-            flush=True,
-        )
-        support_cap = {
-            "Kylin-512-q24": cap_from_external_limit(
+    if args.q24_512_external_multipliers:
+        best = None
+        kept = []
+        for multiplier in args.q24_512_external_multipliers:
+            active_caps["Kylin-512-q24"] = cap_from_external_limit(
                 "Kylin-512-q24",
                 EXTERNAL_CAPS["Kylin-256-q24"],
-                args.tier512_multiplier,
+                multiplier,
                 targets,
             )
-        }
-        print_caps(support_cap)
-        support_512, support_kept = search_with_seed(
-            "Kylin-512-q24",
-            scenario_map["Kylin-512-q24"],
-            support_cap,
-            fallbacks,
-            notes,
-            args.keep,
-        )
-        kept_rows.extend(support_kept)
-        lower_bounds = {
-            "Kylin-256-q24": lower_bounds_from_candidate(
-                support_512, args.tier512_multiplier
+            configure_search(
+                active_caps,
+                notes,
+                fallbacks,
+                enforce_keygen_caps=enforce_keygen_caps,
             )
-        }
-        print(
-            f"[support] lower bounds for Kylin-256-q24: "
-            f"{lower_bounds['Kylin-256-q24']}",
-            flush=True,
-        )
-        support_256_caps = {
-            "Kylin-256-q24": cap_with_target(
-                EXTERNAL_CAPS["Kylin-256-q24"], targets["Kylin-256-q24"]
-            )
-        }
-        support_256, support_kept = search_with_seed(
-            "Kylin-256-q24",
-            scenario_map["Kylin-256-q24"],
-            support_256_caps,
-            fallbacks,
-            notes,
-            args.keep,
-            lower_bounds,
-        )
-        selected["Kylin-256-q24"] = support_256
-        fallbacks["Kylin-256-q24"] = candidate_fallback(support_256)
-        kept_rows.extend(support_kept)
+            print_caps({"Kylin-512-q24": active_caps["Kylin-512-q24"]}, enforce_keygen_caps)
+            try:
+                best, kept = search_with_seed(
+                    "Kylin-512-q24",
+                    scenario_map["Kylin-512-q24"],
+                    active_caps,
+                    fallbacks,
+                    notes,
+                    args.keep,
+                    enforce_keygen_caps=enforce_keygen_caps,
+                )
+                break
+            except RuntimeError:
+                print(f"[support] Kylin-512-q24 infeasible at {multiplier}x external 256-q24 cap")
+        if best is None:
+            raise RuntimeError("no feasible Kylin-512-q24 profile for the external multipliers")
+    else:
         active_caps["Kylin-512-q24"] = cap_from_candidate(
-            "Kylin-512-q24", support_256, args.tier512_multiplier, targets
+            "Kylin-512-q24", selected["Kylin-256-q24"], args.tier512_multiplier, targets
         )
-        print_caps({"Kylin-512-q24": active_caps["Kylin-512-q24"]})
-        best, kept = search_with_seed(
-            "Kylin-512-q24",
-            scenario_map["Kylin-512-q24"],
-            active_caps,
-            fallbacks,
-            notes,
-            args.keep,
-        )
+        configure_search(active_caps, notes, fallbacks, enforce_keygen_caps=enforce_keygen_caps)
+        print_caps({"Kylin-512-q24": active_caps["Kylin-512-q24"]}, enforce_keygen_caps)
+        try:
+            best, kept = search_with_seed(
+                "Kylin-512-q24",
+                scenario_map["Kylin-512-q24"],
+                active_caps,
+                fallbacks,
+                notes,
+                args.keep,
+                enforce_keygen_caps=enforce_keygen_caps,
+            )
+        except RuntimeError:
+            print(
+                "[support] Kylin-512-q24 needs a larger Kylin-256-q24 support profile",
+                flush=True,
+            )
+            support_cap = {
+                "Kylin-512-q24": cap_from_external_limit(
+                    "Kylin-512-q24",
+                    EXTERNAL_CAPS["Kylin-256-q24"],
+                    args.tier512_multiplier,
+                    targets,
+                )
+            }
+            print_caps(support_cap, enforce_keygen_caps)
+            support_512, support_kept = search_with_seed(
+                "Kylin-512-q24",
+                scenario_map["Kylin-512-q24"],
+                support_cap,
+                fallbacks,
+                notes,
+                args.keep,
+                enforce_keygen_caps=enforce_keygen_caps,
+            )
+            kept_rows.extend(support_kept)
+            lower_bounds = {
+                "Kylin-256-q24": lower_bounds_from_candidate(
+                    support_512, args.tier512_multiplier
+                )
+            }
+            print(
+                f"[support] lower bounds for Kylin-256-q24: "
+                f"{lower_bounds['Kylin-256-q24']}",
+                flush=True,
+            )
+            support_256_caps = {
+                "Kylin-256-q24": cap_with_target(
+                    EXTERNAL_CAPS["Kylin-256-q24"], targets["Kylin-256-q24"]
+                )
+            }
+            support_256, support_kept = search_with_seed(
+                "Kylin-256-q24",
+                scenario_map["Kylin-256-q24"],
+                support_256_caps,
+                fallbacks,
+                notes,
+                args.keep,
+                lower_bounds,
+                enforce_keygen_caps=enforce_keygen_caps,
+            )
+            selected["Kylin-256-q24"] = support_256
+            fallbacks["Kylin-256-q24"] = candidate_fallback(support_256)
+            kept_rows.extend(support_kept)
+            active_caps["Kylin-512-q24"] = cap_from_candidate(
+                "Kylin-512-q24", support_256, args.tier512_multiplier, targets
+            )
+            print_caps({"Kylin-512-q24": active_caps["Kylin-512-q24"]}, enforce_keygen_caps)
+            best, kept = search_with_seed(
+                "Kylin-512-q24",
+                scenario_map["Kylin-512-q24"],
+                active_caps,
+                fallbacks,
+                notes,
+                args.keep,
+                enforce_keygen_caps=enforce_keygen_caps,
+            )
 
     selected["Kylin-512-q24"] = best
     fallbacks["Kylin-512-q24"] = candidate_fallback(best)
