@@ -10,13 +10,13 @@
 #define SPX_D 1
 #define SPX_BPORS_K 5
 #define SPX_BPORS_B 16
-#define SPX_BPORS_T 1120
-#define SPX_BPORS_CHILD_HEIGHT 11
-#define SPX_BPORS_CH_K 6
-#define SPX_BPORS_MMAX 234
+#define SPX_BPORS_T 224
+#define SPX_BPORS_CHILD_HEIGHT 8
+#define SPX_BPORS_CH_K 8
+#define SPX_BPORS_MMAX 197
 #define SPX_BPORS_CTR_BYTES 8
-#define SPX_WOTS_W 4
-#define SPX_WOTS_LEN 131
+#define SPX_WOTS_W 5
+#define SPX_WOTS_LEN 113
 
 #define SPX_ADDR_BYTES 32
 

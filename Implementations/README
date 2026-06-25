@@ -25,9 +25,9 @@ Current frozen packaged parameters are:
 - `Kylin-128`: `q=2^64, h=56, d=4, h_vec=[14,14,14,14], BPORS=(K=3,B=15,t=896,k=7,mmax=136), w=114, len=20`
 - `Kylin-256`: `q=2^64, h=58, d=4, h_vec=[15,15,15,13], BPORS=(K=5,B=13,t=1024,k=7,mmax=241), w=127, len=38`
 - `Kylin-512`: `q=2^64, h=62, d=4, h_vec=[16,16,16,14], BPORS=(K=12,B=14,t=192,k=6,mmax=419), w=125, len=75`
-- `Kylin-128-q24`: `q=2^24, h=18, d=1, h_vec=[18], BPORS=(K=3,B=15,t=1024,k=6,mmax=124), w=3, len=84`
-- `Kylin-256-q24`: `q=2^24, h=18, d=1, h_vec=[18], BPORS=(K=5,B=16,t=1120,k=6,mmax=234), w=4, len=131`
-- `Kylin-512-q24`: `q=2^24, h=32, d=2, h_vec=[16,16], BPORS=(K=7,B=11,t=3072,k=7,mmax=401), w=11, len=150`
+- `Kylin-128-q24`: `q=2^24, h=18, d=1, h_vec=[18], BPORS=(K=2,B=15,t=2048,k=6,mmax=85), w=7, len=48`
+- `Kylin-256-q24`: `q=2^24, h=18, d=1, h_vec=[18], BPORS=(K=5,B=16,t=224,k=8,mmax=197), w=5, len=113`
+- `Kylin-512-q24`: `q=2^24, h=32, d=2, h_vec=[16,16], BPORS=(K=7,B=12,t=768,k=8,mmax=344), w=12, len=145`
 
 The packaged NGCC wrappers accept messages up to `2^60` bytes, i.e. `2^63`
 bits, matching the submission bound recorded in the specification.

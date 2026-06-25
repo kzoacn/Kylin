@@ -9,14 +9,14 @@
 #define SPX_FULL_HEIGHT 32
 #define SPX_D 2
 #define SPX_BPORS_K 7
-#define SPX_BPORS_B 11
-#define SPX_BPORS_T 3072
-#define SPX_BPORS_CHILD_HEIGHT 12
-#define SPX_BPORS_CH_K 7
-#define SPX_BPORS_MMAX 401
+#define SPX_BPORS_B 12
+#define SPX_BPORS_T 768
+#define SPX_BPORS_CHILD_HEIGHT 10
+#define SPX_BPORS_CH_K 8
+#define SPX_BPORS_MMAX 344
 #define SPX_BPORS_CTR_BYTES 8
-#define SPX_WOTS_W 11
-#define SPX_WOTS_LEN 150
+#define SPX_WOTS_W 12
+#define SPX_WOTS_LEN 145
 
 #define SPX_ADDR_BYTES 32
 

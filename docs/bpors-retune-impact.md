@@ -6,15 +6,19 @@ bottom few-time layer is BPORS+FP and the six packaged profiles are retuned.
 ## Parameter Source
 
 - Frozen source of truth: `paper/data/para_kylin_final_6profiles.csv`.
-- Reproduction script: `paper/code/search_bpors_kylin_params.py`.
+- Reproduction scripts: `paper/code/search_bpors_kylin_params.py` for the
+  BPORS candidate model and `paper/code/search_sphincs_compare_params.py` for
+  the SPHINCS-comparison profile selection.
 - Independent checker: `paper/code/check_bpors_profiles.py`.
-- Current frozen rows use exact 128/256/512 target labels.  The q=2^64
+- Current frozen q=2^64 rows use exact 128/256/512 target labels.  The q=2^64
   128/256 rows are capped against the SPHINCS-alpha SHA2 small-signature
-  metrics from ePrint 2022/059, and the q=2^24 128/256 companion rows are
-  capped against the SP 800-230 limited-signature-use metrics where feasible.
-  For `Kylin-128-q24`, exact 128-bit target security does not fit the
-  SP 800-230 signature-size cap; the selected row keeps the SP 800-230
-  keygen/sign/verify caps and relaxes only the signature-size cap.
+  metrics from ePrint 2022/059, and the 512 row is capped at the configured
+  multiple of the selected 256 row.
+- Current frozen q=2^24 companion rows use the legacy 127/255/511 target
+  labels requested for limited-signature-use profiles.  The q=2^24 128/256
+  companion rows are capped against the SP 800-230 limited-signature-use
+  metrics where feasible, and the q=2^24 512 row is capped at the configured
+  multiple of the selected q=2^24 256 row.
   `paper/data/para_fors_baseline_6profiles.csv` remains a historical
   comparison baseline.
 
@@ -50,7 +54,10 @@ the signing hash-call proxy.
 ## Validation
 
 - Run `python3 paper/code/check_bpors_profiles.py`.
-- Run `make test` for all primary and q24 reference/optimized instances.
-- Regenerate root `Test_Vectors/KAT_SIG_*.txt` from the retuned code.
+- Run `make test` for all primary reference/optimized instances.  q24
+  reference/optimized tests and KAT generation are long jobs and should be run
+  explicitly when refreshing final vectors.
+- Regenerate root `Test_Vectors/KAT_SIG_*.txt` from the retuned code before a
+  final package refresh.
 - Compare reference and optimized KAT outputs for matching instances.
 - Rebuild English and Chinese PDFs after document edits.

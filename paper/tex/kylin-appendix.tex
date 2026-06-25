@@ -34,19 +34,19 @@ NGCC $q=2^{64}$ families.
     \begin{tabular}{l c c c c l c c c c c c}
     \toprule
     Family & NGCC lvl & $n$ & $h/d$ & $(h_0,\ldots,h_{d-1})$ & $(K,B,t,k,m_{\max})$ & $w$ & $l$ & bitsec & pk & sk & sig \\ \midrule
-    Kylin-128-q24 & 128/80 & 16 & 18/1 & $(18)$ & $(3,15,1024,6,124)$ & 3 & 84 & 128.000 & 32 & 64 & 3928 \\
-    Kylin-256-q24 & 256/128 & 32 & 18/1 & $(18)$ & $(5,16,1120,6,234)$ & 4 & 131 & 256.000 & 64 & 128 & 13256 \\
-    Kylin-512-q24 & 512/256 & 64 & 32/2 & $(16,16)$ & $(7,11,3072,7,401)$ & 11 & 150 & 512.000 & 128 & 256 & 50120 \\
+    Kylin-128-q24 & 128/80 & 16 & 18/1 & $(18)$ & $(2,15,2048,6,85)$ & 7 & 48 & 127.445 & 32 & 64 & 2632 \\
+    Kylin-256-q24 & 256/128 & 32 & 18/1 & $(18)$ & $(5,16,224,8,197)$ & 5 & 113 & 256.000 & 64 & 128 & 11816 \\
+    Kylin-512-q24 & 512/256 & 64 & 32/2 & $(16,16)$ & $(7,12,768,8,344)$ & 12 & 145 & 511.504 & 128 & 256 & 46280 \\
     \bottomrule
     \end{tabular}%
     }
 \end{table}
 
-The companion KAT rows in \cref{tab:q24-kat-digests} were generated from the
-retuned $q=2^{24}$ implementation directories.  Full wall-clock benchmark
-refreshes for these companion rows are intentionally separated from the primary
-package benchmark table because the q24 KAT and benchmark runs are long-running
-jobs under the retuned BPORS+FP parameters.
+The companion KAT rows in \cref{tab:q24-kat-digests} are pending refresh after
+the $q=2^{24}$ legacy-target retune.  Full wall-clock benchmark refreshes for
+these companion rows are intentionally separated from the primary package
+benchmark table because the q24 KAT and benchmark runs are long-running jobs
+under the retuned BPORS+FP parameters.
 
 \begin{table}[htbp]
     \centering
@@ -56,11 +56,11 @@ jobs under the retuned BPORS+FP parameters.
     \begin{tabular}{l r l}
     \toprule
     Family & lines & SHA-256 \\ \midrule
-    Kylin-128-q24 & 120 & \texttt{2b0e47c4f0a7cce7dc5b1f068c000277c3050fdcdd94ea0017662255bcb8030d} \\
-    Kylin-256-q24 & 120 & \texttt{5542877e457f79ae96b57a9652e52c834fbea895c0bc4b8a3226b65941499a2a} \\
-    Kylin-512-q24 & 120 & \texttt{c873a1a1dedda8432202a346c86cb21b356fef81703938177c0c27beedce6c08} \\
+    Kylin-128-q24 & -- & \texttt{TBD} \\
+    Kylin-256-q24 & -- & \texttt{TBD} \\
+    Kylin-512-q24 & -- & \texttt{TBD} \\
     \bottomrule
     \end{tabular}
 \end{table}
 
-The optimized implementations apply macro-unrolled SM3 compression (64~explicit rounds, no branches), SSE2/AVX2 hardware dispatch for message-word loading, a malloc-free \texttt{pseudoXOF} fast path for byte-aligned input, and 4-way SSE2 WOTS chain acceleration (\texttt{thash\_wots\_chain\_4x}) adapted for $n=16/32/64$. Both the sign and verify paths batch 4~WOTS chains per SIMD operation. The KAT output of every optimized variant matches the corresponding reference byte-for-byte (SHA-256 verified).
+The optimized implementations apply macro-unrolled SM3 compression (64~explicit rounds, no branches), SSE2/AVX2 hardware dispatch for message-word loading, a malloc-free \texttt{pseudoXOF} fast path for byte-aligned input, and 4-way SSE2 WOTS chain acceleration (\texttt{thash\_wots\_chain\_4x}) adapted for $n=16/32/64$. Both the sign and verify paths batch 4~WOTS chains per SIMD operation. The q24 optimized/reference KAT comparison must be rerun after the current legacy-target retune.

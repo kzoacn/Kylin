@@ -18,12 +18,12 @@
 - Companion `q=2^24` variants (`Kylin-128-q24`, `Kylin-256-q24`, `Kylin-512-q24`) are maintained in the source tree under `Implementations/Additional_Implementation/{Reference_Implementation,Optimized_Implementation}/`; final packaging promotes the optimized q24 instance directories to flat `build/Implementations/Additional_Implementation/Kylin-*-q24`.
 - Frozen parameter source of truth is `paper/data/para_kylin_final_6profiles.csv`.
 - Frozen parameter set (do not retune unless explicitly requested):
-  - `Kylin-128`: `q=2^64, n=16, h=65, d=9, h_vec=[7,7,7,7,7,7,7,8,8], a=13, k=11, w=73, len=22`
-  - `Kylin-256`: `q=2^64, n=32, h=68, d=10, h_vec=[6,6,7,7,7,7,7,7,7,7], a=13, k=22, w=54, len=46`
-  - `Kylin-512`: `q=2^64, n=64, h=66, d=11, h_vec=[6,6,6,6,6,6,6,6,6,6,6], a=13, k=49, w=97, len=79`
-  - `Kylin-128-q24`: `q=2^24, n=16, h=22, d=1, h_vec=[22], a=24, k=6, w=4, len=67`
-  - `Kylin-256-q24`: `q=2^24, n=32, h=21, d=1, h_vec=[21], a=25, k=12, w=4, len=131`
-  - `Kylin-512-q24`: `q=2^24, n=64, h=57, d=3, h_vec=[19,19,19], a=20, k=24, w=64, len=87`
+  - `Kylin-128`: `q=2^64, n=16, h=56, d=4, h_vec=[14,14,14,14], BPORS=(K=3,B=15,t=896,k=7,mmax=136), w=114, len=20`
+  - `Kylin-256`: `q=2^64, n=32, h=58, d=4, h_vec=[15,15,15,13], BPORS=(K=5,B=13,t=1024,k=7,mmax=241), w=127, len=38`
+  - `Kylin-512`: `q=2^64, n=64, h=62, d=4, h_vec=[16,16,16,14], BPORS=(K=12,B=14,t=192,k=6,mmax=419), w=125, len=75`
+  - `Kylin-128-q24`: `q=2^24, n=16, h=18, d=1, h_vec=[18], BPORS=(K=2,B=15,t=2048,k=6,mmax=85), w=7, len=48`
+  - `Kylin-256-q24`: `q=2^24, n=32, h=18, d=1, h_vec=[18], BPORS=(K=5,B=16,t=224,k=8,mmax=197), w=5, len=113`
+  - `Kylin-512-q24`: `q=2^24, n=64, h=32, d=2, h_vec=[16,16], BPORS=(K=7,B=12,t=768,k=8,mmax=344), w=12, len=145`
 - `Kylin-512` usually runs slowly; for quick smoke tests it may be skipped temporarily, but final-result validation must run `Kylin-512` in practice.
 - Companion `q=2^24` instance tests can take 10 minutes or more; do not run q24 `make test` as part of default packaging smoke tests unless explicitly requested.
 - Use NGCC SIG API files and names: `SIG_AlgorithmInstance.h`, `SIG_AlgorithmInstance.c`, and `KAT_SIG.c`.

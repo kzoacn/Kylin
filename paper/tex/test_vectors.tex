@@ -2,9 +2,10 @@
 \label{sec:test-vectors}
 
 The submission package includes known-answer test vectors for the three primary
-digital-signature instances submitted to NGCC and the three companion
-$q=2^{24}$ profiles. These vectors are intended to verify correctness and
-interoperability of the packaged implementations.
+digital-signature instances submitted to NGCC.  The three companion
+$q=2^{24}$ profiles were retuned after the last vector generation and are
+marked as pending refresh.  These vectors are intended to verify correctness
+and interoperability of the packaged implementations.
 
 \begin{table}[htbp]
     \centering
@@ -16,9 +17,9 @@ interoperability of the packaged implementations.
     Kylin-128 & Digital signature & Included \\
     Kylin-256 & Digital signature & Included \\
     Kylin-512 & Digital signature & Included \\
-    Kylin-128-q24 & Digital signature & Included \\
-    Kylin-256-q24 & Digital signature & Included \\
-    Kylin-512-q24 & Digital signature & Included \\
+    Kylin-128-q24 & Digital signature & Pending refresh \\
+    Kylin-256-q24 & Digital signature & Pending refresh \\
+    Kylin-512-q24 & Digital signature & Pending refresh \\
     \bottomrule
     \end{tabular}
 \end{table}
@@ -34,9 +35,9 @@ interoperability of the packaged implementations.
     \texttt{KAT\_SIG\_Kylin-128.txt} & \texttt{7ea3154ab78e6f6229203f326d049923db435e423eb96559cb128d623e32f7d8} \\
     \texttt{KAT\_SIG\_Kylin-256.txt} & \texttt{da48687426a420c4aad53c73c5a1745b106c85523ed2f733ac54f5f80a0c8055} \\
     \texttt{KAT\_SIG\_Kylin-512.txt} & \texttt{1fe0149603d748b64a54bafd12a71b6e8cb971e1f5172f176519315a8c4d8934} \\
-    \texttt{KAT\_SIG\_Kylin-128-q24.txt} & \texttt{2b0e47c4f0a7cce7dc5b1f068c000277c3050fdcdd94ea0017662255bcb8030d} \\
-    \texttt{KAT\_SIG\_Kylin-256-q24.txt} & \texttt{5542877e457f79ae96b57a9652e52c834fbea895c0bc4b8a3226b65941499a2a} \\
-    \texttt{KAT\_SIG\_Kylin-512-q24.txt} & \texttt{c873a1a1dedda8432202a346c86cb21b356fef81703938177c0c27beedce6c08} \\
+    \texttt{KAT\_SIG\_Kylin-128-q24.txt} & \texttt{TBD} \\
+    \texttt{KAT\_SIG\_Kylin-256-q24.txt} & \texttt{TBD} \\
+    \texttt{KAT\_SIG\_Kylin-512-q24.txt} & \texttt{TBD} \\
     \bottomrule
     \end{tabular}
 \end{table}
@@ -44,8 +45,8 @@ interoperability of the packaged implementations.
 \subsection{Generation and Coverage}
 
 \begin{itemize}
-    \item The published vectors follow the NGCC digital-signature KAT naming convention and cover each primary and companion instance.
+    \item The published vectors follow the NGCC digital-signature KAT naming convention and currently cover each primary instance.
     \item They are generated with the ICCS KAT driver and deterministic random-generator interface required by the call.
     \item The reference implementation package includes automated support for regenerating the published vectors, which keeps the implementation tree and the distributed vector set synchronized.
-    \item The companion $q=2^{24}$ implementations regenerate vectors through the same workflow.
+    \item The companion $q=2^{24}$ implementations regenerate vectors through the same workflow, but those vectors must be rerun for the current legacy-target parameters.
 \end{itemize}

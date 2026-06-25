@@ -822,16 +822,16 @@
 - 重新生成电子提交包 `build/Kylin-0624.zip`，SHA-256 为 `8fef9179b5355723e33ce0f35dceeca771c366bc1752ee8e046b7fa103c8fa73`。
 - 验证：主提交 Ref/Opt 六个包内实例 `make clean all test` 通过；q24 Additional 三个包内实例 `make clean all` 通过；zip 清单仍为 321 项且不含 `tools/`、`benchmarks/`、`output/`、`.stack-usage/`、对象文件、栈报告、生成的可执行文件或嵌套 Additional 实现层级。
 
-### 2026-06-25 - Exact 128/256/512 BPORS+FP Parameter Search (In Progress)
+### 2026-06-25 - q64 Exact and q24 Legacy BPORS+FP Parameter Search (Done)
 
-- 重新搜索并冻结精确目标标签 `128.0/256.0/512.0` 的 BPORS+FP 参数，主提交 q64 版本对标 ePrint 2022/059 的 SPHINCS-alpha SHA2 small-signature 指标，512 档约束为不超过所选 256 档的 4 倍。
+- 重新搜索并冻结混合目标标签的 BPORS+FP 参数：主提交 q64 版本保持精确 `128.0/256.0/512.0`，q24 companion 版本按本次要求使用 legacy `127.0/255.0/511.0`。主提交 q64 版本继续对标 ePrint 2022/059 的 SPHINCS-alpha SHA2 small-signature 指标，q24 128/256 版本对标 SP 800-230 limited-signature-use 指标；512 档约束为不超过所选 256 档的 4 倍。
 - 当前冻结参数为：
   - `Kylin-128`: `h=56,d=4,h_vec=[14,14,14,14], BPORS=(3,15,896,7,136), w=114, len=20, sig=4712`;
   - `Kylin-256`: `h=58,d=4,h_vec=[15,15,15,13], BPORS=(5,13,1024,7,241), w=127, len=38, sig=15592`;
   - `Kylin-512`: `h=62,d=4,h_vec=[16,16,16,14], BPORS=(12,14,192,6,419), w=125, len=75, sig=54664`;
-  - `Kylin-128-q24`: `h=18,d=1,h_vec=[18], BPORS=(3,15,1024,6,124), w=3, len=84, sig=3928`;
-  - `Kylin-256-q24`: `h=18,d=1,h_vec=[18], BPORS=(5,16,1120,6,234), w=4, len=131, sig=13256`;
-  - `Kylin-512-q24`: `h=32,d=2,h_vec=[16,16], BPORS=(7,11,3072,7,401), w=11, len=150, sig=50120`.
-- 重要约束说明：在包含 `2^{-8n}` 直接猜测项的 checker 模型下，`n=16/32/64` profile 的指数从下方逼近 `128/256/512`；checker 采用 `1e-12` 高精度数值容差验证精确 target 标签。`Kylin-128-q24` 在精确 128 target 下无法同时小于 SP 800-230 的签名尺寸 cap，因此保留 keygen/sign/verify cap，仅放宽签名尺寸 cap。
-- 已完成：`paper/data/para_kylin_final_6profiles.csv`、`para_kylin_selected_6profiles.csv`、12 个实现目录的 `params.h`、英文/中文参数表、安全表、性能 hashcall 表、实现 README 与 impact note 同步更新。
-- 验证：`python3 paper/code/check_bpors_profiles.py` 通过；12 个 Reference/Optimized/Additional 实现目录 `make clean all` 通过；`make -C paper/build all` 与 `make -C paper/build zh` 均通过；`git diff --check` 通过。由于精确 target 参数将 sign hashcall 推到亿级，KAT 生成、wall-clock benchmark 刷新和提交包重打包仍待单独长任务收口。
+  - `Kylin-128-q24`: `h=18,d=1,h_vec=[18], BPORS=(2,15,2048,6,85), w=7, len=48, sig=2632`, `bitsec=127.444703`;
+  - `Kylin-256-q24`: `h=18,d=1,h_vec=[18], BPORS=(5,16,224,8,197), w=5, len=113, sig=11816`, `bitsec=255.999944`;
+  - `Kylin-512-q24`: `h=32,d=2,h_vec=[16,16], BPORS=(7,12,768,8,344), w=12, len=145, sig=46280`, `bitsec=511.504374`.
+- 重要约束说明：在包含 `2^{-8n}` 直接猜测项的 checker 模型下，q64 profile 的指数从下方逼近 `128/256/512`；checker 采用 `1e-12` 高精度数值容差验证精确 target 标签。q24 profile 改用 legacy `127/255/511` 目标后，`Kylin-128-q24` 签名尺寸从 exact-q24 的 `3928` 字节降至 `2632` 字节，同时仍满足 SP 800-230 的 keygen/sign/verify/signature cap。`Kylin-512-q24` 需要反推更大的 `Kylin-256-q24` 支撑 profile，因此 `Kylin-256-q24` 最终采用 `11816` 字节而不是初选的 `10888` 字节。
+- 已完成：`paper/data/para_kylin_final_6profiles.csv`、`para_kylin_selected_6profiles.csv`、12 个实现目录的 `params.h`、英文/中文参数表、安全表、性能 hashcall 表、实现 README、`AGENTS.md` 与 impact note 同步更新。
+- 验证：`python3 -m py_compile paper/code/search_sphincs_compare_params.py paper/code/search_bpors_kylin_params.py paper/code/check_bpors_profiles.py` 通过；`python3 paper/code/check_bpors_profiles.py` 通过；12 个 Reference/Optimized/Additional 实现目录 `make clean all` 通过；`make -C paper/build all` 与 `make -C paper/build zh` 均通过；`git diff --check` 通过。q24 KAT 生成、wall-clock benchmark 刷新和提交包重打包仍待单独长任务收口。

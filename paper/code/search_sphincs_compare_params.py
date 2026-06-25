@@ -4,9 +4,9 @@
 The primary q=2^64 128/256-bit profiles can be constrained against either
 SLH-DSA-SHAKE or SPHINCS-alpha small-signature parameter sets.  The q=2^24
 companions are constrained against the draft SP 800-230 limited-signature-use
-parameter sets where exact target security is feasible.  The 512-bit profiles
-are constrained to stay within a selected multiple of the 256-bit Kylin profile
-costs, then all profiles minimize signature size.
+parameter sets and may use either exact or legacy target labels.  The 512-bit
+profiles are constrained to stay within a selected multiple of the 256-bit
+Kylin profile costs, then all profiles minimize signature size.
 """
 
 from __future__ import annotations
@@ -43,6 +43,15 @@ EXACT_TARGETS = {
     "Kylin-256-q24": 256.0,
     "Kylin-512-q24": 512.0,
 }
+
+
+def mixed_targets(*, exact_targets: bool, q24_legacy_targets: bool) -> dict[str, float]:
+    targets = dict(EXACT_TARGETS if exact_targets else TARGETS)
+    if q24_legacy_targets:
+        for name, target in TARGETS.items():
+            if name.endswith("-q24"):
+                targets[name] = target
+    return targets
 
 
 
@@ -530,9 +539,17 @@ def main() -> int:
         action="store_true",
         help="require exact 128/256/512 classical security targets",
     )
+    parser.add_argument(
+        "--q24-legacy-targets",
+        action="store_true",
+        help="use legacy 127/255/511 targets for q=2^24 companions even with --exact-targets",
+    )
     args = parser.parse_args()
 
-    targets = EXACT_TARGETS if args.exact_targets else TARGETS
+    targets = mixed_targets(
+        exact_targets=args.exact_targets,
+        q24_legacy_targets=args.q24_legacy_targets,
+    )
     scenario_map = {s.name: scenario_for(s, targets) for s in bp.SCENARIOS}
     selected: dict[str, bp.Candidate] = {}
     kept_rows: list[bp.Candidate] = []
@@ -542,7 +559,12 @@ def main() -> int:
     q64_label = "SPHINCS-alpha 2022/059" if args.q64_cap_source == "sphincs-alpha" else "SLH-DSA"
     notes = (
         f"BPORS+FP retuned against {q64_label}/SP 800-230 comparison caps; "
-        f"Kylin-512 profiles are capped at {args.tier512_multiplier}x "
+        + (
+            "q24 companions use legacy 127/255/511 target labels; "
+            if args.q24_legacy_targets
+            else ""
+        )
+        + f"Kylin-512 profiles are capped at {args.tier512_multiplier}x "
         "the selected Kylin-256 profile"
     )
 
@@ -561,7 +583,7 @@ def main() -> int:
                 name, scenario_map[name], active_caps, fallbacks, notes, args.keep
             )
         except RuntimeError:
-            if name != "Kylin-128-q24" or not args.exact_targets:
+            if name != "Kylin-128-q24" or targets[name] != EXACT_TARGETS[name]:
                 raise
             print(
                 "[support] Kylin-128-q24 exact 128-bit security does not fit "
