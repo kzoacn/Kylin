@@ -1,15 +1,11 @@
 #!/usr/bin/env python3
 """Search BPORS+FP-aware Kylin parameter profiles.
 
-The objective is fixed by the BPORS retune plan:
-
-* use the old FORS profiles as the sign/verify hash-call baseline;
-* require sign and verify proxy costs to be at most 105% of that baseline;
-* require the conservative bucket-thinned BPORS cover estimate to meet the
-  target bit security;
-* require the global forced-pruning acceptance probability to be at least
-  1e-8;
-* minimize total signature size, with smaller sign/verify costs as tie-breaks.
+The default objective follows the original BPORS retune plan, and the command
+line can switch the cap source, cost slack, target bits, and optional forced-
+pruning tau floors.  In every mode the search requires the conservative
+bucket-thinned BPORS cover estimate to meet the target bit security and then
+minimizes total signature size, with smaller sign/verify costs as tie-breaks.
 """
 
 from __future__ import annotations
@@ -42,6 +38,21 @@ MAX_BPORS_B = 16
 MAX_CHILD_HEIGHT = 13
 DEFAULT_HT_FRONTIER_LIMIT = 80
 WIDE_HT_FRONTIER_LIMIT = 500
+
+ACTIVE_BASELINES: dict[str, Baseline]
+ACTIVE_FALLBACKS: dict[str, dict[str, object]]
+ACTIVE_SIGN_COST_SLACK = COST_SLACK
+ACTIVE_VERIFY_COST_SLACK = COST_SLACK
+ACTIVE_ENFORCE_SIGN_CAP = True
+ACTIVE_WIDE_BPORS = False
+ACTIVE_TAU_FLOOR = TAU_FLOOR
+ACTIVE_Q24_TAU_FLOOR = Q24_TAU_FLOOR
+INITIAL_SIG_HEADROOM = 1
+ACTIVE_NOTES = "BPORS+FP retuned under old-FORS 105% sign/verify hashcall caps"
+ACTIVE_SIGNATURE_CAPS: dict[str, tuple[int, bool]] = {}
+ACTIVE_KEYGEN_CAPS: dict[str, int] = {}
+ACTIVE_METRIC_LOWER_BOUNDS: dict[str, dict[str, int]] = {}
+SECURITY_MARGIN_BITS = 0.0
 
 mp.mp.dps = 170
 
@@ -211,6 +222,9 @@ FORS_BASELINES = {
     ),
 }
 
+ACTIVE_BASELINES = FORS_BASELINES
+ACTIVE_FALLBACKS = SECURE_BPORS_FALLBACKS
+
 
 def format_q(q_sigs: int) -> str:
     if q_sigs > 0 and (q_sigs & (q_sigs - 1)) == 0:
@@ -219,7 +233,7 @@ def format_q(q_sigs: int) -> str:
 
 
 def tau_floor_for_name(name: str) -> float:
-    return Q24_TAU_FLOOR if name.endswith("-q24") else TAU_FLOOR
+    return ACTIVE_Q24_TAU_FLOOR if name.endswith("-q24") else ACTIVE_TAU_FLOOR
 
 
 def ceil_log2(x: int) -> int:
@@ -485,6 +499,48 @@ def bpors_bitsec(q_sigs: int, n: int, h: int, K: int, B: int, t: int, child_k: i
     return float(-mp.log(total, 2))
 
 
+@lru_cache(maxsize=None)
+def bpors_bitsec_fast(q_sigs: int, n: int, h: int, K: int, B: int, t: int, child_k: int) -> float:
+    """Fast Poisson/float screen for BPORS cover security.
+
+    The exact search still calls ``bpors_bitsec`` before accepting a candidate.
+    This helper only filters combinations that are far below the requested
+    target, avoiding many expensive high-precision inclusion-exclusion sums.
+    """
+
+    denom = float(math.comb(t, child_k))
+    p_bucket = math.ldexp(1.0, -B)
+    coeffs: list[float] = []
+    bases: list[float] = []
+    for i in range(child_k + 1):
+        ratio = float(math.comb(t - i, child_k)) / denom if t - i >= child_k else 0.0
+        coeffs.append(float((-1 if i % 2 else 1) * math.comb(child_k, i)))
+        bases.append(1.0 - p_bucket + p_bucket * ratio)
+
+    lam = math.ldexp(float(q_sigs), -h)
+    prob = math.exp(-lam)
+    powers = [1.0 for _ in bases]
+    total = math.ldexp(1.0, -(8 * n))
+    limit = max(1000, int(lam + 20.0 * math.sqrt(lam + 1.0) + 100.0))
+
+    for gamma in range(limit):
+        p_child = math.fsum(c * x for c, x in zip(coeffs, powers))
+        if p_child < 0.0 and abs(p_child) < 1e-14:
+            p_child = 0.0
+        if p_child > 0.0:
+            total += prob * (p_child ** K)
+        next_gamma = gamma + 1
+        prob *= lam / next_gamma
+        if gamma > lam and prob < 1e-320:
+            break
+        for idx, base in enumerate(bases):
+            powers[idx] *= base
+
+    if total <= 0.0:
+        return float("inf")
+    return -math.log2(total)
+
+
 def t_candidates(max_t: int, child_k: int) -> list[int]:
     vals: set[int] = set()
     max_t = min(max_t, 1 << MAX_CHILD_HEIGHT)
@@ -521,7 +577,7 @@ def focused_t_candidates(fallback_t: int, max_t: int, child_k: int) -> list[int]
 
 
 def current_fallback(scenario: Scenario) -> Candidate:
-    row = SECURE_BPORS_FALLBACKS[scenario.name]
+    row = ACTIVE_FALLBACKS[scenario.name]
     h_vec = row["h_vec"]  # type: ignore[assignment]
     K = int(row["K"])
     B = int(row["B"])
@@ -530,7 +586,7 @@ def current_fallback(scenario: Scenario) -> Candidate:
     mmax = int(row["mmax"])
     w = int(row["w"])
     length = int(row["length"])
-    baseline = FORS_BASELINES[scenario.name]
+    baseline = ACTIVE_BASELINES[scenario.name]
     tau = tau_at_mmax(K, B, t, child_k, mmax)
     h = int(row["h"])
     d = int(row["d"])
@@ -548,10 +604,48 @@ def current_fallback(scenario: Scenario) -> Candidate:
 
 def is_feasible(c: Candidate) -> bool:
     return (
-        c.bitsec + 1e-9 >= c.target_bits
+        c.bitsec >= c.target_bits + SECURITY_MARGIN_BITS
         and c.tau + 1e-18 >= tau_floor_for_name(c.name)
-        and c.sign_hashcalls <= math.floor(COST_SLACK * c.baseline_sign_hashcalls)
-        and c.verify_hashcalls <= math.floor(COST_SLACK * c.baseline_verify_hashcalls)
+        and signature_cap_ok(c.name, c.sig)
+        and keygen_cap_ok(c.name, c.keygen_hashcalls)
+        and metric_lower_bounds_ok(c)
+        and c.verify_hashcalls <= math.floor(ACTIVE_VERIFY_COST_SLACK * c.baseline_verify_hashcalls)
+        and (
+            not ACTIVE_ENFORCE_SIGN_CAP
+            or c.sign_hashcalls <= math.floor(ACTIVE_SIGN_COST_SLACK * c.baseline_sign_hashcalls)
+        )
+    )
+
+
+def signature_upper_bound(name: str, default_upper: int) -> int:
+    cap = ACTIVE_SIGNATURE_CAPS.get(name)
+    if cap is None:
+        return default_upper
+    value, strict = cap
+    cap_upper = value if strict else value + 1
+    return min(default_upper, cap_upper)
+
+
+def signature_cap_ok(name: str, sig: int) -> bool:
+    cap = ACTIVE_SIGNATURE_CAPS.get(name)
+    if cap is None:
+        return True
+    value, strict = cap
+    return sig < value if strict else sig <= value
+
+
+def keygen_cap_ok(name: str, keygen: int) -> bool:
+    cap = ACTIVE_KEYGEN_CAPS.get(name)
+    return cap is None or keygen <= cap
+
+
+def metric_lower_bounds_ok(c: Candidate) -> bool:
+    bounds = ACTIVE_METRIC_LOWER_BOUNDS.get(c.name, {})
+    return (
+        c.sig >= bounds.get("sig", 0)
+        and c.keygen_hashcalls >= bounds.get("keygen_hashcalls", 0)
+        and c.sign_hashcalls >= bounds.get("sign_hashcalls", 0)
+        and c.verify_hashcalls >= bounds.get("verify_hashcalls", 0)
     )
 
 
@@ -564,14 +658,17 @@ def parse_h_profile(text: str) -> tuple[int, ...]:
 
 
 def search_scenario(scenario: Scenario, keep_per_scenario: int) -> tuple[Candidate, list[Candidate]]:
-    baseline = FORS_BASELINES[scenario.name]
-    sign_cap = math.floor(COST_SLACK * baseline.sign_hashcalls)
-    verify_cap = math.floor(COST_SLACK * baseline.verify_hashcalls)
+    baseline = ACTIVE_BASELINES[scenario.name]
+    sign_cap = math.floor(ACTIVE_SIGN_COST_SLACK * baseline.sign_hashcalls)
+    verify_cap = math.floor(ACTIVE_VERIFY_COST_SLACK * baseline.verify_hashcalls)
+    if not ACTIVE_ENFORCE_SIGN_CAP:
+        sign_cap = 10**30
     fallback_candidate = current_fallback(scenario)
     best: Candidate | None = fallback_candidate if is_feasible(fallback_candidate) else None
-    upper_sig = best.sig if best is not None else baseline.sig + 1
+    upper_sig = best.sig if best is not None else baseline.sig + INITIAL_SIG_HEADROOM
+    upper_sig = signature_upper_bound(scenario.name, upper_sig)
     candidates: list[Candidate] = [best] if best is not None else []
-    fallback = SECURE_BPORS_FALLBACKS[scenario.name]
+    fallback = ACTIVE_FALLBACKS[scenario.name]
     frontier_limit = (
         WIDE_HT_FRONTIER_LIMIT
         if scenario.name == "Kylin-512"
@@ -596,7 +693,12 @@ def search_scenario(scenario: Scenario, keep_per_scenario: int) -> tuple[Candida
                 for h_vec in profiles:
                     ht_sign = sign_ht_hashcalls(h_vec, w, length)
                     ht_verify = verify_ht_hashcalls(h, d, w, length)
-                    if ht_sign >= sign_cap or ht_verify >= verify_cap:
+                    ht_keygen = keygen_hashcalls(h_vec, w, length)
+                    if ACTIVE_ENFORCE_SIGN_CAP and ht_sign >= sign_cap:
+                        continue
+                    if ht_verify >= verify_cap:
+                        continue
+                    if not keygen_cap_ok(scenario.name, ht_keygen):
                         continue
                     wrapper = scenario.n + (h + d * length) * scenario.n + CTR_BYTES
                     if wrapper >= upper_sig:
@@ -634,15 +736,20 @@ def search_scenario(scenario: Scenario, keep_per_scenario: int) -> tuple[Candida
     fb_B = int(fallback["B"])
     fb_t = int(fallback["t"])
     fb_child_k = int(fallback["child_k"])
-    K_values = range(max(2, fb_K - 2), min(MAX_BPORS_K, fb_K + 2) + 1)
-    min_B = max(4, fb_B - 2)
-    if scenario.name == "Kylin-512":
-        K_values = range(12, 17)
-        min_B = 5
-    B_values = range(min_B, min(MAX_BPORS_B, fb_B + 2) + 1)
-    child_k_values = range(max(2, fb_child_k - 2), min(12, fb_child_k + 2) + 1)
-    if scenario.name == "Kylin-512":
-        child_k_values = range(5, 8)
+    if not ACTIVE_WIDE_BPORS:
+        K_values = range(max(2, fb_K - 2), min(MAX_BPORS_K, fb_K + 2) + 1)
+        min_B = max(4, fb_B - 2)
+        if scenario.name == "Kylin-512":
+            K_values = range(12, 17)
+            min_B = 5
+        B_values = range(min_B, min(MAX_BPORS_B, fb_B + 2) + 1)
+        child_k_values = range(max(2, fb_child_k - 2), min(12, fb_child_k + 2) + 1)
+        if scenario.name == "Kylin-512":
+            child_k_values = range(5, 8)
+    else:
+        K_values = range(scenario.bpors_K_min, min(MAX_BPORS_K, scenario.bpors_K_max) + 1)
+        B_values = range(scenario.bpors_B_min, min(MAX_BPORS_B, scenario.bpors_B_max) + 1)
+        child_k_values = range(scenario.child_k_min, min(12, scenario.child_k_max) + 1)
 
     for wrapper, ht_sign, ht_verify, h, d, h_vec, w, length in frontier:
                     max_ftselems = (upper_sig - wrapper - 1) // scenario.n
@@ -664,12 +771,22 @@ def search_scenario(scenario: Scenario, keep_per_scenario: int) -> tuple[Candida
                                 sig_lower = signature_bytes(scenario.n, h, d, length, K, child_k, min_auth)
                                 if sig_lower >= upper_sig:
                                     continue
-                                max_t_by_sign = (sign_rem - K * ((1 << B) - 1) - 1)
-                                max_t_by_sign //= max(1, K * (1 << B) * 3)
+                                if ACTIVE_ENFORCE_SIGN_CAP:
+                                    max_t_by_sign = (sign_rem - K * ((1 << B) - 1) - 1)
+                                    max_t_by_sign //= max(1, K * (1 << B) * 3)
+                                else:
+                                    max_t_by_sign = 1 << MAX_CHILD_HEIGHT
                                 if max_t_by_sign < child_k:
                                     continue
-                                t_values = focused_t_candidates(fb_t, max_t_by_sign, child_k)
-                                if scenario.name == "Kylin-512":
+                                if ACTIVE_WIDE_BPORS:
+                                    t_values = t_candidates(max_t_by_sign, child_k)
+                                else:
+                                    t_values = focused_t_candidates(fb_t, max_t_by_sign, child_k)
+                                if (
+                                    ACTIVE_ENFORCE_SIGN_CAP
+                                    and not ACTIVE_WIDE_BPORS
+                                    and scenario.name == "Kylin-512"
+                                ):
                                     t_values = [
                                         t for t in (
                                             192, 224, 256, 280, 320, 384,
@@ -679,7 +796,7 @@ def search_scenario(scenario: Scenario, keep_per_scenario: int) -> tuple[Candida
                                     ]
                                 for t in t_values:
                                     base_sign = bpors_sign_base(K, B, t)
-                                    if base_sign >= sign_rem:
+                                    if ACTIVE_ENFORCE_SIGN_CAP and base_sign >= sign_rem:
                                         continue
                                     needed_tau = max(
                                         tau_floor_for_name(scenario.name),
@@ -692,20 +809,32 @@ def search_scenario(scenario: Scenario, keep_per_scenario: int) -> tuple[Candida
                                     sig = signature_bytes(scenario.n, h, d, length, K, child_k, mmax)
                                     if sig >= upper_sig:
                                         continue
+                                    rough_bitsec = bpors_bitsec_fast(
+                                        scenario.q_sigs, scenario.n, h, K, B, t, child_k
+                                    )
+                                    if rough_bitsec + 1.0 < scenario.target_bits:
+                                        continue
                                     bitsec = bpors_bitsec(scenario.q_sigs, scenario.n, h, K, B, t, child_k)
-                                    if bitsec + 1e-9 < scenario.target_bits:
+                                    if bitsec < scenario.target_bits + SECURITY_MARGIN_BITS:
                                         continue
                                     sign_cost = ht_sign + base_sign + math.ceil(1.0 / tau)
                                     verify_cost = ht_verify + 2 * K * child_k + mmax
-                                    if sign_cost > sign_cap or verify_cost > verify_cap:
+                                    keygen_cost = keygen_hashcalls(h_vec, w, length)
+                                    if ACTIVE_ENFORCE_SIGN_CAP and sign_cost > sign_cap:
+                                        continue
+                                    if verify_cost > verify_cap:
+                                        continue
+                                    if not keygen_cap_ok(scenario.name, keygen_cost):
                                         continue
                                     cand = Candidate(
                                         scenario.name, scenario.q_sigs, scenario.n, scenario.target_bits,
                                         h, d, h_vec, K, B, t, ceil_log2(t), child_k, mmax,
                                         CTR_BYTES, w, length, sig, bitsec, tau,
-                                        keygen_hashcalls(h_vec, w, length), sign_cost, verify_cost,
+                                        keygen_cost, sign_cost, verify_cost,
                                         baseline.sign_hashcalls, baseline.verify_hashcalls,
                                     )
+                                    if not metric_lower_bounds_ok(cand):
+                                        continue
                                     candidates.append(cand)
                                     if best is None or rank_key(cand) < rank_key(best):
                                         best = cand
@@ -778,7 +907,73 @@ def candidate_to_row(c: Candidate) -> dict[str, str | int | float]:
         "verify_hashcalls": c.verify_hashcalls,
         "baseline_sign_hashcalls": c.baseline_sign_hashcalls,
         "baseline_verify_hashcalls": c.baseline_verify_hashcalls,
-        "notes": "BPORS+FP retuned under old-FORS 105% sign/verify hashcall caps",
+        "notes": ACTIVE_NOTES,
+    }
+
+
+def load_current_profile_rows(
+    targets: dict[str, float],
+    path: Path = FINAL_CSV,
+) -> tuple[dict[str, Baseline], dict[str, dict[str, object]]]:
+    baselines: dict[str, Baseline] = {}
+    fallbacks: dict[str, dict[str, object]] = {}
+    with path.open(newline="", encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            name = row["name"]
+            h_vec = parse_h_profile(row["h_profile"])
+            target = targets.get(name, float(row["target_bits"]))
+            baselines[name] = Baseline(
+                name=name,
+                q_sigs=parse_q(row["q"]),
+                n=int(row["n"]),
+                target_bits=target,
+                h=int(row["h"]),
+                d=int(row["d"]),
+                h_vec=h_vec,
+                a=int(row["bpors_B"]),
+                k=int(row["bpors_k"]),
+                w=int(row["w"]),
+                length=int(row["len"]),
+                sig=int(row["sig"]),
+                sign_hashcalls=int(row["sign_hashcalls"]),
+                verify_hashcalls=int(row["verify_hashcalls"]),
+            )
+            fallbacks[name] = {
+                "q_sigs": parse_q(row["q"]),
+                "n": int(row["n"]),
+                "target_bits": target,
+                "h": int(row["h"]),
+                "d": int(row["d"]),
+                "h_vec": h_vec,
+                "K": int(row["bpors_K"]),
+                "B": int(row["bpors_B"]),
+                "t": int(row["bpors_t"]),
+                "child_k": int(row["bpors_k"]),
+                "mmax": int(row["bpors_mmax"]),
+                "w": int(row["w"]),
+                "length": int(row["len"]),
+                "sig": int(row["sig"]),
+            }
+    return baselines, fallbacks
+
+
+def parse_q(text: str) -> int:
+    if "^" in text:
+        base, exp = text.split("^", 1)
+        if base != "2":
+            raise ValueError(f"unsupported q label: {text}")
+        return 1 << int(exp)
+    return int(text)
+
+
+def exact_target_map() -> dict[str, float]:
+    return {
+        "Kylin-128": 128.0,
+        "Kylin-256": 256.0,
+        "Kylin-512": 512.0,
+        "Kylin-128-q24": 128.0,
+        "Kylin-256-q24": 256.0,
+        "Kylin-512-q24": 512.0,
     }
 
 
@@ -908,15 +1103,158 @@ def sync_params(selected: dict[str, Candidate]) -> None:
 
 
 def main() -> int:
+    global ACTIVE_BASELINES, ACTIVE_FALLBACKS
+    global ACTIVE_SIGN_COST_SLACK, ACTIVE_VERIFY_COST_SLACK
+    global ACTIVE_ENFORCE_SIGN_CAP, ACTIVE_WIDE_BPORS
+    global ACTIVE_TAU_FLOOR, ACTIVE_Q24_TAU_FLOOR, INITIAL_SIG_HEADROOM, ACTIVE_NOTES
+
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--write", action="store_true", help="write selected CSV outputs")
     parser.add_argument("--sync-params", action="store_true", help="rewrite implementation params.h files")
     parser.add_argument("--keep", type=int, default=80, help="candidate rows to keep per scenario")
+    parser.add_argument(
+        "--cap-source",
+        choices=("old-fors", "current"),
+        default="old-fors",
+        help="hash-call caps are taken from old FORS baselines or current final BPORS profiles",
+    )
+    parser.add_argument(
+        "--cap-csv",
+        type=Path,
+        default=FINAL_CSV,
+        help="CSV used when --cap-source=current; defaults to the working final profile CSV",
+    )
+    parser.add_argument(
+        "--fallback-csv",
+        type=Path,
+        default=None,
+        help="optional profile CSV used only as the search fallback/initial upper bound",
+    )
+    parser.add_argument(
+        "--cost-slack",
+        type=float,
+        default=COST_SLACK,
+        help="multiplier applied to both sign and verify caps unless the per-cap options are set",
+    )
+    parser.add_argument(
+        "--sign-cost-slack",
+        type=float,
+        default=None,
+        help="multiplier applied to the signing cap; overrides --cost-slack for signing",
+    )
+    parser.add_argument(
+        "--verify-cost-slack",
+        type=float,
+        default=None,
+        help="multiplier applied to the verification cap; overrides --cost-slack for verification",
+    )
+    parser.add_argument(
+        "--no-sign-cap",
+        action="store_true",
+        help="do not enforce the signing hash-call cap; verification cap still applies",
+    )
+    parser.add_argument(
+        "--wide-bpors",
+        action="store_true",
+        help="with --no-sign-cap, search the full BPORS K/B/k/t scenario ranges instead of the focused window",
+    )
+    parser.add_argument(
+        "--exact-targets",
+        action="store_true",
+        help="use exact 128/256/512 classical target bits instead of legacy 127/255/511 targets",
+    )
+    parser.add_argument(
+        "--tau-floor",
+        type=float,
+        default=TAU_FLOOR,
+        help="minimum forced-pruning tau for primary profiles; use 0 to disable the explicit floor",
+    )
+    parser.add_argument(
+        "--q24-tau-floor",
+        type=float,
+        default=Q24_TAU_FLOOR,
+        help="minimum forced-pruning tau for q=2^24 profiles; use 0 to disable the explicit floor",
+    )
+    parser.add_argument(
+        "--initial-sig-headroom",
+        type=int,
+        default=1,
+        help="extra bytes allowed above the current cap source signature if its profile is infeasible",
+    )
+    parser.add_argument(
+        "--profiles",
+        nargs="*",
+        default=None,
+        help="optional subset of profile names to search",
+    )
     args = parser.parse_args()
+
+    targets = exact_target_map() if args.exact_targets else {}
+    if args.cap_source == "current":
+        ACTIVE_BASELINES, ACTIVE_FALLBACKS = load_current_profile_rows(targets, args.cap_csv)
+        if args.fallback_csv is not None:
+            _, ACTIVE_FALLBACKS = load_current_profile_rows(targets, args.fallback_csv)
+    else:
+        ACTIVE_BASELINES = FORS_BASELINES
+        ACTIVE_FALLBACKS = SECURE_BPORS_FALLBACKS
+    ACTIVE_SIGN_COST_SLACK = args.sign_cost_slack if args.sign_cost_slack is not None else args.cost_slack
+    ACTIVE_VERIFY_COST_SLACK = (
+        args.verify_cost_slack if args.verify_cost_slack is not None else args.cost_slack
+    )
+    ACTIVE_ENFORCE_SIGN_CAP = not args.no_sign_cap
+    ACTIVE_WIDE_BPORS = args.wide_bpors
+    ACTIVE_TAU_FLOOR = args.tau_floor
+    ACTIVE_Q24_TAU_FLOOR = args.q24_tau_floor
+    INITIAL_SIG_HEADROOM = args.initial_sig_headroom
+
+    source_label = "current BPORS" if args.cap_source == "current" else "old-FORS"
+    target_label = (
+        " and exact 128/256/512 classical targets" if args.exact_targets else ""
+    )
+    if args.no_sign_cap:
+        cap_label = (
+            f"verify hashcall cap ({ACTIVE_VERIFY_COST_SLACK:g}x); "
+            "signing cost is not capped"
+        )
+    else:
+        cap_label = (
+            f"sign/verify hashcall caps "
+            f"({ACTIVE_SIGN_COST_SLACK:g}x/{ACTIVE_VERIFY_COST_SLACK:g}x)"
+        )
+    if ACTIVE_TAU_FLOOR == 0 and ACTIVE_Q24_TAU_FLOOR == 0:
+        tau_label = "; no explicit tau floor"
+    else:
+        tau_label = (
+            f"; tau floors primary={ACTIVE_TAU_FLOOR:g}, "
+            f"q24={ACTIVE_Q24_TAU_FLOOR:g}"
+        )
+    ACTIVE_NOTES = (
+        f"BPORS+FP retuned under {source_label} {cap_label}"
+        f"{target_label}{tau_label}"
+    )
+
+    scenarios = SCENARIOS
+    if args.exact_targets:
+        target_map = exact_target_map()
+        scenarios = tuple(
+            Scenario(
+                s.name, s.q_sigs, s.n, target_map[s.name], s.h_min, s.h_max,
+                s.d_min, s.d_max, s.w_min, s.w_max, s.child_k_min,
+                s.child_k_max, s.bpors_K_min, s.bpors_K_max, s.bpors_B_min,
+                s.bpors_B_max,
+            )
+            for s in scenarios
+        )
+    if args.profiles:
+        wanted = set(args.profiles)
+        scenarios = tuple(s for s in scenarios if s.name in wanted)
+        missing = wanted - {s.name for s in scenarios}
+        if missing:
+            raise SystemExit(f"unknown profile(s): {', '.join(sorted(missing))}")
 
     selected: dict[str, Candidate] = {}
     all_kept: list[Candidate] = []
-    for scenario in SCENARIOS:
+    for scenario in scenarios:
         print(f"[search] {scenario.name}", flush=True)
         best, kept = search_scenario(scenario, args.keep)
         selected[scenario.name] = best

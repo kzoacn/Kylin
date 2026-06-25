@@ -15,9 +15,9 @@
     \begin{tabular}{l r r r r}
     \toprule
     实例 & 密钥生成哈希调用 & 签名哈希调用 & 验证哈希调用 & 签名字节数 \\ \midrule
-    Kylin-128 & 417279 & 2389373 & 7362 & 6472 \\
-    Kylin-256 & 324095 & 3382025 & 11405 & 25352 \\
-    Kylin-512 & 519295 & 6493104 & 44418 & 91528 \\
+    Kylin-128 & 37715967 & 525642106 & 4758 & 4712 \\
+    Kylin-256 & 39862271 & 725444501 & 9949 & 15592 \\
+    Kylin-512 & 154861567 & 2628765986 & 19229 & 54664 \\
     \bottomrule
     \end{tabular}
 \end{table}
@@ -26,13 +26,11 @@
 软件实现使用 ISO C 编写，并采用 GCC 13.3.0。参考实现保持默认的 \texttt{-O2} ISO C 编译配置，并启用常规告警检查。优化后的 64 位 PC 实现使用以 \texttt{-O3 -march=native} 为核心的目录级构建选项；其中 \texttt{Kylin-128} 还额外启用了链接时优化、省略帧指针、循环展开以及 \texttt{-fno-plt}。基准主机为 x86-64 64 位 PC 环境：AMD Ryzen 7 7800X3D 8-Core Processor，8 个物理核心、16 个硬件线程，\texttt{/proc/cpuinfo} 报告主频约为 4.192 GHz，内存 30 GiB，操作系统为 Ubuntu 24.04.3 LTS，运行于 Linux 6.18.33.1-microsoft-standard-WSL2。实现中使用 ICCS 辅助哈希/XOF 接口 \texttt{sm3hash}、\texttt{pseudohash} 与 \texttt{pseudoXOF}；报告中的打包基准不依赖外部密码学库。
 
 \paragraph{软件性能、传输与存储开销。}
-\cref{tab:kylin-package-bench} 中的自动化打包测量结果由当前实现树上的 package benchmark 驱动脚本生成。该表给出在 32 字节消息上、经过 3 次预热后的 9 次实测主机本地墙钟时间中位数（毫秒），并同时列出公钥、私钥和签名大小（字节）。由于这些数据是仓库本地环境中的墙钟测量值，其绝对数值应理解为当前主机上的实测点，而不是跨平台的统一性能声明。
-
-在本次重新测试中，优化实现相较参考实现仍保持优势，但重新调参后的 BPORS+FP 参数改变了相对签名加速比。对于 \texttt{Kylin-128}、\texttt{Kylin-256} 和 \texttt{Kylin-512}，签名阶段的实测加速比分别约为 $3.39\times$、$1.30\times$ 和 $2.60\times$；密钥生成阶段分别约为 $3.92\times$、$4.27\times$ 和 $6.10\times$；验证阶段分别约为 $2.59\times$、$2.66\times$ 和 $3.93\times$。
+\cref{tab:kylin-package-bench} 预留给实现 benchmark 驱动脚本生成的自动化打包测量结果。当前精确目标 BPORS+FP 重新调参显著改变了签名工作量，因此墙钟时间行在完成长时间 benchmark 刷新前标记为待定。表中的公钥、私钥与签名尺寸已经按当前实现参数更新。
 
 \begin{table}[H]
     \centering
-    \caption{已打包 Kylin NGCC 实例在仓库本地环境中的软件性能与传输/存储开销。时间单位为 32 字节消息上的毫秒；尺寸单位为字节。}
+    \caption{已打包 Kylin NGCC 实例在仓库本地环境中的软件性能与传输/存储开销。若时间可用，则单位为 32 字节消息上的毫秒；\texttt{TBD} 表示该时间行等待精确目标参数的 benchmark 刷新。尺寸单位为字节。}
     \label{tab:kylin-package-bench}
     \scriptsize
     \begin{tabular}{l c c c c c c c}

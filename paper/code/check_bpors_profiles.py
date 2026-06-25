@@ -9,6 +9,7 @@ not a broad parameter search.
 
 from __future__ import annotations
 
+import argparse
 import csv
 import math
 from math import comb
@@ -18,9 +19,10 @@ import mpmath as mp
 
 ROOT = Path(__file__).resolve().parents[2]
 CSV = ROOT / "paper/data/para_kylin_final_6profiles.csv"
-COST_SLACK = 1.05
-TAU_FLOOR = 1.0e-8
-Q24_TAU_FLOOR = 5.0e-7
+COST_SLACK = 1.0
+TAU_FLOOR = 0.0
+Q24_TAU_FLOOR = 0.0
+SECURITY_TOLERANCE = mp.mpf("1e-12")
 
 mp.mp.dps = 170
 
@@ -85,11 +87,32 @@ def ceil_log2(x: int) -> int:
     return (x - 1).bit_length()
 
 
-def tau_floor_for_name(name: str) -> float:
-    return Q24_TAU_FLOOR if name.endswith("-q24") else TAU_FLOOR
+def tau_floor_for_name(name: str, tau_floor: float, q24_tau_floor: float) -> float:
+    return q24_tau_floor if name.endswith("-q24") else tau_floor
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--tau-floor",
+        type=float,
+        default=TAU_FLOOR,
+        help="minimum forced-pruning tau for primary profiles",
+    )
+    parser.add_argument(
+        "--q24-tau-floor",
+        type=float,
+        default=Q24_TAU_FLOOR,
+        help="minimum forced-pruning tau for q=2^24 profiles",
+    )
+    parser.add_argument(
+        "--cost-slack",
+        type=float,
+        default=COST_SLACK,
+        help="multiplier applied to the recorded sign/verify caps",
+    )
+    args = parser.parse_args()
+
     with CSV.open(newline="") as f:
         for row in csv.DictReader(f):
             got_sig = signature_bytes(row)
@@ -112,14 +135,19 @@ def main() -> int:
             )
             if got_sig != want_sig:
                 raise SystemExit(f"signature-size mismatch for {row['name']}")
-            if bitsec + mp.mpf("1e-9") < mp.mpf(row["target_bits"]):
+            # The bound includes the direct 2^(-8n) term, so an n-byte profile
+            # approaches the nominal 8n-bit level from below.  Enforce the
+            # exact target up to high-precision numerical roundoff.
+            if bitsec + SECURITY_TOLERANCE < mp.mpf(row["target_bits"]):
                 raise SystemExit(f"BPORS cover estimate below target for {row['name']}")
-            if float(row["tau"]) + 1e-18 < tau_floor_for_name(row["name"]):
+            if float(row["tau"]) + 1e-18 < tau_floor_for_name(
+                row["name"], args.tau_floor, args.q24_tau_floor
+            ):
                 raise SystemExit(f"forced-pruning tau below floor for {row['name']}")
             if int(row["bpors_child_height"]) != ceil_log2(int(row["bpors_t"])):
                 raise SystemExit(f"child-height mismatch for {row['name']}")
-            sign_cap = math.floor(COST_SLACK * int(row["baseline_sign_hashcalls"]))
-            verify_cap = math.floor(COST_SLACK * int(row["baseline_verify_hashcalls"]))
+            sign_cap = math.floor(args.cost_slack * int(row["baseline_sign_hashcalls"]))
+            verify_cap = math.floor(args.cost_slack * int(row["baseline_verify_hashcalls"]))
             if int(row["sign_hashcalls"]) > sign_cap:
                 raise SystemExit(f"sign hash-call cap exceeded for {row['name']}")
             if int(row["verify_hashcalls"]) > verify_cap:

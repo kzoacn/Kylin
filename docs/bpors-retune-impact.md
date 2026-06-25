@@ -8,14 +8,21 @@ bottom few-time layer is BPORS+FP and the six packaged profiles are retuned.
 - Frozen source of truth: `paper/data/para_kylin_final_6profiles.csv`.
 - Reproduction script: `paper/code/search_bpors_kylin_params.py`.
 - Independent checker: `paper/code/check_bpors_profiles.py`.
-- Historical FORS baseline used for sign/verify hash-call caps:
-  `paper/data/para_fors_baseline_6profiles.csv`.
+- Current frozen rows use exact 128/256/512 target labels.  The q=2^64
+  128/256 rows are capped against the SPHINCS-alpha SHA2 small-signature
+  metrics from ePrint 2022/059, and the q=2^24 128/256 companion rows are
+  capped against the SP 800-230 limited-signature-use metrics where feasible.
+  For `Kylin-128-q24`, exact 128-bit target security does not fit the
+  SP 800-230 signature-size cap; the selected row keeps the SP 800-230
+  keygen/sign/verify caps and relaxes only the signature-size cap.
+  `paper/data/para_fors_baseline_6profiles.csv` remains a historical
+  comparison baseline.
 
 The checker recomputes signature size, BPORS cover bit security,
-forced-pruning acceptance probability, child-tree height, and the 105% old-FORS
-sign/verify hash-call caps.  The q24 companion rows use a higher practical
-forced-pruning floor than the primary rows so that KAT generation does not
-spend tens of millions of trials on the counter loop.
+forced-pruning acceptance probability, child-tree height, and the recorded
+sign/verify hash-call caps.  The current frozen rows do not impose an explicit
+forced-pruning tau floor beyond the expected-retry term already included in
+the signing hash-call proxy.
 
 ## Implementation Files
 
