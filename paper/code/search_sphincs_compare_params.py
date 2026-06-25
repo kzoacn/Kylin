@@ -382,10 +382,14 @@ def cap_with_target(cap: CapProfile, target_bits: float) -> CapProfile:
     )
 
 
-def cap_with_signature_limit(cap: CapProfile, signature_limit: int) -> CapProfile:
+def cap_with_signature_limit(
+    cap: CapProfile,
+    signature_limit: int,
+    reason: str = "signature cap relaxed",
+) -> CapProfile:
     baseline = cap.baseline
     return CapProfile(
-        f"{cap.label} (signature cap relaxed for exact classical security)",
+        f"{cap.label} ({reason})",
         bp.Baseline(
             name=baseline.name,
             q_sigs=baseline.q_sigs,
@@ -504,6 +508,20 @@ def main() -> int:
         action="store_true",
         help="use legacy 127/255/511 targets for q=2^24 companions even with --exact-targets",
     )
+    parser.add_argument(
+        "--relax-q64-signature-caps",
+        action="store_true",
+        help=(
+            "keep q=2^64 SPHINCS-alpha keygen/sign/verify hash-call caps, "
+            "but relax the external signature-size caps and minimize Kylin size"
+        ),
+    )
+    parser.add_argument(
+        "--q64-signature-slack",
+        type=float,
+        default=1.3,
+        help="temporary search upper bound multiplier for relaxed q=2^64 signature caps",
+    )
     args = parser.parse_args()
 
     targets = mixed_targets(
@@ -520,6 +538,11 @@ def main() -> int:
     notes = (
         f"BPORS+FP retuned against {q64_label}/SP 800-230 comparison caps; "
         + (
+            "q64 signature-size caps relaxed while retaining keygen/sign/verify caps; "
+            if args.relax_q64_signature_caps
+            else ""
+        )
+        + (
             "q24 companions use legacy 127/255/511 target labels; "
             if args.q24_legacy_targets
             else ""
@@ -528,9 +551,23 @@ def main() -> int:
         "the selected Kylin-256 profile"
     )
 
+    q64_128_cap = cap_with_target(q64_caps["Kylin-128"], targets["Kylin-128"])
+    q64_256_cap = cap_with_target(q64_caps["Kylin-256"], targets["Kylin-256"])
+    if args.relax_q64_signature_caps:
+        q64_128_cap = cap_with_signature_limit(
+            q64_128_cap,
+            math.ceil(q64_128_cap.baseline.sig * args.q64_signature_slack),
+            f"signature cap relaxed to {args.q64_signature_slack:g}x",
+        )
+        q64_256_cap = cap_with_signature_limit(
+            q64_256_cap,
+            math.ceil(q64_256_cap.baseline.sig * args.q64_signature_slack),
+            f"signature cap relaxed to {args.q64_signature_slack:g}x",
+        )
+
     active_caps: dict[str, CapProfile] = {
-        "Kylin-128": cap_with_target(q64_caps["Kylin-128"], targets["Kylin-128"]),
-        "Kylin-256": cap_with_target(q64_caps["Kylin-256"], targets["Kylin-256"]),
+        "Kylin-128": q64_128_cap,
+        "Kylin-256": q64_256_cap,
         "Kylin-128-q24": cap_with_target(EXTERNAL_CAPS["Kylin-128-q24"], targets["Kylin-128-q24"]),
         "Kylin-256-q24": cap_with_target(EXTERNAL_CAPS["Kylin-256-q24"], targets["Kylin-256-q24"]),
     }
@@ -551,7 +588,11 @@ def main() -> int:
                 "caps and relaxing only the signature cap",
                 flush=True,
             )
-            active_caps[name] = cap_with_signature_limit(active_caps[name], 8000)
+            active_caps[name] = cap_with_signature_limit(
+                active_caps[name],
+                8000,
+                "signature cap relaxed for exact classical security",
+            )
             best, kept = search_with_seed(
                 name, scenario_map[name], active_caps, fallbacks, notes, args.keep
             )

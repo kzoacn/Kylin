@@ -1,7 +1,7 @@
 name,impl,keygenms,signms,verifyms,pkbytes,skbytes,sigbytes
-Kylin-128,opt,TBD,TBD,TBD,32,64,4712
-Kylin-128,ref,TBD,TBD,TBD,32,64,4712
-Kylin-256,opt,TBD,TBD,TBD,64,128,15592
-Kylin-256,ref,TBD,TBD,TBD,64,128,15592
-Kylin-512,opt,TBD,TBD,TBD,128,256,54664
-Kylin-512,ref,TBD,TBD,TBD,128,256,54664
+Kylin-128,opt,TBD,TBD,TBD,32,64,7128
+Kylin-128,ref,TBD,TBD,TBD,32,64,7128
+Kylin-256,opt,TBD,TBD,TBD,64,128,26376
+Kylin-256,ref,TBD,TBD,TBD,64,128,26376
+Kylin-512,opt,TBD,TBD,TBD,128,256,83016
+Kylin-512,ref,TBD,TBD,TBD,128,256,83016

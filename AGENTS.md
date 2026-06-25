@@ -18,9 +18,9 @@
 - Companion `q=2^24` variants (`Kylin-128-q24`, `Kylin-256-q24`, `Kylin-512-q24`) are maintained in the source tree under `Implementations/Additional_Implementation/{Reference_Implementation,Optimized_Implementation}/`; final packaging promotes the optimized q24 instance directories to flat `build/Implementations/Additional_Implementation/Kylin-*-q24`.
 - Frozen parameter source of truth is `paper/data/para_kylin_final_6profiles.csv`.
 - Frozen parameter set (do not retune unless explicitly requested):
-  - `Kylin-128`: `q=2^64, n=16, h=56, d=4, h_vec=[14,14,14,14], BPORS=(K=3,B=15,t=896,k=7,mmax=136), w=114, len=20`
-  - `Kylin-256`: `q=2^64, n=32, h=58, d=4, h_vec=[15,15,15,13], BPORS=(K=5,B=13,t=1024,k=7,mmax=241), w=127, len=38`
-  - `Kylin-512`: `q=2^64, n=64, h=62, d=4, h_vec=[16,16,16,14], BPORS=(K=12,B=14,t=192,k=6,mmax=419), w=125, len=75`
+  - `Kylin-128`: `q=2^64, n=16, h=56, d=8, h_vec=[7,7,7,7,7,7,7,7], BPORS=(K=6,B=8,t=192,k=5,mmax=158), w=43, len=25`
+  - `Kylin-256`: `q=2^64, n=32, h=58, d=10, h_vec=[5,6,6,6,6,6,6,6,5,6], BPORS=(K=9,B=7,t=256,k=6,mmax=281), w=71, len=43`
+  - `Kylin-512`: `q=2^64, n=64, h=62, d=9, h_vec=[7,7,7,7,7,7,7,7,6], BPORS=(K=15,B=7,t=320,k=5,mmax=457), w=103, len=78`
   - `Kylin-128-q24`: `q=2^24, n=16, h=18, d=1, h_vec=[18], BPORS=(K=2,B=15,t=2048,k=6,mmax=85), w=7, len=48`
   - `Kylin-256-q24`: `q=2^24, n=32, h=18, d=1, h_vec=[18], BPORS=(K=5,B=16,t=224,k=8,mmax=197), w=5, len=113`
   - `Kylin-512-q24`: `q=2^24, n=64, h=32, d=2, h_vec=[16,16], BPORS=(K=7,B=12,t=768,k=8,mmax=344), w=12, len=145`

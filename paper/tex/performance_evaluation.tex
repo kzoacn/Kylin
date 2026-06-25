@@ -14,9 +14,9 @@ At the design level, Kylin's dominant costs are hash and XOF calls. Key generati
     \begin{tabular}{l r r r r}
     \toprule
     Instance & KeyGen hash calls & Sign hash calls & Verify hash calls & Signature bytes \\ \midrule
-    Kylin-128 & 37715967 & 525642106 & 4758 & 4712 \\
-    Kylin-256 & 39862271 & 725444501 & 9949 & 15592 \\
-    Kylin-512 & 154861567 & 2628765986 & 19229 & 54664 \\
+    Kylin-128 & 141055 & 2038881 & 4482 & 7128 \\
+    Kylin-256 & 198271 & 2691224 & 15507 & 26376 \\
+    Kylin-512 & 519295 & 10723949 & 36480 & 83016 \\
     \bottomrule
     \end{tabular}
 \end{table}
@@ -26,7 +26,7 @@ The software implementation is written in ISO C and is compiled with GCC 13.3.0.
 
 \paragraph{Software performance, transmission, and storage cost.}
 \cref{tab:kylin-package-bench} is reserved for automated package measurements
-from the implementation benchmark driver.  The current exact-target BPORS+FP
+from the implementation benchmark driver.  The current BPORS+FP
 retune changes the signing workload substantially, so the wall-clock timing
 rows are marked as pending until the long-running benchmark refresh is rerun.
 The public-key, secret-key, and signature sizes in the table are already
@@ -34,7 +34,7 @@ updated from the current implementation parameters.
 
 \begin{table}[H]
     \centering
-    \caption{Repository-local software performance and transmission/storage cost for the packaged Kylin NGCC instances. Times are milliseconds on a 32-byte message when available; \texttt{TBD} marks timing rows awaiting the exact-target benchmark refresh. Sizes are bytes.}
+    \caption{Repository-local software performance and transmission/storage cost for the packaged Kylin NGCC instances. Times are milliseconds on a 32-byte message when available; \texttt{TBD} marks timing rows awaiting the benchmark refresh. Sizes are bytes.}
     \label{tab:kylin-package-bench}
     \scriptsize
     \begin{tabular}{l c c c c c c c}

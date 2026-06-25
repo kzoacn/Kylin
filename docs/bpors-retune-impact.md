@@ -10,10 +10,12 @@ bottom few-time layer is BPORS+FP and the six packaged profiles are retuned.
   BPORS candidate model and `paper/code/search_sphincs_compare_params.py` for
   the SPHINCS-comparison profile selection.
 - Independent checker: `paper/code/check_bpors_profiles.py`.
-- Current frozen q=2^64 rows use exact 128/256/512 target labels.  The q=2^64
-  128/256 rows are capped against the SPHINCS-alpha SHA2 small-signature
-  metrics from ePrint 2022/059, and the 512 row is capped at the configured
-  multiple of the selected 256 row.
+- Current frozen q=2^64 rows use the legacy 127/255/511 target labels.  The
+  q=2^64 128/256 rows retain the corrected SPHINCS-alpha theoretical
+  keygen/sign/verify hash-call caps from ePrint 2022/059 / the NIST
+  submission, while the SPHINCS-alpha signature-size caps are relaxed and
+  Kylin signature size is minimized under those time caps.  The 512 row is
+  capped at the configured multiple of the selected 256 row.
 - Current frozen q=2^24 companion rows use the legacy 127/255/511 target
   labels requested for limited-signature-use profiles.  The q=2^24 128/256
   companion rows are capped against the SP 800-230 limited-signature-use

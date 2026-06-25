@@ -850,3 +850,15 @@
   - 放开 signature cap、保留 keygen/sign/verify cap 与精确 128 安全时，最小签名为 `8616` bytes；
   - 同样放开 signature cap 的精确 256 诊断点为 `28840` bytes。
 - 结论：严格“所有 q64 指标均不超过 SPHINCS-alpha small-signature theoretical hashcall proxy 且安全精确达标”与当前 BPORS+FP 构造冲突；因此本次未静默改写 `paper/data/para_kylin_final_6profiles.csv` 或实现参数，等待明确选择放宽 signature cap、sign cap 或改回其他对标口径。
+
+### 2026-06-25 - Legacy 127/255/511 BPORS+FP Retune under Corrected Caps (Done)
+
+- 按最新要求放弃 q64 精确 `128/256/512` target，改回 legacy `127/255/511` 安全阈值；q64 128/256 继续使用 SPHINCS-alpha theoretical keygen/sign/verify hashcall caps，修正后的 signature-size cap 不再作为硬约束，而是在这些时间 cap 下最小化 Kylin 签名尺寸。
+- 搜索脚本新增 `--relax-q64-signature-caps` 与 `--q64-signature-slack`，用于显式记录“放松 q64 signature cap、保留 hashcall cap”的再现路径。
+- 当前冻结参数更新为：
+  - `Kylin-128`: `h=56,d=8,h_vec=[7,7,7,7,7,7,7,7], BPORS=(6,8,192,5,158), w=43, len=25, sig=7128`, `bitsec=127.568928`, `sign/verify=2038881/4482`;
+  - `Kylin-256`: `h=58,d=10,h_vec=[5,6,6,6,6,6,6,6,5,6], BPORS=(9,7,256,6,281), w=71, len=43, sig=26376`, `bitsec=255.607621`, `sign/verify=2691224/15507`;
+  - `Kylin-512`: `h=62,d=9,h_vec=[7,7,7,7,7,7,7,7,6], BPORS=(15,7,320,5,457), w=103, len=78, sig=83016`, `bitsec=511.422193`, `sign/verify=10723949/36480`;
+  - q24 rows remain `Kylin-128-q24 sig=2632`, `Kylin-256-q24 sig=11816`, `Kylin-512-q24 sig=46280` under the prior legacy/support-profile logic.
+- 已同步：`paper/data/para_kylin_final_6profiles.csv`、`para_kylin_selected_6profiles.csv`、primary Ref/Opt `params.h`、`AGENTS.md`、`Implementations/README`、hashcall/package-bench CSV、英文/中文 Table 1、参数表、安全表、性能表与 impact note。
+- 验证：`python3 -m py_compile paper/code/search_sphincs_compare_params.py paper/code/search_bpors_kylin_params.py paper/code/check_bpors_profiles.py` 通过；`python3 paper/code/check_bpors_profiles.py` 通过；主提交 Reference/Optimized 三档 `make clean all test` 均通过，包括 `Kylin-512`；`make -C paper/build all` 与 `make -C paper/build zh` 均通过；`git diff --check` 通过。KAT/Test Vectors 与 package rebuild 仍需后续长任务刷新。
