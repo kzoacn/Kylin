@@ -21,11 +21,11 @@
   - `Kylin-128`: `q=2^64, n=16, h=62, d=7, h_vec=[8,9,9,9,9,9,9], BPORS=(K=4,B=7,t=128,k=6,mmax=95), w=17, len=33`
   - `Kylin-256`: `q=2^64, n=32, h=65, d=8, h_vec=[8,8,8,8,8,8,8,9], BPORS=(K=9,B=8,t=66,k=5,mmax=187), w=16, len=66`
   - `Kylin-512`: `q=2^64, n=64, h=64, d=8, h_vec=[8,8,8,8,8,8,8,8], BPORS=(K=14,B=8,t=256,k=5,mmax=415), w=43, len=96`
-  - `Kylin-128-q24`: `q=2^24, n=16, h=21, d=1, h_vec=[21], BPORS=(K=2,B=16,t=560,k=7,mmax=76), w=7, len=48`
-  - `Kylin-256-q24`: `q=2^24, n=32, h=20, d=1, h_vec=[20], BPORS=(K=3,B=15,t=2944,k=8,mmax=184), w=7, len=94`
-  - `Kylin-512-q24`: `q=2^24, n=64, h=38, d=2, h_vec=[19,19], BPORS=(K=7,B=16,t=216,k=10,mmax=313), w=12, len=145`
+  - `Kylin-128-q24`: `q=2^24, n=16, h=22, d=1, h_vec=[22], BPORS=(K=2,B=12,t=864,k=7,mmax=90), w=6, len=52`
+  - `Kylin-256-q24`: `q=2^24, n=32, h=21, d=1, h_vec=[21], BPORS=(K=3,B=14,t=3072,k=8,mmax=202), w=6, len=102`
+  - `Kylin-512-q24`: `q=2^24, n=64, h=41, d=2, h_vec=[20,21], BPORS=(K=7,B=15,t=224,k=10,mmax=336), w=12, len=145`
 - `Kylin-512` usually runs slowly; for quick smoke tests it may be skipped temporarily, but final-result validation must run `Kylin-512` in practice.
-- Companion `q=2^24` instance tests can take 10 minutes or more; do not run q24 `make test` as part of default packaging smoke tests unless explicitly requested.
+- Companion `q=2^24` instance tests and KAT generation can take tens of minutes or hours; do not run q24 `make test` as part of default packaging smoke tests unless explicitly requested.
 - Use NGCC SIG API files and names: `SIG_AlgorithmInstance.h`, `SIG_AlgorithmInstance.c`, and `KAT_SIG.c`.
 - Copy NGCC helper/template files from `docs/API_PKC/...`; do not modify `KAT_SIG.c`, `auxfunc.*`, or `drng.*` after copying.
 - Required NGCC functions are `sig_get_pk_len_bytes`, `sig_get_sk_len_bytes`, `sig_get_sn_len_bytes`, `sig_keygen`, `sig_sign`, and `sig_verify`.

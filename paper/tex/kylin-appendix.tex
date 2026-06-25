@@ -13,7 +13,7 @@ tuples \texttt{Kylin-128-q24/256-q24/512-q24}.
 \label{apx:q24-profiles}
 
 This appendix summarizes the frozen companion $q=2^{24}$ profiles that are
-kept as additional reference implementations. The motivation is practical:
+kept as additional implementations. The motivation is practical:
 some application settings remain dissatisfied with large signature sizes and
 verification-time behavior under very large per-key signing budgets. In
 addition, NIST's April 13, 2026 initial public draft SP 800-230 highlights
@@ -22,31 +22,31 @@ further motivates keeping explicit companion rows for limited-signature
 operating points (including $2^{24}$-style limits)~\cite{NIST:SP800-230-IPD}.
 
 In this repository, the $q=2^{24}$ rows are selected from the same constrained
-search workflow and then frozen as reference-only companions to the packaged
+search workflow and then frozen as additional companions to the packaged
 NGCC $q=2^{64}$ families.
 
 \begin{table}[htbp]
     \centering
-    \caption{Frozen companion $q=2^{24}$ Kylin parameter profiles (reference-only additional implementations).}
+    \caption{Frozen companion $q=2^{24}$ Kylin parameter profiles (additional implementations).}
     \label{tab:q24-parameters}
     \scriptsize
     \resizebox{\linewidth}{!}{%
     \begin{tabular}{l c c c c l c c c c c c}
     \toprule
     Family & NGCC lvl & $n$ & $h/d$ & $(h_0,\ldots,h_{d-1})$ & $(K,B,t,k,m_{\max})$ & $w$ & $l$ & bitsec & pk & sk & sig \\ \midrule
-    Kylin-128-q24 & 128/80 & 16 & 21/1 & $(21)$ & $(2,16,560,7,76)$ & 7 & 48 & 127.163 & 32 & 64 & 2568 \\
-    Kylin-256-q24 & 256/128 & 32 & 20/1 & $(20)$ & $(3,15,2944,8,184)$ & 7 & 94 & 255.321 & 64 & 128 & 10344 \\
-    Kylin-512-q24 & 512/256 & 64 & 38/2 & $(19,19)$ & $(7,16,216,10,313)$ & 12 & 145 & 511.529 & 128 & 256 & 45576 \\
+    Kylin-128-q24 & 128/80 & 16 & 22/1 & $(22)$ & $(2,12,864,7,90)$ & 6 & 52 & 127.150 & 32 & 64 & 2872 \\
+    Kylin-256-q24 & 256/128 & 32 & 21/1 & $(21)$ & $(3,14,3072,8,202)$ & 6 & 102 & 255.588 & 64 & 128 & 11208 \\
+    Kylin-512-q24 & 512/256 & 64 & 41/2 & $(20,21)$ & $(7,15,224,10,336)$ & 12 & 145 & 511.192 & 128 & 256 & 47240 \\
     \bottomrule
     \end{tabular}%
     }
 \end{table}
 
-The companion KAT rows in \cref{tab:q24-kat-digests} are pending refresh after
-the $q=2^{24}$ legacy-target retune.  Full wall-clock benchmark refreshes for
-these companion rows are intentionally separated from the primary package
-benchmark table because the q24 KAT and benchmark runs are long-running jobs
-under the retuned BPORS+FP parameters.
+The companion KAT rows in \cref{tab:q24-kat-digests} were regenerated after the
+$q=2^{24}$ legacy-target retune.  Full wall-clock benchmark refreshes for these
+companion rows are intentionally separated from the primary package benchmark
+table because the q24 benchmark runs are long-running jobs under the retuned
+BPORS+FP parameters.
 
 \begin{table}[htbp]
     \centering
@@ -56,11 +56,11 @@ under the retuned BPORS+FP parameters.
     \begin{tabular}{l r l}
     \toprule
     Family & lines & SHA-256 \\ \midrule
-    Kylin-128-q24 & -- & \texttt{TBD} \\
-    Kylin-256-q24 & -- & \texttt{TBD} \\
-    Kylin-512-q24 & -- & \texttt{TBD} \\
+    Kylin-128-q24 & 120 & \texttt{c284b49d8cf9075a513878a2c68535ae08a9236fe2f713b90d086268e6ddd46c} \\
+    Kylin-256-q24 & 120 & \texttt{5cc6cf82cc4399d990eba8577de32dede7620fd1daa4c4b5defd869c73de748d} \\
+    Kylin-512-q24 & 120 & \texttt{d5529d69487b37eb237d6f936e5db62dace4c7e4b94a8afada547146e6a52e50} \\
     \bottomrule
     \end{tabular}
 \end{table}
 
-The optimized implementations apply macro-unrolled SM3 compression (64~explicit rounds, no branches), SSE2/AVX2 hardware dispatch for message-word loading, a malloc-free \texttt{pseudoXOF} fast path for byte-aligned input, and 4-way SSE2 WOTS chain acceleration (\texttt{thash\_wots\_chain\_4x}) adapted for $n=16/32/64$. Both the sign and verify paths batch 4~WOTS chains per SIMD operation. The q24 optimized/reference KAT comparison must be rerun after the current legacy-target retune.
+The optimized implementations apply macro-unrolled SM3 compression (64~explicit rounds, no branches), SSE2/AVX2 hardware dispatch for message-word loading, a malloc-free \texttt{pseudoXOF} fast path for byte-aligned input, and 4-way SSE2 WOTS chain acceleration (\texttt{thash\_wots\_chain\_4x}) adapted for $n=16/32/64$. Both the sign and verify paths batch 4~WOTS chains per SIMD operation. The q24 KAT files listed above cover the current legacy-target BPORS+FP retune.

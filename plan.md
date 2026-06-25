@@ -876,3 +876,24 @@
   - `Kylin-512-q24`: `h=38,d=2,h_vec=[19,19], BPORS=(7,16,216,10,313), w=12, len=145, sig=45576`, `bitsec=511.529371`, `sign/verify=7342274265/2089`.
 - 已同步：`paper/data/para_kylin_final_6profiles.csv`、`para_kylin_selected_6profiles.csv`、12 个实现目录 `params.h`、`AGENTS.md`、`Implementations/README`、hashcall/package-bench CSV、英文/中文参数表、安全表、q24 附录、性能表、Table 1 figure 源与 impact note。
 - 验证：`python3 -m py_compile paper/code/search_sphincs_compare_params.py paper/code/search_bpors_kylin_params.py paper/code/check_bpors_profiles.py` 通过；`python3 paper/code/check_bpors_profiles.py` 通过；主提交 Reference/Optimized 三档 `make clean all test` 均通过，包括 `Kylin-512`；q24 Reference/Optimized 六个目录 `make clean all` 通过；`make -C paper/build all` 与 `make -C paper/build zh` 均通过；`git diff --check` 通过。q24 `make test`、KAT/Test Vectors、wall-clock benchmark 与 package rebuild 仍需后续长任务刷新。
+
+### 2026-06-26 - BPORS Sampler Cost Fix, q24 Tau-Floor Retune, and Full KAT Refresh (Done)
+
+- 精简 BPORS+FP counter 尝试路径：12 个实现目录的 `bpors.c` 同步改为 512-byte sampler block，bucket 与 index 使用独立 domain；失败 counter 只解析 index 子集并计算 Octopus 认证节点数，成功后才抽 bucket 并生成秘密值、子树与外层认证路径。
+- 修正搜索/checker hashcall 模型：sign proxy 现在显式计入 sampler block 与 `1/\tau` 的 index-sampling 重试成本，verify proxy 使用一次 index sampler 与一次 bucket sampler；`search_sphincs_compare_params.py` 增加 `--tau-floor` / `--q24-tau-floor`，本轮 q24 使用 `--q24-tau-floor 1e-4`。
+- 当前冻结参数更新为：
+  - `Kylin-128`: `h=62,d=7,h_vec=[8,9,9,9,9,9,9], BPORS=(4,7,128,6,95), w=17, len=33, sig=6616`, `bitsec=127.054520`, `sign/verify=2113169/2062`;
+  - `Kylin-256`: `h=65,d=8,h_vec=[8,8,8,8,8,8,8,9], BPORS=(9,8,66,5,187), w=16, len=66, sig=26440`, `bitsec=255.155647`, `sign/verify=2912474/4312`;
+  - `Kylin-512`: `h=64,d=8,h_vec=[8,8,8,8,8,8,8,8], BPORS=(14,8,256,5,415), w=43, len=96, sig=84360`, `bitsec=511.663268`, `sign/verify=11566745/16757`;
+  - `Kylin-128-q24`: `h=22,d=1,h_vec=[22], BPORS=(2,12,864,7,90), w=6, len=52, sig=2872`, `bitsec=127.150459`, `tau=1.00366813292e-4`;
+  - `Kylin-256-q24`: `h=21,d=1,h_vec=[21], BPORS=(3,14,3072,8,202), w=6, len=102, sig=11208`, `bitsec=255.587871`, `tau=1.17726968272e-4`;
+  - `Kylin-512-q24`: `h=41,d=2,h_vec=[20,21], BPORS=(7,15,224,10,336), w=12, len=145, sig=47240`, `bitsec=511.191929`, `tau=1.21683287616e-4`.
+- 已同步：`paper/data/para_kylin_final_6profiles.csv`、`para_kylin_selected_6profiles.csv`、12 个实现目录 `params.h`、`AGENTS.md`、`Implementations/README`、英文/中文参数表、安全表、性能 hashcall 表、q24 附录、KAT 摘要表、impact note 与术语表。
+- KAT 刷新完成：六个 `Test_Vectors/KAT_SIG_Kylin-*.txt` 均为 120 行；q24-512 长任务使用临时单 count 拆分生成器并行完成，临时 count00/count01 与官方 `make kat` 已生成的 count 0/1 字节级一致后合并。最终 SHA-256：
+  - `Kylin-128`: `db4b95738e79df45ab20e06a768eec576d70712ef4962a7936b1344dbfa57db7`;
+  - `Kylin-256`: `141bb7daee612f22bdd18a1d9fe7868c78434308dc7ecc86ae107e3ea9a0f1bc`;
+  - `Kylin-512`: `2c16f6190028eff55db3a7f2aff00c7b51098378759381fd2c43e1b7bafd38ed`;
+  - `Kylin-128-q24`: `c284b49d8cf9075a513878a2c68535ae08a9236fe2f713b90d086268e6ddd46c`;
+  - `Kylin-256-q24`: `5cc6cf82cc4399d990eba8577de32dede7620fd1daa4c4b5defd869c73de748d`;
+  - `Kylin-512-q24`: `d5529d69487b37eb237d6f936e5db62dace4c7e4b94a8afada547146e6a52e50`.
+- 验证：`python3 -m py_compile paper/code/search_sphincs_compare_params.py paper/code/search_bpors_kylin_params.py paper/code/check_bpors_profiles.py` 通过；`python3 paper/code/check_bpors_profiles.py --q24-tau-floor 1e-4` 通过；`git diff --check` 通过；`make -C paper/build all` 与 `make -C paper/build zh` 均通过。主提交 Reference/Optimized 三档 `make clean all test` 已在本轮参数同步后通过，包括 `Kylin-512`；q24-128 Reference `make clean all test` 与 q24 optimized KAT 路径通过，q24-512 完整 KAT 已由每个 count 内部 sign+verify 验证。

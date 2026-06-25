@@ -36,6 +36,7 @@ MAX_TREE_BITS = 64
 MAX_BPORS_K = 16
 MAX_BPORS_B = 16
 MAX_CHILD_HEIGHT = 13
+BPORS_SAMPLER_BUF_U32 = 512 // 4
 DEFAULT_HT_FRONTIER_LIMIT = 80
 WIDE_HT_FRONTIER_LIMIT = 500
 
@@ -596,8 +597,8 @@ def current_fallback(scenario: Scenario) -> Candidate:
         child_k, mmax, CTR_BYTES, w, length, int(row["sig"]),
         bpors_bitsec(scenario.q_sigs, scenario.n, h, K, B, t, child_k),
         tau, keygen_hashcalls(h_vec, w, length),
-        sign_ht_hashcalls(h_vec, w, length) + bpors_sign_base(K, B, t) + math.ceil(1.0 / tau),
-        verify_ht_hashcalls(h, d, w, length) + 2 * K * child_k + mmax,
+        bpors_sign_hashcalls(sign_ht_hashcalls(h_vec, w, length), K, B, t, child_k, tau),
+        bpors_verify_hashcalls(verify_ht_hashcalls(h, d, w, length), K, B, t, child_k, mmax),
         baseline.sign_hashcalls, baseline.verify_hashcalls,
     )
 
@@ -651,6 +652,40 @@ def metric_lower_bounds_ok(c: Candidate) -> bool:
 
 def bpors_sign_base(K: int, B: int, t: int) -> int:
     return K * (1 << B) * (3 * t - 1) + K * ((1 << B) - 1)
+
+
+def bounded_draw_factor(bound: int) -> float:
+    range32 = 1 << 32
+    limit = range32 - (range32 % bound)
+    return range32 / limit
+
+
+def expected_distinct_draws(t: int, child_k: int) -> float:
+    return sum(t / (t - i) for i in range(child_k))
+
+
+def sampler_blocks(words: float) -> int:
+    return max(1, math.ceil(words / BPORS_SAMPLER_BUF_U32))
+
+
+def bpors_index_sampler_blocks(K: int, t: int, child_k: int) -> int:
+    words = K * expected_distinct_draws(t, child_k) * bounded_draw_factor(t)
+    return sampler_blocks(words)
+
+
+def bpors_bucket_sampler_blocks(K: int) -> int:
+    return sampler_blocks(K)
+
+
+def bpors_sign_hashcalls(ht_sign: int, K: int, B: int, t: int, child_k: int, tau: float) -> int:
+    trial_cost = bpors_index_sampler_blocks(K, t, child_k)
+    success_cost = bpors_bucket_sampler_blocks(K)
+    return ht_sign + bpors_sign_base(K, B, t) + success_cost + math.ceil(trial_cost / tau)
+
+
+def bpors_verify_hashcalls(ht_verify: int, K: int, B: int, t: int, child_k: int, mmax: int) -> int:
+    sampler_cost = bpors_index_sampler_blocks(K, t, child_k) + bpors_bucket_sampler_blocks(K)
+    return ht_verify + 2 * K * child_k + mmax + sampler_cost
 
 
 def parse_h_profile(text: str) -> tuple[int, ...]:
@@ -789,11 +824,14 @@ def search_scenario(scenario: Scenario, keep_per_scenario: int) -> tuple[Candida
                                     ]
                                 for t in t_values:
                                     base_sign = bpors_sign_base(K, B, t)
-                                    if ACTIVE_ENFORCE_SIGN_CAP and base_sign >= sign_rem:
+                                    trial_cost = bpors_index_sampler_blocks(K, t, child_k)
+                                    success_cost = bpors_bucket_sampler_blocks(K)
+                                    fixed_sign = base_sign + success_cost
+                                    if ACTIVE_ENFORCE_SIGN_CAP and fixed_sign >= sign_rem:
                                         continue
                                     needed_tau = max(
                                         tau_floor_for_name(scenario.name),
-                                        1.0 / max(1, sign_rem - base_sign),
+                                        trial_cost / max(1, sign_rem - fixed_sign),
                                     )
                                     pick = choose_mmax(K, B, t, child_k, max_mmax, needed_tau)
                                     if pick is None:
@@ -810,8 +848,8 @@ def search_scenario(scenario: Scenario, keep_per_scenario: int) -> tuple[Candida
                                     bitsec = bpors_bitsec(scenario.q_sigs, scenario.n, h, K, B, t, child_k)
                                     if bitsec < scenario.target_bits + SECURITY_MARGIN_BITS:
                                         continue
-                                    sign_cost = ht_sign + base_sign + math.ceil(1.0 / tau)
-                                    verify_cost = ht_verify + 2 * K * child_k + mmax
+                                    sign_cost = ht_sign + fixed_sign + math.ceil(trial_cost / tau)
+                                    verify_cost = bpors_verify_hashcalls(ht_verify, K, B, t, child_k, mmax)
                                     keygen_cost = keygen_hashcalls(h_vec, w, length)
                                     if ACTIVE_ENFORCE_SIGN_CAP and sign_cost > sign_cap:
                                         continue

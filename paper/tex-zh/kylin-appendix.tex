@@ -9,29 +9,28 @@
 
 本附录汇总了冻结的 $q=2^{24}$ 附加参数配置，它们在仓库中作为额外的参考实现保留。其动机是实践性的：在某些应用场景中，当单密钥签名预算极大时，现有签名尺寸与验证时间行为仍难以令人满意。此外，NIST 于 2026 年 4 月 13 日发布的 SP 800-230 初始公开草案强调了带有显式单密钥使用上界的有状态哈希签名，这也进一步说明了为受限签名次数工作点（包括 $2^{24}$ 这一类限制）保留明确附加参数行的意义~\cite{NIST:SP800-230-IPD}。
 
-在本仓库中，这些 $q=2^{24}$ 配置通过与主线相同的受约束搜索工作流选出，随后被冻结为已打包 NGCC $q=2^{64}$ 参数族的参考性附加配置。
+在本仓库中，这些 $q=2^{24}$ 配置通过与主线相同的受约束搜索工作流选出，随后被冻结为已打包 NGCC $q=2^{64}$ 参数族的附加配置。
 
 \begin{table}[htbp]
     \centering
-    \caption{冻结的 $q=2^{24}$ Kylin 附加参数配置（仅供参考的额外实现）。}
+    \caption{冻结的 $q=2^{24}$ Kylin 附加参数配置（额外实现）。}
     \label{tab:q24-parameters}
     \scriptsize
     \resizebox{\linewidth}{!}{%
     \begin{tabular}{l c c c c l c c c c c c}
     \toprule
     参数族 & NGCC 等级 & $n$ & $h/d$ & $(h_0,\ldots,h_{d-1})$ & $(K,B,t,k,m_{\max})$ & $w$ & $l$ & bitsec & pk & sk & sig \\ \midrule
-    Kylin-128-q24 & 128/80 & 16 & 21/1 & $(21)$ & $(2,16,560,7,76)$ & 7 & 48 & 127.163 & 32 & 64 & 2568 \\
-    Kylin-256-q24 & 256/128 & 32 & 20/1 & $(20)$ & $(3,15,2944,8,184)$ & 7 & 94 & 255.321 & 64 & 128 & 10344 \\
-    Kylin-512-q24 & 512/256 & 64 & 38/2 & $(19,19)$ & $(7,16,216,10,313)$ & 12 & 145 & 511.529 & 128 & 256 & 45576 \\
+    Kylin-128-q24 & 128/80 & 16 & 22/1 & $(22)$ & $(2,12,864,7,90)$ & 6 & 52 & 127.150 & 32 & 64 & 2872 \\
+    Kylin-256-q24 & 256/128 & 32 & 21/1 & $(21)$ & $(3,14,3072,8,202)$ & 6 & 102 & 255.588 & 64 & 128 & 11208 \\
+    Kylin-512-q24 & 512/256 & 64 & 41/2 & $(20,21)$ & $(7,15,224,10,336)$ & 12 & 145 & 511.192 & 128 & 256 & 47240 \\
     \bottomrule
     \end{tabular}%
     }
 \end{table}
 
-\cref{tab:q24-kat-digests} 中的 companion KAT 行在本次 $q=2^{24}$
-legacy-target 重新调参后等待刷新。由于重新调参后的 BPORS+FP q24 KAT 与
-benchmark 均属于长时间任务，完整墙钟 benchmark 刷新与主 package benchmark
-表分开维护。
+\cref{tab:q24-kat-digests} 中的 companion KAT 行已在本次 $q=2^{24}$
+legacy-target 重新调参后重新生成。由于重新调参后的 BPORS+FP q24 benchmark
+属于长时间任务，完整墙钟 benchmark 刷新与主 package benchmark 表分开维护。
 
 \begin{table}[htbp]
     \centering
@@ -41,11 +40,11 @@ benchmark 均属于长时间任务，完整墙钟 benchmark 刷新与主 package
     \begin{tabular}{l r l}
     \toprule
     参数族 & 行数 & SHA-256 \\ \midrule
-    Kylin-128-q24 & -- & \texttt{TBD} \\
-    Kylin-256-q24 & -- & \texttt{TBD} \\
-    Kylin-512-q24 & -- & \texttt{TBD} \\
+    Kylin-128-q24 & 120 & \texttt{c284b49d8cf9075a513878a2c68535ae08a9236fe2f713b90d086268e6ddd46c} \\
+    Kylin-256-q24 & 120 & \texttt{5cc6cf82cc4399d990eba8577de32dede7620fd1daa4c4b5defd869c73de748d} \\
+    Kylin-512-q24 & 120 & \texttt{d5529d69487b37eb237d6f936e5db62dace4c7e4b94a8afada547146e6a52e50} \\
     \bottomrule
     \end{tabular}
 \end{table}
 
-优化实现采用宏展开的 SM3 压缩函数（64 个显式轮函数，无分支）、面向消息字加载的 SSE2/AVX2 硬件分派、针对字节对齐输入的无 \texttt{malloc} \texttt{pseudoXOF} 快速路径，以及适配 $n=16/32/64$ 的 4 路 SSE2 WOTS 链加速（\texttt{thash\_wots\_chain\_4x}）。签名与验证路径均以每次 SIMD 操作处理 4 条 WOTS 链。本次 legacy-target 重新调参后，q24 优化/参考 KAT 对比仍需重新运行。
+优化实现采用宏展开的 SM3 压缩函数（64 个显式轮函数，无分支）、面向消息字加载的 SSE2/AVX2 硬件分派、针对字节对齐输入的无 \texttt{malloc} \texttt{pseudoXOF} 快速路径，以及适配 $n=16/32/64$ 的 4 路 SSE2 WOTS 链加速（\texttt{thash\_wots\_chain\_4x}）。签名与验证路径均以每次 SIMD 操作处理 4 条 WOTS 链。上表中的 q24 KAT 文件覆盖当前 legacy-target BPORS+FP 重新调参结果。

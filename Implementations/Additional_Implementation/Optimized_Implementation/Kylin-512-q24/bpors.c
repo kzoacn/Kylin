@@ -10,6 +10,9 @@
 #include "auxfunc.h"
 
 #define BPORS_MAX_CHILD_AUTH (SPX_BPORS_CH_K * SPX_BPORS_CHILD_HEIGHT)
+#define BPORS_SAMPLER_BUF_BYTES 512
+#define BPORS_SAMPLE_BUCKETS 1
+#define BPORS_SAMPLE_INDICES 2
 
 #if SPX_BPORS_CH_K > SPX_BPORS_T
 #error BPORS child subset size must not exceed the child leaf count
@@ -64,66 +67,92 @@ static void prepare_bpors_addr(uint32_t out[8], const uint32_t in[8],
     set_bpors_bucket(out, bucket);
 }
 
-static int xof_u32(uint32_t *out, const unsigned char *m, uint64_t ctr,
-                   const spx_ctx *ctx, const uint32_t addr[8],
-                   uint32_t domain, uint32_t coord, uint32_t item,
-                   uint32_t draw)
+typedef struct {
+    const unsigned char *m;
+    uint64_t ctr;
+    const spx_ctx *ctx;
+    const uint32_t *addr;
+    uint32_t domain;
+    uint32_t block;
+    size_t pos;
+    unsigned char buf[BPORS_SAMPLER_BUF_BYTES];
+} bpors_sampler;
+
+static void sampler_init(bpors_sampler *st, const unsigned char *m,
+                         uint64_t ctr, const spx_ctx *ctx,
+                         const uint32_t addr[8], uint32_t domain)
 {
-    static const unsigned char tag[] = "Kylin-BPORS-H2-v1";
-    unsigned char buf[sizeof(tag) - 1 + SPX_N + SPX_ADDR_BYTES +
-                      SPX_BPORS_MSG_BYTES + 8 + 16];
-    unsigned char rnd[4];
-    unsigned char *p = buf;
+    st->m = m;
+    st->ctr = ctr;
+    st->ctx = ctx;
+    st->addr = addr;
+    st->domain = domain;
+    st->block = 0;
+    st->pos = BPORS_SAMPLER_BUF_BYTES;
+}
+
+static int sampler_refill(bpors_sampler *st)
+{
+    static const unsigned char tag[] = "Kylin-BPORS-Sampler-v2";
+    unsigned char in[sizeof(tag) - 1 + SPX_N + SPX_ADDR_BYTES +
+                     SPX_BPORS_MSG_BYTES + 8 + 8];
+    unsigned char *p = in;
 
     memcpy(p, tag, sizeof(tag) - 1);
     p += sizeof(tag) - 1;
-    memcpy(p, ctx->pub_seed, SPX_N);
+    memcpy(p, st->ctx->pub_seed, SPX_N);
     p += SPX_N;
-    memcpy(p, addr, SPX_ADDR_BYTES);
+    memcpy(p, st->addr, SPX_ADDR_BYTES);
     p += SPX_ADDR_BYTES;
-    memcpy(p, m, SPX_BPORS_MSG_BYTES);
+    memcpy(p, st->m, SPX_BPORS_MSG_BYTES);
     p += SPX_BPORS_MSG_BYTES;
-    ull_to_bytes(p, 8, ctr);
+    ull_to_bytes(p, 8, st->ctr);
     p += 8;
-    u32_to_bytes(p, domain);
+    u32_to_bytes(p, st->domain);
     p += 4;
-    u32_to_bytes(p, coord);
-    p += 4;
-    u32_to_bytes(p, item);
-    p += 4;
-    u32_to_bytes(p, draw);
+    u32_to_bytes(p, st->block);
     p += 4;
 
-    if (pseudoXOF(32, buf, (unsigned long long)(p - buf) * 8ULL, rnd) != 0) {
+    if (pseudoXOF(BPORS_SAMPLER_BUF_BYTES * 8ULL, in,
+                  (unsigned long long)(p - in) * 8ULL, st->buf) != 0) {
         return -1;
     }
-    *out = (uint32_t)bytes_to_ull(rnd, 4);
+    st->block++;
+    st->pos = 0;
     return 0;
 }
 
-static int random_bounded(uint32_t *out, uint32_t bound,
-                          const unsigned char *m, uint64_t ctr,
-                          const spx_ctx *ctx, const uint32_t addr[8],
-                          uint32_t domain, uint32_t coord, uint32_t item)
+static int sampler_u32(uint32_t *out, bpors_sampler *st)
 {
-    uint32_t draw = 0;
+    if (st->pos + 4 > BPORS_SAMPLER_BUF_BYTES) {
+        if (sampler_refill(st) != 0) {
+            return -1;
+        }
+    }
+    *out = (uint32_t)bytes_to_ull(st->buf + st->pos, 4);
+    st->pos += 4;
+    return 0;
+}
+
+static int random_bounded(uint32_t *out, uint32_t bound, bpors_sampler *st)
+{
     const uint64_t range = 1ULL << 32;
-    const uint64_t limit = range - (range % bound);
+    uint64_t limit;
 
     if (bound == 0) {
         return -1;
     }
 
+    limit = range - (range % bound);
     for (;;) {
         uint32_t x;
-        if (xof_u32(&x, m, ctr, ctx, addr, domain, coord, item, draw) != 0) {
+        if (sampler_u32(&x, st) != 0) {
             return -1;
         }
         if ((uint64_t)x < limit) {
             *out = x % bound;
             return 0;
         }
-        draw++;
     }
 }
 
@@ -153,19 +182,14 @@ static void sort_u32(uint32_t *values, uint32_t len)
 }
 
 static int select_subset(uint32_t out[SPX_BPORS_CH_K],
-                         const unsigned char *m, uint64_t ctr,
-                         const spx_ctx *ctx, const uint32_t addr[8],
-                         uint32_t coord)
+                         bpors_sampler *sampler)
 {
     uint32_t len = 0;
-    uint32_t item = 0;
     while (len < SPX_BPORS_CH_K) {
         uint32_t x;
-        if (random_bounded(&x, SPX_BPORS_T, m, ctr, ctx, addr,
-                           2, coord, item) != 0) {
+        if (random_bounded(&x, SPX_BPORS_T, sampler) != 0) {
             return -1;
         }
-        item++;
         if (!contains_u32(out, len, x)) {
             out[len++] = x;
         }
@@ -591,22 +615,19 @@ static void outer_root_from_sig(unsigned char *root,
     memcpy(root, cur, SPX_N);
 }
 
-static int parse_candidate(uint32_t buckets[SPX_BPORS_K],
-                           uint32_t indices[SPX_BPORS_K][SPX_BPORS_CH_K],
-                           uint32_t auth_pos[SPX_BPORS_K][BPORS_MAX_CHILD_AUTH],
-                           uint32_t auth_len[SPX_BPORS_K],
-                           uint32_t *total_auth,
-                           const unsigned char *m, uint64_t ctr,
-                           const spx_ctx *ctx, const uint32_t addr[8])
+static int parse_indices(uint32_t indices[SPX_BPORS_K][SPX_BPORS_CH_K],
+                         uint32_t auth_pos[SPX_BPORS_K][BPORS_MAX_CHILD_AUTH],
+                         uint32_t auth_len[SPX_BPORS_K],
+                         uint32_t *total_auth,
+                         const unsigned char *m, uint64_t ctr,
+                         const spx_ctx *ctx, const uint32_t addr[8])
 {
+    bpors_sampler sampler;
     uint32_t c;
+    sampler_init(&sampler, m, ctr, ctx, addr, BPORS_SAMPLE_INDICES);
     *total_auth = SPX_BPORS_K * SPX_BPORS_B;
     for (c = 0; c < SPX_BPORS_K; c++) {
-        if (random_bounded(&buckets[c], 1u << SPX_BPORS_B, m, ctr, ctx,
-                           addr, 1, c, 0) != 0) {
-            return -1;
-        }
-        if (select_subset(indices[c], m, ctr, ctx, addr, c) != 0) {
+        if (select_subset(indices[c], &sampler) != 0) {
             return -1;
         }
         if (oct_positions(auth_pos[c], &auth_len[c], indices[c]) != 0) {
@@ -615,6 +636,36 @@ static int parse_candidate(uint32_t buckets[SPX_BPORS_K],
         *total_auth += auth_len[c];
     }
     return 0;
+}
+
+static int parse_buckets(uint32_t buckets[SPX_BPORS_K],
+                         const unsigned char *m, uint64_t ctr,
+                         const spx_ctx *ctx, const uint32_t addr[8])
+{
+    bpors_sampler sampler;
+    uint32_t c;
+    sampler_init(&sampler, m, ctr, ctx, addr, BPORS_SAMPLE_BUCKETS);
+    for (c = 0; c < SPX_BPORS_K; c++) {
+        if (random_bounded(&buckets[c], 1u << SPX_BPORS_B, &sampler) != 0) {
+            return -1;
+        }
+    }
+    return 0;
+}
+
+static int parse_candidate(uint32_t buckets[SPX_BPORS_K],
+                           uint32_t indices[SPX_BPORS_K][SPX_BPORS_CH_K],
+                           uint32_t auth_pos[SPX_BPORS_K][BPORS_MAX_CHILD_AUTH],
+                           uint32_t auth_len[SPX_BPORS_K],
+                           uint32_t *total_auth,
+                           const unsigned char *m, uint64_t ctr,
+                           const spx_ctx *ctx, const uint32_t addr[8])
+{
+    if (parse_indices(indices, auth_pos, auth_len, total_auth,
+                      m, ctr, ctx, addr) != 0) {
+        return -1;
+    }
+    return parse_buckets(buckets, m, ctr, ctx, addr);
 }
 
 int bpors_sign(unsigned char *sig, unsigned char *pk,
@@ -636,8 +687,8 @@ int bpors_sign(unsigned char *sig, unsigned char *pk,
     unsigned char *authp = auth;
 
     for (ctr = 0; ctr != UINT64_MAX; ctr++) {
-        if (parse_candidate(buckets, indices, auth_pos, auth_len, &total_auth,
-                            m, ctr, ctx, bpors_addr) != 0) {
+        if (parse_indices(indices, auth_pos, auth_len, &total_auth,
+                          m, ctr, ctx, bpors_addr) != 0) {
             return -1;
         }
         if (total_auth <= SPX_BPORS_MMAX) {
@@ -649,6 +700,9 @@ int bpors_sign(unsigned char *sig, unsigned char *pk,
     }
 
     ull_to_bytes(sig, SPX_BPORS_CTR_BYTES, ctr);
+    if (parse_buckets(buckets, m, ctr, ctx, bpors_addr) != 0) {
+        return -1;
+    }
 
     for (c = 0; c < SPX_BPORS_K; c++) {
         uint32_t i;

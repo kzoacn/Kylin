@@ -417,6 +417,8 @@ def configure_search(
     fallbacks: dict[str, dict[str, object]] | None = None,
     lower_bounds: dict[str, dict[str, int]] | None = None,
     enforce_keygen_caps: bool = True,
+    tau_floor: float = 0.0,
+    q24_tau_floor: float = 0.0,
 ) -> None:
     bp.ACTIVE_BASELINES = {name: cap.baseline for name, cap in active_caps.items()}
     bp.ACTIVE_FALLBACKS = fallbacks if fallbacks is not None else dict(bp.SECURE_BPORS_FALLBACKS)
@@ -424,8 +426,8 @@ def configure_search(
     bp.ACTIVE_VERIFY_COST_SLACK = 1.0
     bp.ACTIVE_ENFORCE_SIGN_CAP = True
     bp.ACTIVE_WIDE_BPORS = True
-    bp.ACTIVE_TAU_FLOOR = 0.0
-    bp.ACTIVE_Q24_TAU_FLOOR = 0.0
+    bp.ACTIVE_TAU_FLOOR = tau_floor
+    bp.ACTIVE_Q24_TAU_FLOOR = q24_tau_floor
     bp.INITIAL_SIG_HEADROOM = 1
     bp.ACTIVE_SIGNATURE_CAPS = {
         name: (cap.baseline.sig, cap.strict_signature)
@@ -462,12 +464,22 @@ def search_with_seed(
     keep: int,
     lower_bounds: dict[str, dict[str, int]] | None = None,
     enforce_keygen_caps: bool = True,
+    tau_floor: float = 0.0,
+    q24_tau_floor: float = 0.0,
 ) -> tuple[bp.Candidate, list[bp.Candidate]]:
     best: bp.Candidate | None = None
     merged: list[bp.Candidate] = []
     for round_idx in range(1, 11):
         print(f"[search] {name} focused round {round_idx}", flush=True)
-        configure_search(active_caps, notes, fallbacks, lower_bounds, enforce_keygen_caps)
+        configure_search(
+            active_caps,
+            notes,
+            fallbacks,
+            lower_bounds,
+            enforce_keygen_caps,
+            tau_floor,
+            q24_tau_floor,
+        )
         bp.ACTIVE_WIDE_BPORS = False
         current, kept = bp.search_scenario(scenario, keep)
         merged.extend(kept)
@@ -542,6 +554,18 @@ def main() -> int:
             "SP 800-230 256-q24 profile, instead of tying it to selected Kylin-256-q24"
         ),
     )
+    parser.add_argument(
+        "--tau-floor",
+        type=float,
+        default=0.0,
+        help="minimum forced-pruning tau for primary q=2^64 profiles",
+    )
+    parser.add_argument(
+        "--q24-tau-floor",
+        type=float,
+        default=0.0,
+        help="minimum forced-pruning tau for q=2^24 companion profiles",
+    )
     args = parser.parse_args()
 
     targets = mixed_targets(
@@ -578,6 +602,12 @@ def main() -> int:
             if args.q24_legacy_targets
             else ""
         )
+        + (
+            f"tau floors are {args.tau_floor:g} for q64 and "
+            f"{args.q24_tau_floor:g} for q24; "
+            if args.tau_floor > 0.0 or args.q24_tau_floor > 0.0
+            else ""
+        )
         + f"q64 Kylin-512 profile is capped at {args.tier512_multiplier}x "
         "the selected Kylin-256 profile"
     )
@@ -602,7 +632,14 @@ def main() -> int:
         "Kylin-128-q24": cap_with_target(EXTERNAL_CAPS["Kylin-128-q24"], targets["Kylin-128-q24"]),
         "Kylin-256-q24": cap_with_target(EXTERNAL_CAPS["Kylin-256-q24"], targets["Kylin-256-q24"]),
     }
-    configure_search(active_caps, notes, fallbacks, enforce_keygen_caps=enforce_keygen_caps)
+    configure_search(
+        active_caps,
+        notes,
+        fallbacks,
+        enforce_keygen_caps=enforce_keygen_caps,
+        tau_floor=args.tau_floor,
+        q24_tau_floor=args.q24_tau_floor,
+    )
     print_caps(active_caps, enforce_keygen_caps)
 
     for name in ("Kylin-128", "Kylin-256", "Kylin-128-q24", "Kylin-256-q24"):
@@ -615,6 +652,8 @@ def main() -> int:
                 notes,
                 args.keep,
                 enforce_keygen_caps=enforce_keygen_caps,
+                tau_floor=args.tau_floor,
+                q24_tau_floor=args.q24_tau_floor,
             )
         except RuntimeError:
             if name != "Kylin-128-q24" or targets[name] != EXACT_TARGETS[name]:
@@ -638,6 +677,8 @@ def main() -> int:
                 notes,
                 args.keep,
                 enforce_keygen_caps=enforce_keygen_caps,
+                tau_floor=args.tau_floor,
+                q24_tau_floor=args.q24_tau_floor,
             )
         selected[name] = best
         fallbacks[name] = candidate_fallback(best)
@@ -658,7 +699,14 @@ def main() -> int:
     active_caps["Kylin-512"] = cap_from_candidate(
         "Kylin-512", selected["Kylin-256"], args.tier512_multiplier, targets
     )
-    configure_search(active_caps, notes, fallbacks, enforce_keygen_caps=enforce_keygen_caps)
+    configure_search(
+        active_caps,
+        notes,
+        fallbacks,
+        enforce_keygen_caps=enforce_keygen_caps,
+        tau_floor=args.tau_floor,
+        q24_tau_floor=args.q24_tau_floor,
+    )
     print_caps({"Kylin-512": active_caps["Kylin-512"]}, enforce_keygen_caps)
     best, kept = search_with_seed(
         "Kylin-512",
@@ -668,6 +716,8 @@ def main() -> int:
         notes,
         args.keep,
         enforce_keygen_caps=enforce_keygen_caps,
+        tau_floor=args.tau_floor,
+        q24_tau_floor=args.q24_tau_floor,
     )
     selected["Kylin-512"] = best
     fallbacks["Kylin-512"] = candidate_fallback(best)
@@ -700,6 +750,8 @@ def main() -> int:
                 notes,
                 fallbacks,
                 enforce_keygen_caps=enforce_keygen_caps,
+                tau_floor=args.tau_floor,
+                q24_tau_floor=args.q24_tau_floor,
             )
             print_caps({"Kylin-512-q24": active_caps["Kylin-512-q24"]}, enforce_keygen_caps)
             try:
@@ -711,6 +763,8 @@ def main() -> int:
                     notes,
                     args.keep,
                     enforce_keygen_caps=enforce_keygen_caps,
+                    tau_floor=args.tau_floor,
+                    q24_tau_floor=args.q24_tau_floor,
                 )
                 break
             except RuntimeError:
@@ -721,7 +775,14 @@ def main() -> int:
         active_caps["Kylin-512-q24"] = cap_from_candidate(
             "Kylin-512-q24", selected["Kylin-256-q24"], args.tier512_multiplier, targets
         )
-        configure_search(active_caps, notes, fallbacks, enforce_keygen_caps=enforce_keygen_caps)
+        configure_search(
+            active_caps,
+            notes,
+            fallbacks,
+            enforce_keygen_caps=enforce_keygen_caps,
+            tau_floor=args.tau_floor,
+            q24_tau_floor=args.q24_tau_floor,
+        )
         print_caps({"Kylin-512-q24": active_caps["Kylin-512-q24"]}, enforce_keygen_caps)
         try:
             best, kept = search_with_seed(
@@ -732,6 +793,8 @@ def main() -> int:
                 notes,
                 args.keep,
                 enforce_keygen_caps=enforce_keygen_caps,
+                tau_floor=args.tau_floor,
+                q24_tau_floor=args.q24_tau_floor,
             )
         except RuntimeError:
             print(
@@ -755,6 +818,8 @@ def main() -> int:
                 notes,
                 args.keep,
                 enforce_keygen_caps=enforce_keygen_caps,
+                tau_floor=args.tau_floor,
+                q24_tau_floor=args.q24_tau_floor,
             )
             kept_rows.extend(support_kept)
             lower_bounds = {
@@ -781,6 +846,8 @@ def main() -> int:
                 args.keep,
                 lower_bounds,
                 enforce_keygen_caps=enforce_keygen_caps,
+                tau_floor=args.tau_floor,
+                q24_tau_floor=args.q24_tau_floor,
             )
             selected["Kylin-256-q24"] = support_256
             fallbacks["Kylin-256-q24"] = candidate_fallback(support_256)
@@ -797,6 +864,8 @@ def main() -> int:
                 notes,
                 args.keep,
                 enforce_keygen_caps=enforce_keygen_caps,
+                tau_floor=args.tau_floor,
+                q24_tau_floor=args.q24_tau_floor,
             )
 
     selected["Kylin-512-q24"] = best

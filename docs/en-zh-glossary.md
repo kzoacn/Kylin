@@ -40,7 +40,7 @@ This glossary fixes the preferred wording for the bilingual submission document 
 | frozen parameter set | 冻结参数集 |  |
 | reference implementation | 参考实现 |  |
 | optimized implementation | 优化实现 |  |
-| additional implementation | 附加实现 | For the `q=2^24` reference-only track. |
+| additional implementation | 附加实现 | For the companion `q=2^24` implementation track. |
 | security statement | 安全性声明 |  |
 | security analysis | 安全性分析 |  |
 | security model | 安全模型 |  |

@@ -23,6 +23,8 @@ COST_SLACK = 1.0
 TAU_FLOOR = 0.0
 Q24_TAU_FLOOR = 0.0
 SECURITY_TOLERANCE = mp.mpf("1e-12")
+CTR_BYTES = 8
+BPORS_SAMPLER_BUF_U32 = 512 // 4
 
 mp.mp.dps = 170
 
@@ -83,6 +85,72 @@ def signature_bytes(row: dict[str, str]) -> int:
     return n + ctr + (K * k + mmax) * n + d * wots_len * n + h * n
 
 
+def bounded_draw_factor(bound: int) -> float:
+    range32 = 1 << 32
+    limit = range32 - (range32 % bound)
+    return range32 / limit
+
+
+def expected_distinct_draws(t: int, k: int) -> float:
+    return sum(t / (t - i) for i in range(k))
+
+
+def sampler_blocks(words: float) -> int:
+    return max(1, math.ceil(words / BPORS_SAMPLER_BUF_U32))
+
+
+def bpors_index_sampler_blocks(K: int, t: int, k: int) -> int:
+    words = K * expected_distinct_draws(t, k) * bounded_draw_factor(t)
+    return sampler_blocks(words)
+
+
+def bpors_bucket_sampler_blocks(K: int) -> int:
+    return sampler_blocks(K)
+
+
+def bpors_sign_base(K: int, B: int, t: int) -> int:
+    return K * (1 << B) * (3 * t - 1) + K * ((1 << B) - 1)
+
+
+def sign_ht_hashcalls(h_vec: tuple[int, ...], w: int, length: int) -> int:
+    return sum((1 << layer_h) * (length * w + 1) for layer_h in h_vec)
+
+
+def verify_chain_steps(length: int, w: int) -> int:
+    total = length * (w - 1)
+    return total - (total // 2)
+
+
+def verify_ht_hashcalls(h: int, d: int, w: int, length: int) -> int:
+    return d * (verify_chain_steps(length, w) + 1) + h
+
+
+
+def bpors_sign_hashcalls(row: dict[str, str]) -> int:
+    K = int(row["bpors_K"])
+    B = int(row["bpors_B"])
+    t = int(row["bpors_t"])
+    k = int(row["bpors_k"])
+    tau = float(row["tau"])
+    h_vec = tuple(int(x) for x in row["h_profile"].strip("[]").split(",") if x)
+    ht_sign = sign_ht_hashcalls(h_vec, int(row["w"]), int(row["len"]))
+    trial_cost = bpors_index_sampler_blocks(K, t, k)
+    success_cost = bpors_bucket_sampler_blocks(K)
+    return ht_sign + bpors_sign_base(K, B, t) + success_cost + math.ceil(trial_cost / tau)
+
+
+def bpors_verify_hashcalls(row: dict[str, str]) -> int:
+    K = int(row["bpors_K"])
+    B = int(row["bpors_B"])
+    t = int(row["bpors_t"])
+    k = int(row["bpors_k"])
+    h = int(row["h"])
+    d = int(row["d"])
+    ht_verify = verify_ht_hashcalls(h, d, int(row["w"]), int(row["len"]))
+    sampler_cost = bpors_index_sampler_blocks(K, t, k) + bpors_bucket_sampler_blocks(K)
+    return ht_verify + 2 * K * k + int(row["bpors_mmax"]) + sampler_cost
+
+
 def ceil_log2(x: int) -> int:
     return (x - 1).bit_length()
 
@@ -117,6 +185,8 @@ def main() -> int:
         for row in csv.DictReader(f):
             got_sig = signature_bytes(row)
             want_sig = int(row["sig"])
+            got_sign = bpors_sign_hashcalls(row)
+            got_verify = bpors_verify_hashcalls(row)
             bitsec = bpors_bitsec(
                 parse_power_of_two(row["q"]),
                 int(row["n"]),
@@ -135,6 +205,10 @@ def main() -> int:
             )
             if got_sig != want_sig:
                 raise SystemExit(f"signature-size mismatch for {row['name']}")
+            if got_sign != int(row["sign_hashcalls"]):
+                raise SystemExit(f"sign hash-call mismatch for {row['name']}: {got_sign}")
+            if got_verify != int(row["verify_hashcalls"]):
+                raise SystemExit(f"verify hash-call mismatch for {row['name']}: {got_verify}")
             # The bound includes the direct 2^(-8n) term, so an n-byte profile
             # approaches the nominal 8n-bit level from below.  Enforce the
             # exact target up to high-precision numerical roundoff.

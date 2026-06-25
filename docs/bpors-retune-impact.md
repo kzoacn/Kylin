@@ -25,9 +25,10 @@ bottom few-time layer is BPORS+FP and the six packaged profiles are retuned.
 
 The checker recomputes signature size, BPORS cover bit security,
 forced-pruning acceptance probability, child-tree height, and the recorded
-sign/verify hash-call caps.  The current frozen rows do not impose an explicit
-forced-pruning tau floor beyond the expected-retry term already included in
-the signing hash-call proxy.
+sign/verify hash-call caps.  The current q=2^24 frozen rows are reproduced
+with an explicit `--q24-tau-floor 1e-4` engineering constraint so that final
+KAT generation remains deliverable; the q=2^64 rows use only the expected-retry
+term included in the signing hash-call proxy.
 
 ## Implementation Files
 

@@ -9,7 +9,7 @@ Primary submission profiles (`q=2^64`):
 - `Kylin-256`
 - `Kylin-512`
 
-Additional companion profiles (`q=2^24`, reference-only):
+Additional companion profiles (`q=2^24`):
 
 - `Kylin-128-q24`
 - `Kylin-256-q24`
@@ -25,9 +25,9 @@ Current frozen packaged parameters are:
 - `Kylin-128`: `q=2^64, h=62, d=7, h_vec=[8,9,9,9,9,9,9], BPORS=(K=4,B=7,t=128,k=6,mmax=95), w=17, len=33`
 - `Kylin-256`: `q=2^64, h=65, d=8, h_vec=[8,8,8,8,8,8,8,9], BPORS=(K=9,B=8,t=66,k=5,mmax=187), w=16, len=66`
 - `Kylin-512`: `q=2^64, h=64, d=8, h_vec=[8,8,8,8,8,8,8,8], BPORS=(K=14,B=8,t=256,k=5,mmax=415), w=43, len=96`
-- `Kylin-128-q24`: `q=2^24, h=21, d=1, h_vec=[21], BPORS=(K=2,B=16,t=560,k=7,mmax=76), w=7, len=48`
-- `Kylin-256-q24`: `q=2^24, h=20, d=1, h_vec=[20], BPORS=(K=3,B=15,t=2944,k=8,mmax=184), w=7, len=94`
-- `Kylin-512-q24`: `q=2^24, h=38, d=2, h_vec=[19,19], BPORS=(K=7,B=16,t=216,k=10,mmax=313), w=12, len=145`
+- `Kylin-128-q24`: `q=2^24, h=22, d=1, h_vec=[22], BPORS=(K=2,B=12,t=864,k=7,mmax=90), w=6, len=52`
+- `Kylin-256-q24`: `q=2^24, h=21, d=1, h_vec=[21], BPORS=(K=3,B=14,t=3072,k=8,mmax=202), w=6, len=102`
+- `Kylin-512-q24`: `q=2^24, h=41, d=2, h_vec=[20,21], BPORS=(K=7,B=15,t=224,k=10,mmax=336), w=12, len=145`
 
 The packaged NGCC wrappers accept messages up to `2^60` bytes, i.e. `2^63`
 bits, matching the submission bound recorded in the specification.
@@ -59,11 +59,11 @@ Instance directories:
   the primary 256-bit classical profile.
 - `Optimized_Implementation/Kylin-512`: optimized 64-bit PC implementation for
   the primary 512-bit classical profile.
-- `Additional_Implementation/Kylin-128-q24`: reference-only companion
+- `Additional_Implementation/Kylin-128-q24`: companion
   implementation for the 128-bit classical profile with `q=2^24`.
-- `Additional_Implementation/Kylin-256-q24`: reference-only companion
+- `Additional_Implementation/Kylin-256-q24`: companion
   implementation for the 256-bit classical profile with `q=2^24`.
-- `Additional_Implementation/Kylin-512-q24`: reference-only companion
+- `Additional_Implementation/Kylin-512-q24`: companion
   implementation for the 512-bit classical profile with `q=2^24`.
 
 Each instance directory listed above contains the common file inventory below:
@@ -159,7 +159,7 @@ Refresh the package-level benchmark and memory summaries only:
 
 By default this refreshes the primary submission profiles in
 `Reference_Implementation/` and `Optimized_Implementation/`. To also include
-the reference-only `q=2^24` companion profiles, run:
+the `q=2^24` companion profiles, run:
 
     python3 Implementations/tools/collect_metrics.py --include-additional
 
