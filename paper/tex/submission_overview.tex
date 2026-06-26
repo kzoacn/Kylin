@@ -1,22 +1,22 @@
 \section{Submission Package Overview}
 \label{sec:submission-overview}
 
-This draft is organized as the first-stage NGCC digital-signature submission package for \emph{Kylin}, the submission name used in this repository for the \SPHINCSA-based construction. The document now follows the package order requested in the NGCC submission requirements: overview and basic information first, then the algorithm specification, followed by implementation codes, test vectors, and intellectual-property materials. Whenever the current repository does not yet contain finalized external deliverables, we mark the gap with \todo{...}.
+This specification is organized as the first-stage NGCC digital-signature submission package for \emph{Kylin}, the submission name used in this repository for the \SPHINCSA-based construction. The document follows the package order requested in the NGCC submission requirements: overview and basic information first, then the algorithm specification, followed by implementation codes, test vectors, and intellectual-property materials. External signed forms are carried as package-root PDF files rather than duplicated in the technical specification.
 
 The electronic submission package is centered around this specification, the packaged implementation tree, and the generated test vectors. The printed package required by the call is narrower: it mainly consists of signed hard copies of the basic-information form and the intellectual-property statements that accompany the technical package.
 
 \begin{table}[htbp]
     \centering
-    \caption{How the current draft maps to the required NGCC submission-package components.}
+    \caption{How the current specification maps to the required NGCC submission-package components.}
     \label{tab:package-components}
     \begin{tabular}{p{0.30\linewidth}p{0.62\linewidth}}
     \toprule
-    Required component & Coverage in the current draft \\ \midrule
-    Basic information & Section~\ref{sec:basic-information} summarizes the algorithm name, functionality, family, packaged profiles, and contact placeholders. \\
+    Required component & Coverage in the current specification \\ \midrule
+    Basic information & Section~\ref{sec:basic-information} summarizes the algorithm name, functionality, family, packaged profiles, and the external signed contact form. \\
     Algorithm specifications & Sections~\ref{sec:intro}--\ref{sec:feature-statement} provide the algorithm description, design rationale, security statements and analyses, performance evaluation, and feature statements. \\
     Implementation codes & Section~\ref{sec:implementation-codes} summarizes the packaged ISO C reference implementation, the optimized 64-bit PC implementation, and the additional companion implementations. \\
     Test vectors & Section~\ref{sec:test-vectors} summarizes the packaged known-answer test vectors for the submitted digital-signature instances. \\
-    Intellectual-property statements & Section~\ref{sec:ip-statements} records the required statement types; the remaining signed external materials are tracked in Appendix~\ref{apx:submission-checklist}. \\
+    Intellectual-property statements & Section~\ref{sec:ip-statements} records the required statement types and points to the signed external PDF materials. \\
     \bottomrule
     \end{tabular}
 \end{table}
@@ -25,9 +25,9 @@ The electronic submission package is centered around this specification, the pac
 
 \begin{itemize}
     \item The package includes NGCC-oriented Kylin families covering the required 128/256/512-bit classical security levels with the corresponding 80/128/256-bit generic quantum targets; see \cref{tab:ngcc-parameters}.
-    \item The packaged NGCC rows are tuned with $q=2^{64}$ in the concrete-security formulas and use hypertree heights $h\in\{56,58,62\}$, allowing the submission text to state support for at least $2^{64}$ signatures under one long-term key pair in the intended single-key setting.
+    \item The packaged NGCC rows are tuned with $q=2^{64}$ in the concrete-security formulas and use hypertree heights $h\in\{62,65,64\}$, allowing the submission text to state support for at least $2^{64}$ signatures under one long-term key pair in the intended single-key setting.
     \item The packaged NGCC SIG wrapper accepts message lengths up to $2^{60}$ bytes, i.e.\ $2^{63}$ bits, matching the message-length bound stated in the call.
-    \item The reference and optimized software packages, together with the published test vectors, are already present in the repository. Remaining signed forms and ownership statements are external submission materials tracked in Appendix~\ref{apx:submission-checklist}.
+    \item The reference and optimized software packages, together with the published test vectors and signed external PDF materials, are already present in the repository package inputs.
 \end{itemize}
 
 \section{Basic Information}
@@ -39,7 +39,7 @@ The electronic submission package is centered around this specification, the pac
     \label{tab:basic-info}
     \begin{tabular}{p{0.30\linewidth}p{0.62\linewidth}}
     \toprule
-    Item & Current draft status \\ \midrule
+    Item & Current package status \\ \midrule
     Algorithm name & Kylin \\
     Algorithm functionality & Digital signature \\
     Algorithm family & Stateless hash-based signature \\
@@ -48,8 +48,8 @@ The electronic submission package is centered around this specification, the pac
     Hash/XOF interface in the packaged code & ICCS auxiliary functions, with domain-separated wrappers built from \texttt{pseudoXOF} \\
     Submitted primary profiles & \texttt{Kylin-128}, \texttt{Kylin-256}, and \texttt{Kylin-512} \\
     Additional companion profiles & Frozen $q=2^{24}$ companion profiles retained as additional implementations \\
-    Submitters & \todo{List the names, affiliations, postal addresses, phone numbers, e-mail addresses, and signatures of all submitters.} \\
-    Primary contact & \todo{Identify the submission contact and provide the signed contact information required by the call.} \\
+    Submitters & Listed in the signed algorithm basic-information PDF included with the submission package. \\
+    Primary contact & Identified in the signed algorithm basic-information PDF included with the submission package. \\
     \bottomrule
     \end{tabular}
 \end{table}

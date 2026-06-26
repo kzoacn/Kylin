@@ -311,7 +311,7 @@ $x\in [\sum_{k<j}D_{i-1,m-k},\sum_{k\leq j}D_{i-1,m-k})$
 
 \subsection{\WOTSCS\ 由签名恢复公钥（函数 \texttt{wots\_pkFromSig})}
 
-\SPHINCSA\ 对 \WOTSCS\ 使用隐式签名验证。为了验证消息 $M$ 上的 \WOTSCS\ 签名 \sig，验证者需要从签名恢复一个 \WOTSCS\ 公钥值。这可以通过从签名值继续“补全”链计算来完成，其中使用的步数由消息哈希及其校验和的 base-$w$ 表示决定。这个步骤称为 \texttt{wots\_pkFromSig}，其过程见算法 \ref{alg:wotspkfromsig}。随后还需要对 \texttt{wots\_pkFromSig} 的结果进行验证。若该方案单独使用，则可直接通过比较完成；而在 \SPHINCSA\ 中，则通过利用该结果继续计算 \SPHINCSA\ 公钥来实现隐式验证。
+\SPHINCSA\ 对 \WOTSCS\ 使用隐式签名验证。为了验证消息 $M$ 上的 \WOTSCS\ 签名 \sig，验证者需要从签名恢复一个 \WOTSCS\ 公钥值。这可以通过从签名值继续“补全”链计算来完成，其中使用的步数由消息哈希导出的常和 base-$w$ 编码值决定。这个步骤称为 \texttt{wots\_pkFromSig}，其过程见算法 \ref{alg:wotspkfromsig}。随后还需要对 \texttt{wots\_pkFromSig} 的结果进行验证。若该方案单独使用，则可直接通过比较完成；而在 \SPHINCSA\ 中，则通过利用该结果继续计算 \SPHINCSA\ 公钥来实现隐式验证。
 
 调用方需要提供 \WOTSCS\ 哈希地址 \ADRS 和公有种子 $\pk.\seed$。地址将编码该 \WOTSCS\ 密钥对在 \SPHINCSA\ 结构中的位置。因此，\WOTSCS\ 算法 \textbf{不得} 操作 \ADRS 除最后三个 32 位字之外的部分。这里使用的 $\pk.\seed$ 对验证者同样是公开信息。
 

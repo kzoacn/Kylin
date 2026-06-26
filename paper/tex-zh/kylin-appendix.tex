@@ -28,8 +28,8 @@
     }
 \end{table}
 
-\cref{tab:q24-kat-digests} 中的 companion KAT 行已在本次 $q=2^{24}$
-legacy-target 重新调参后重新生成。由于重新调参后的 BPORS+FP q24 benchmark
+\cref{tab:q24-kat-digests} 中的 companion KAT 行已在当前 $q=2^{24}$
+BPORS+FP 重新调参后重新生成。由于重新调参后的 BPORS+FP q24 benchmark
 属于长时间任务，完整墙钟 benchmark 刷新与主 package benchmark 表分开维护。
 
 \begin{table}[htbp]
@@ -47,4 +47,4 @@ legacy-target 重新调参后重新生成。由于重新调参后的 BPORS+FP q2
     \end{tabular}
 \end{table}
 
-优化实现采用宏展开的 SM3 压缩函数（64 个显式轮函数，无分支）、面向消息字加载的 SSE2/AVX2 硬件分派、针对字节对齐输入的无 \texttt{malloc} \texttt{pseudoXOF} 快速路径，以及适配 $n=16/32/64$ 的 4 路 SSE2 WOTS 链加速（\texttt{thash\_wots\_chain\_4x}）。签名与验证路径均以每次 SIMD 操作处理 4 条 WOTS 链。上表中的 q24 KAT 文件覆盖当前 legacy-target BPORS+FP 重新调参结果。
+优化实现采用宏展开的 SM3 压缩函数（64 个显式轮函数，无分支）、面向消息字加载的 SSE2/AVX2 硬件分派、针对字节对齐输入的无 \texttt{malloc} \texttt{pseudoXOF} 快速路径，以及适配 $n=16/32/64$ 的 4 路 SSE2 WOTS 链加速（\texttt{thash\_wots\_chain\_4x}）。签名与验证路径均以每次 SIMD 操作处理 4 条 WOTS 链。上表中的 q24 KAT 文件覆盖当前 BPORS+FP 重新调参结果。

@@ -905,3 +905,12 @@
 - 修正默认参数入口：顶层 `make params` 改为运行 `check_bpors_profiles.py --q24-tau-floor 1e-4`；`paper/code/search_ngcc_params.py` 默认输出当前 q64 BPORS+FP rows 且不再无意写回旧 `para_ngcc.csv`；`paper/code/search_bpors_kylin_params.py` 的 `CURRENT_BPORS_UPPER` 与 `SECURE_BPORS_FALLBACKS` 同步到最终六组参数，显式 `FORS_BASELINES` 保留为历史基准。
 - 将 `paper/build/Makefile` 的英文/中文构建依赖补充 `paper/code/*`，避免 minted 附录代码变化后 PDF 不重建；`new-files/kylin_security_proof.tex` 标注为未参与当前构建的 FORS-era historical draft，当前维护入口指向 `paper/tex/security_statements_and_analyses.tex` 与最终 CSV。
 - 验证：`python3 paper/code/para.sage`、`python3 paper/code/search_ngcc_params.py`、`make params`、`python3 paper/code/check_bpors_profiles.py --q24-tau-floor 1e-4`、12 个 `params.h` 对最终 CSV 的结构比对、`make -C paper/build all`、`make -C paper/build zh`、`make -C paper/build zh` up-to-date 检查、`git diff --check` 均通过；`pdftotext` 抽查确认英文/中文 PDF 附录已显示当前 BPORS+FP 参数。当前 active 源码扫描仅剩 `FORS_BASELINES`、`para_ngcc.csv`、`para_fors_baseline_6profiles.csv`、candidate CSV 与 `plan.md` 历史记录中的旧值，均为显式历史/基准材料。
+
+### 2026-06-26 - Paper TBD and Placeholder Cleanup (Done)
+
+- 扫描 `main.tex`/`main_zh.tex`、`paper/tex*`、`paper/data` 与 PDF 文本，确认 active PDF 中真实暴露的待补项是 performance evaluation 的 package benchmark 表；`submission_overview.tex` 与 `submission_checklist.tex` 未被 `main.tex` 引入，但也含有旧 TODO/placeholder wording。
+- 运行 `python3 Implementations/tools/collect_metrics.py` 完成主提交 Reference/Optimized 六个实例的 package metrics，填充 `paper/data/package_bench.csv`、`paper/data/package_memory.csv` 与 `Implementations/benchmarks/summary.md`。本次本机中位数 benchmark 包括 `Kylin-128 opt/ref = 871.313/1746.791 ms sign`、`Kylin-256 opt/ref = 997.808/2322.339 ms sign`、`Kylin-512 opt/ref = 21804.592/36862.925 ms sign`。
+- 更新英文/中文 performance section：删除 `TBD`/`待定` 说明，写明时间为 32-byte message 上 3 次 warmup 后 9 次测量的 median；同步清理 q24 附录中的 `legacy-target` wording。
+- 修正文稿中顺手发现的严谨性/表述问题：WOTSCS `wots_pkFromSig` 不再描述为使用 message checksum，而改为 constant-sum base-$w$ encoding values；修复 `stings`、`sum ... is equals`、HT 描述断句与 footnote 中的 `can assumed`；将 “draft/本草稿” wording 改为 specification/本规范。
+- 将未引入的 submission overview/checklist 草稿改为完成态外部材料引用，移除红色 `\todo{}` 内容，并同步为当前 CSV 中的主参数高度 `{62,65,64}`。
+- 验证：`make -C paper/build all`、`make -C paper/build zh` 均生成 PDF；英文 build 仍出现 WSL/Windows clock-skew 环境警告和既有 overfull/underfull 排版警告，中文 build 有既有字体替代与 overfull 警告，但均退出成功。`pdftotext` 扫描 `main.pdf` 与 `main_zh.pdf` 未再发现 `TBD`、`TODO`、`FIXME`、`待定`、`legacy-target`、`this draft`、`本草稿` 等正文占位符；源码扫描仅剩 `defs.tex` 中的宏定义名、`docs/API_PKC` 模板中的 `XXX_AlgorithmInstance` 与 `plan.md` 历史记录；`git diff --check` 通过。

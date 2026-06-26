@@ -18,7 +18,7 @@ We explain the details of our optimization as well as some technical proofs in t
 
 \subsection{Diverse Layer Heights in the Hypertree}
 
-Earlier parameter profiles often imposed the divisibility condition $h \bmod d = 0$ so that every layer had the same height $h/d$. In this draft, we allow per-layer heights $(h_0,\ldots,h_{d-1})$ to be non-uniform as long as $\sum_{i=0}^{d-1} h_i = h$. By default, we assume the layer-height vector is ordered, i.e., $h_0 \le h_1 \le \cdots \le h_{d-1}$.
+Earlier parameter profiles often imposed the divisibility condition $h \bmod d = 0$ so that every layer had the same height $h/d$. Kylin allows per-layer heights $(h_0,\ldots,h_{d-1})$ to be non-uniform as long as $\sum_{i=0}^{d-1} h_i = h$. By default, we assume the layer-height vector is ordered, i.e., $h_0 \le h_1 \le \cdots \le h_{d-1}$.
 
 Let $r = h \bmod d$. Our default balancing rule is:
 \begin{itemize}

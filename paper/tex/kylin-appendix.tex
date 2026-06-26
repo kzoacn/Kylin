@@ -43,10 +43,10 @@ NGCC $q=2^{64}$ families.
 \end{table}
 
 The companion KAT rows in \cref{tab:q24-kat-digests} were regenerated after the
-$q=2^{24}$ legacy-target retune.  Full wall-clock benchmark refreshes for these
-companion rows are intentionally separated from the primary package benchmark
-table because the q24 benchmark runs are long-running jobs under the retuned
-BPORS+FP parameters.
+current $q=2^{24}$ BPORS+FP retune.  Full wall-clock benchmark refreshes for
+these companion rows are intentionally separated from the primary package
+benchmark table because the q24 benchmark runs are long-running jobs under the
+retuned BPORS+FP parameters.
 
 \begin{table}[htbp]
     \centering
@@ -63,4 +63,4 @@ BPORS+FP parameters.
     \end{tabular}
 \end{table}
 
-The optimized implementations apply macro-unrolled SM3 compression (64~explicit rounds, no branches), SSE2/AVX2 hardware dispatch for message-word loading, a malloc-free \texttt{pseudoXOF} fast path for byte-aligned input, and 4-way SSE2 WOTS chain acceleration (\texttt{thash\_wots\_chain\_4x}) adapted for $n=16/32/64$. Both the sign and verify paths batch 4~WOTS chains per SIMD operation. The q24 KAT files listed above cover the current legacy-target BPORS+FP retune.
+The optimized implementations apply macro-unrolled SM3 compression (64~explicit rounds, no branches), SSE2/AVX2 hardware dispatch for message-word loading, a malloc-free \texttt{pseudoXOF} fast path for byte-aligned input, and 4-way SSE2 WOTS chain acceleration (\texttt{thash\_wots\_chain\_4x}) adapted for $n=16/32/64$. Both the sign and verify paths batch 4~WOTS chains per SIMD operation. The q24 KAT files listed above cover the current BPORS+FP retune.

@@ -1,7 +1,7 @@
 name,impl,maxstack,textbytes,databytes,bssbytes,maxstackfn
-Kylin-128,opt,TBD,TBD,TBD,TBD,TBD
-Kylin-128,ref,TBD,TBD,TBD,TBD,TBD
-Kylin-256,opt,TBD,TBD,TBD,TBD,TBD
-Kylin-256,ref,TBD,TBD,TBD,TBD,TBD
-Kylin-512,opt,TBD,TBD,TBD,TBD,TBD
-Kylin-512,ref,TBD,TBD,TBD,TBD,TBD
+Kylin-128,opt,2176,65444,664,216528,thash_wots_chain_4x
+Kylin-128,ref,1200,34302,696,216472,SPX_bpors_pk_from_sig
+Kylin-256,opt,2960,63430,704,1329552,SPX_merkle_gen_root
+Kylin-256,ref,2544,35294,696,1329512,SPX_merkle_gen_root
+Kylin-512,opt,7328,66614,704,14087008,SPX_merkle_gen_root
+Kylin-512,ref,6800,36623,704,14086960,SPX_merkle_gen_root
