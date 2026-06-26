@@ -7,22 +7,23 @@ outdir := $(root)/$(outdir_rel)
 localtex := $(paper)/build/texmf/tex/latex/local//
 texfiles := $(root)/main.tex $(wildcard $(paper)/tex/*.tex $(paper)/figure/*.tex)
 zhtexfiles := $(root)/main_zh.tex $(paper)/tex/defs_zh.tex $(wildcard $(paper)/tex-zh/*.tex $(paper)/figure-zh/*.tex $(paper)/figure/*.tex)
+codefiles := $(wildcard $(paper)/code/*)
 bibfiles := $(wildcard $(paper)/bib/*.bib)
 localtexfiles := $(wildcard $(paper)/build/texmf/tex/latex/local/*)
 export TEXINPUTS := $(localtex):$(TEXINPUTS):
 
-$(root)/main.pdf : $(texfiles) $(bibfiles) $(localtexfiles) | $(outdir)
+$(root)/main.pdf : $(texfiles) $(codefiles) $(bibfiles) $(localtexfiles) | $(outdir)
 	cd $(root) && ${texengine} --shell-escape -output-directory=$(outdir) main
 	cp $(outdir)/main.pdf $(root)/main.pdf
 
-$(root)/main_zh.pdf : $(zhtexfiles) $(bibfiles) $(localtexfiles) | $(outdir)
+$(root)/main_zh.pdf : $(zhtexfiles) $(codefiles) $(bibfiles) $(localtexfiles) | $(outdir)
 	cd $(root) && ${zhengine} --shell-escape -interaction=nonstopmode -output-directory=$(outdir) main_zh
 	cd $(root) && bibtex $(outdir_rel)/main_zh
 	cd $(root) && ${zhengine} --shell-escape -interaction=nonstopmode -output-directory=$(outdir) main_zh
 	cd $(root) && ${zhengine} --shell-escape -interaction=nonstopmode -output-directory=$(outdir) main_zh
 	cp $(outdir)/main_zh.pdf $(root)/main_zh.pdf
 
-all: $(texfiles) $(bibfiles) $(localtexfiles) | $(outdir)
+all: $(texfiles) $(codefiles) $(bibfiles) $(localtexfiles) | $(outdir)
 	cd $(root) && ${texengine} --shell-escape -output-directory=$(outdir) main
 	cd $(root) && bibtex $(outdir_rel)/main
 	cd $(root) && ${texengine} --shell-escape -output-directory=$(outdir) main

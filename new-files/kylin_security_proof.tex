@@ -44,12 +44,25 @@
 \newcommand{\prf}{\mathsf{PRF}}
 \newcommand{\Nbits}{N}
 
-\title{Tight Security Proof of Kylin}
+\title{Historical Tight Security Proof Draft of Kylin}
 \author{Based on ``Recovering the Tight Security Proof of SPHINCS+''\\ by H\"ulsing and Kudinov (2022)}
 \date{\today}
 
 \begin{document}
 \maketitle
+
+\begin{center}
+\fbox{\begin{minipage}{0.92\linewidth}
+\textbf{Historical draft.}
+This standalone file is a FORS-era proof draft retained under \texttt{new-files/}
+for provenance only.  It is not included by the current submission build.
+The maintained BPORS+FP security statements, concrete-security parameters, and
+HK22/SPHINCS+ comparison live in
+\texttt{paper/tex/security\_statements\_and\_analyses.tex} and the frozen
+parameter source of truth is
+\texttt{paper/data/para\_kylin\_final\_6profiles.csv}.
+\end{minipage}}
+\end{center}
 
 \begin{abstract}
 We present a tight security proof for Kylin, a stateless hash-based signature scheme that improves upon SPHINCS+ by replacing the WOTS+ one-time signature scheme with CS-WOTS+ (Constant Sum WOTS+) and allowing diverse layer heights in the hypertree. Our proof follows the tight proof framework of H\"ulsing and Kudinov~\cite{HK22}, which recovered the tight reduction for SPHINCS+ after the flaw identified by Kudinov, Kiktenko, and Fedorov~\cite{KKF20}. The key technical contribution is the adaptation of the WOTS-TW security proof~\cite[Theorem~1]{HK22} to CS-WOTS-TW, replacing the checksum-based encoding with the antichain-based CS-WOTS+ encoding. We show that all game transitions (PRF replacement, SM-UD hybrid, SM-TCR placement, SM-PRE extraction) carry over unchanged, with only the final preimage extraction step relying on the antichain property instead of the checksum.

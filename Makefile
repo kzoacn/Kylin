@@ -9,7 +9,7 @@ KAT_DIRS := $(REF_DIRS) $(ADD_DIRS)
 all: build
 
 params:
-	python3 paper/code/search_ngcc_params.py
+	python3 paper/code/check_bpors_profiles.py --q24-tau-floor 1e-4
 
 build:
 	@for d in $(ALL_DIRS); do \

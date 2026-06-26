@@ -12,7 +12,8 @@ layer-height vectors h_vec = (h_0, ..., h_{d-1}) with:
   - signing-time hash-call proxy using sum_i 2^{h_i}
 
 By default (q = 2^64 and no explicit --shape), the script emits the frozen
-packaged NGCC rows. Search helpers are retained for broader exploration.
+packaged BPORS+FP rows from paper/data/para_kylin_final_6profiles.csv. The
+legacy FORS-oriented search helpers are retained for historical exploration.
 """
 
 from __future__ import annotations
@@ -28,6 +29,8 @@ import mpmath as mp
 
 mp.mp.dps = 80
 
+ROOT = Path(__file__).resolve().parents[2]
+CURRENT_FINAL_CSV = ROOT / "paper/data/para_kylin_final_6profiles.csv"
 DEFAULT_Q_SIGS = 2**64
 Q_SIGS = DEFAULT_Q_SIGS
 W_CHOICES = tuple(range(8, 129))
@@ -143,43 +146,6 @@ FAMILIES = (
     Family("Kylin-256", 256, 128, 32, 256),
     Family("Kylin-512", 512, 256, 64, 512),
 )
-
-
-FROZEN_Q64_PROFILES: dict[str, dict[str, int | tuple[int, ...]]] = {
-    "Kylin-128": {
-        "h": 65,
-        "d": 9,
-        "h_vec": (7, 7, 7, 7, 7, 7, 7, 8, 8),
-        "a": 13,
-        "k": 11,
-        "w": 73,
-        "length": 22,
-    },
-    "Kylin-256": {
-        "h": 68,
-        "d": 10,
-        "h_vec": (6, 6, 7, 7, 7, 7, 7, 7, 7, 7),
-        "a": 13,
-        "k": 22,
-        "w": 54,
-        "length": 46,
-    },
-    "Kylin-512": {
-        "h": 66,
-        "d": 11,
-        "h_vec": (6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6),
-        "a": 13,
-        "k": 49,
-        "w": 97,
-        "length": 79,
-    },
-}
-
-MIN_REQUIRED_BITSEC = {
-    "Kylin-128": 127.0,
-    "Kylin-256": 255.0,
-    "Kylin-512": 511.0,
-}
 
 
 # Fixed external baseline sets kept in code for future tuning/reference.
@@ -475,41 +441,6 @@ def choose_fixed_shape(
     return chosen
 
 
-def choose_frozen_q64_profiles() -> dict[str, Candidate]:
-    family_by_name = {family.name: family for family in FAMILIES}
-    chosen: dict[str, Candidate] = {}
-    for family_name, profile in FROZEN_Q64_PROFILES.items():
-        family = family_by_name[family_name]
-        h = int(profile["h"])
-        d = int(profile["d"])
-        h_vec = tuple(profile["h_vec"])  # type: ignore[arg-type]
-        a = int(profile["a"])
-        k = int(profile["k"])
-        w = int(profile["w"])
-        length = int(profile["length"])
-
-        if len(h_vec) != d or not profile_is_compatible(h, h_vec):
-            raise RuntimeError(f"invalid frozen profile for {family_name}: h={h}, d={d}, h_vec={h_vec}")
-        if classical_bit_security(family.n, h, a, k) < MIN_REQUIRED_BITSEC[family_name]:
-            raise RuntimeError(f"frozen profile does not meet target bit security for {family_name}")
-
-        chosen[family_name] = Candidate(
-            family=family,
-            h=h,
-            d=d,
-            h_vec=h_vec,
-            a=a,
-            k=k,
-            w=w,
-            length=length,
-            classical_bitsec=float(classical_bit_security(family.n, h, a, k)),
-            quantum_bitsec=float(quantum_bit_security(family.n, h, a, k)),
-            sig_bytes=signature_bytes(family.n, h, d, a, k, length),
-            hash_calls=hash_calls(h_vec, a, k, w, length),
-        )
-    return chosen
-
-
 def candidate_fieldnames() -> list[str]:
     return [
         "name",
@@ -604,6 +535,92 @@ def candidate_to_row(candidate: Candidate) -> dict[str, str | int]:
         "hashcalls": candidate.hash_calls,
         "q": format_q(Q_SIGS),
     }
+
+
+def current_ngcc_fieldnames() -> list[str]:
+    return [
+        "name",
+        "ngccclassical",
+        "ngccquantum",
+        "q",
+        "n",
+        "h",
+        "d",
+        "h_profile",
+        "h0",
+        "bpors_K",
+        "bpors_B",
+        "bpors_t",
+        "bpors_k",
+        "bpors_mmax",
+        "w",
+        "len",
+        "bitsec",
+        "quantum",
+        "pk",
+        "sk",
+        "sig",
+        "sign_hashcalls",
+        "verify_hashcalls",
+    ]
+
+
+def load_current_ngcc_rows(path: Path = CURRENT_FINAL_CSV) -> list[dict[str, str | int]]:
+    levels = {
+        "Kylin-128": (128, 80),
+        "Kylin-256": (256, 128),
+        "Kylin-512": (512, 256),
+    }
+    rows: list[dict[str, str | int]] = []
+    with path.open(newline="", encoding="utf-8") as handle:
+        for row in csv.DictReader(handle):
+            name = row["name"]
+            if name not in levels:
+                continue
+            classical, quantum_level = levels[name]
+            n = int(row["n"])
+            bitsec = float(row["bitsec"])
+            rows.append(
+                {
+                    "name": name,
+                    "ngccclassical": classical,
+                    "ngccquantum": quantum_level,
+                    "q": row["q"],
+                    "n": n,
+                    "h": int(row["h"]),
+                    "d": int(row["d"]),
+                    "h_profile": row["h_profile"],
+                    "h0": int(row["h0"]),
+                    "bpors_K": int(row["bpors_K"]),
+                    "bpors_B": int(row["bpors_B"]),
+                    "bpors_t": int(row["bpors_t"]),
+                    "bpors_k": int(row["bpors_k"]),
+                    "bpors_mmax": int(row["bpors_mmax"]),
+                    "w": int(row["w"]),
+                    "len": int(row["len"]),
+                    "bitsec": f"{bitsec:.3f}",
+                    "quantum": f"{bitsec / 2:.3f}",
+                    "pk": 2 * n,
+                    "sk": 4 * n,
+                    "sig": int(row["sig"]),
+                    "sign_hashcalls": int(row["sign_hashcalls"]),
+                    "verify_hashcalls": int(row["verify_hashcalls"]),
+                }
+            )
+    expected = {"Kylin-128", "Kylin-256", "Kylin-512"}
+    got = {str(row["name"]) for row in rows}
+    if got != expected:
+        raise RuntimeError(f"unexpected current NGCC profile set: {sorted(got)}")
+    return rows
+
+
+def write_current_ngcc_csv(rows: list[dict[str, str | int]], path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=current_ngcc_fieldnames())
+        writer.writeheader()
+        for row in rows:
+            writer.writerow(row)
 
 
 def write_baseline_csv(path: Path) -> None:
@@ -702,6 +719,19 @@ def print_selected(
         )
 
 
+def print_current_ngcc_rows(rows: list[dict[str, str | int]]) -> None:
+    print("Selected frozen packaged BPORS+FP profiles (q=2^64).")
+    for row in rows:
+        print(
+            f"{row['name']}: n={row['n']}, h={row['h']}, d={row['d']}, "
+            f"h_vec={row['h_profile']}, BPORS=({row['bpors_K']},{row['bpors_B']},"
+            f"{row['bpors_t']},{row['bpors_k']},{row['bpors_mmax']}), "
+            f"w={row['w']}, len={row['len']}, bitsec={row['bitsec']}, "
+            f"pk={row['pk']}, sk={row['sk']}, sig={row['sig']}, "
+            f"sign={row['sign_hashcalls']}, verify={row['verify_hashcalls']}"
+        )
+
+
 def print_matches(
     matched: dict[str, list[Candidate]],
     h_min: int,
@@ -790,8 +820,8 @@ def main() -> None:
     parser.add_argument(
         "--write-csv",
         type=Path,
-        default=Path("paper/data/para_ngcc.csv"),
-        help="Write the selected parameter rows to a CSV file.",
+        default=None,
+        help="Optionally write the selected parameter rows to a CSV file.",
     )
     parser.add_argument(
         "--shape",
@@ -830,12 +860,12 @@ def main() -> None:
     if shape is not None and len(shape) != 4:
         parser.error("--shape must provide exactly 4 integers")
 
-    # Default non-search output is the frozen packaged q=2^64 profiles.
+    # Default non-search output is the frozen packaged BPORS+FP q=2^64 profile set.
     if not args.search and shape is None and q_sigs == DEFAULT_Q_SIGS:
-        chosen = choose_frozen_q64_profiles()
-        print_selected(chosen)
+        rows = load_current_ngcc_rows()
+        print_current_ngcc_rows(rows)
         if args.write_csv:
-            write_selected_csv(chosen, args.write_csv)
+            write_current_ngcc_csv(rows, args.write_csv)
             print(f"Wrote {args.write_csv}")
         return
 

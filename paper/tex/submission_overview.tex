@@ -61,11 +61,13 @@ For the actual NGCC submission package, the primary submission set consists of t
     \caption{Frozen NGCC-aligned Kylin parameter families used by the packaged primary implementations.}
     \label{tab:ngcc-parameters}
     \scriptsize
-    \begin{tabular}{l c c c c c c c c c c c c}
+    \resizebox{\linewidth}{!}{%
+    \begin{tabular}{l c c c c l l c c c c c c}
     \toprule
-    Family & NGCC lvl & $n$ & $h$ & $d$ & $\log t$ & $k$ & $w$ & $l$ & bitsec & pk & sk & sig \\ \midrule
+    Family & NGCC lvl & $q$ & $n$ & $h/d$ & $(h_0,\ldots,h_{d-1})$ & $(K,B,t,k,m_{\max})$ & $w$ & $\ell$ & bitsec & pk & sk & sig \\ \midrule
     \csvreader[head to column names]{paper/data/para_ngcc_table_rounded.csv}{}%
-    { \name & \ngccclassical/\ngccquantum & \n & \h & \d & \a & \k & \w & \len & \bitsec & \pk & \sk & \sig \\ }
+    { \name & \ngccclassical/\ngccquantum & $ \qs $ & \n & \hdiv & \hprofile & \bpors & \w & \len & \bitsec & \pk & \sk & \sig \\ }
     \vspace{-0.8em} \\ \bottomrule
-    \end{tabular}
+    \end{tabular}%
+    }
 \end{table}

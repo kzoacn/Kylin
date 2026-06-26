@@ -897,3 +897,11 @@
   - `Kylin-256-q24`: `5cc6cf82cc4399d990eba8577de32dede7620fd1daa4c4b5defd869c73de748d`;
   - `Kylin-512-q24`: `d5529d69487b37eb237d6f936e5db62dace4c7e4b94a8afada547146e6a52e50`.
 - 验证：`python3 -m py_compile paper/code/search_sphincs_compare_params.py paper/code/search_bpors_kylin_params.py paper/code/check_bpors_profiles.py` 通过；`python3 paper/code/check_bpors_profiles.py --q24-tau-floor 1e-4` 通过；`git diff --check` 通过；`make -C paper/build all` 与 `make -C paper/build zh` 均通过。主提交 Reference/Optimized 三档 `make clean all test` 已在本轮参数同步后通过，包括 `Kylin-512`；q24-128 Reference `make clean all test` 与 q24 optimized KAT 路径通过，q24-512 完整 KAT 已由每个 count 内部 sign+verify 验证。
+
+### 2026-06-26 - Parameter Residue Audit and Cleanup (Done)
+
+- 检查当前参数源、实现 `params.h`、论文源码、PDF 文本、默认参数脚本入口和辅助表格，发现并清理两类真实残留：`paper/data/para_ngcc_table*.csv` / `paper/tex/submission_overview.tex` 仍使用旧 FORS 表头与旧三档主参数；`paper/code/para.sage` 作为附录代码仍输出旧 FORS tuple。
+- 将 `para_ngcc_table*.csv` 与 submission overview 表改为当前 BPORS+FP 主提交 rows；将 `paper/code/para.sage` 重写为读取 `paper/data/para_kylin_final_6profiles.csv` 的 BPORS+FP checker，重新计算签名长度、BPORS cover bitsec 与 sign/verify hashcall。
+- 修正默认参数入口：顶层 `make params` 改为运行 `check_bpors_profiles.py --q24-tau-floor 1e-4`；`paper/code/search_ngcc_params.py` 默认输出当前 q64 BPORS+FP rows 且不再无意写回旧 `para_ngcc.csv`；`paper/code/search_bpors_kylin_params.py` 的 `CURRENT_BPORS_UPPER` 与 `SECURE_BPORS_FALLBACKS` 同步到最终六组参数，显式 `FORS_BASELINES` 保留为历史基准。
+- 将 `paper/build/Makefile` 的英文/中文构建依赖补充 `paper/code/*`，避免 minted 附录代码变化后 PDF 不重建；`new-files/kylin_security_proof.tex` 标注为未参与当前构建的 FORS-era historical draft，当前维护入口指向 `paper/tex/security_statements_and_analyses.tex` 与最终 CSV。
+- 验证：`python3 paper/code/para.sage`、`python3 paper/code/search_ngcc_params.py`、`make params`、`python3 paper/code/check_bpors_profiles.py --q24-tau-floor 1e-4`、12 个 `params.h` 对最终 CSV 的结构比对、`make -C paper/build all`、`make -C paper/build zh`、`make -C paper/build zh` up-to-date 检查、`git diff --check` 均通过；`pdftotext` 抽查确认英文/中文 PDF 附录已显示当前 BPORS+FP 参数。当前 active 源码扫描仅剩 `FORS_BASELINES`、`para_ngcc.csv`、`para_fors_baseline_6profiles.csv`、candidate CSV 与 `plan.md` 历史记录中的旧值，均为显式历史/基准材料。

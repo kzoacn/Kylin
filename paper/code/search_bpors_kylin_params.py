@@ -147,48 +147,48 @@ SCENARIOS = (
 
 
 CURRENT_BPORS_UPPER = {
-    "Kylin-128": 6472,
-    "Kylin-256": 25576,
-    "Kylin-512": 95432,
-    "Kylin-128-q24": 3464,
-    "Kylin-256-q24": 13192,
-    "Kylin-512-q24": 50184,
+    "Kylin-128": 6616,
+    "Kylin-256": 26440,
+    "Kylin-512": 84360,
+    "Kylin-128-q24": 2872,
+    "Kylin-256-q24": 11208,
+    "Kylin-512-q24": 47240,
 }
 
 
 SECURE_BPORS_FALLBACKS = {
     "Kylin-128": dict(
-        q_sigs=2**64, n=16, target_bits=127.0, h=65, d=9,
-        h_vec=(7, 7, 7, 7, 7, 7, 7, 8, 8), K=5, B=6,
-        t=132, child_k=4, mmax=120, w=73, length=22,
-        sig=6472,
+        q_sigs=2**64, n=16, target_bits=127.0, h=62, d=7,
+        h_vec=(8, 9, 9, 9, 9, 9, 9), K=4, B=7,
+        t=128, child_k=6, mmax=95, w=17, length=33,
+        sig=6616,
     ),
     "Kylin-256": dict(
-        q_sigs=2**64, n=32, target_bits=255.0, h=68, d=10,
-        h_vec=(6, 6, 7, 7, 7, 7, 7, 7, 7, 7), K=7, B=7,
-        t=280, child_k=5, mmax=235, w=54, length=46,
-        sig=25576,
+        q_sigs=2**64, n=32, target_bits=255.0, h=65, d=8,
+        h_vec=(8, 8, 8, 8, 8, 8, 8, 9), K=9, B=8,
+        t=66, child_k=5, mmax=187, w=16, length=66,
+        sig=26440,
     ),
     "Kylin-512": dict(
-        q_sigs=2**64, n=64, target_bits=511.0, h=66, d=11,
-        h_vec=(6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6), K=13, B=6,
-        t=320, child_k=6, mmax=427, w=103, length=78,
-        sig=91528,
+        q_sigs=2**64, n=64, target_bits=511.0, h=64, d=8,
+        h_vec=(8, 8, 8, 8, 8, 8, 8, 8), K=14, B=8,
+        t=256, child_k=5, mmax=415, w=43, length=96,
+        sig=84360,
     ),
     "Kylin-128-q24": dict(
         q_sigs=2**24, n=16, target_bits=127.0, h=22, d=1,
-        h_vec=(22,), K=2, B=13, t=736, child_k=7, mmax=112,
-        w=4, length=67, sig=3464,
+        h_vec=(22,), K=2, B=12, t=864, child_k=7, mmax=90,
+        w=6, length=52, sig=2872,
     ),
     "Kylin-256-q24": dict(
         q_sigs=2**24, n=32, target_bits=255.0, h=21, d=1,
-        h_vec=(21,), K=3, B=13, t=3456, child_k=8, mmax=235,
-        w=4, length=131, sig=13192,
+        h_vec=(21,), K=3, B=14, t=3072, child_k=8, mmax=202,
+        w=6, length=102, sig=11208,
     ),
     "Kylin-512-q24": dict(
-        q_sigs=2**24, n=64, target_bits=511.0, h=57, d=3,
-        h_vec=(19, 19, 19), K=5, B=12, t=3456, child_k=9,
-        mmax=420, w=64, length=87, sig=50184,
+        q_sigs=2**24, n=64, target_bits=511.0, h=41, d=2,
+        h_vec=(20, 21), K=7, B=15, t=224, child_k=10,
+        mmax=336, w=12, length=145, sig=47240,
     ),
 }
 
