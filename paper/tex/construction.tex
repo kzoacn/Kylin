@@ -43,7 +43,7 @@ The checksum addresses the issue: an increase in any $m_i$ leads to a decrease i
 
 \subsection{Size-Optimal Encoding}
 
-More formally, the problem of constructing one-time signature reduces to that of building an efficient encoding scheme $\mathsf{Enc}:\mathcal{M}\rightarrow \mathcal{C}\subseteq[w]^{l}$ for some incomparable codeword set $\mathcal{C}$ (see \cref{incomparable}). In case of \WOTSP, the encoding function $\mathsf{Enc}$ simply appends the checksum to the original message. Note that \WOTSP~ fixes the size of the message to $l_1$ (i.e., $\mathcal{M}=[w]^{l_l}$) and then constructs as small codewords as possible (minimizing $l-l_1$). 
+More formally, the problem of constructing one-time signature reduces to that of building an efficient encoding scheme $\mathsf{Enc}:\mathcal{M}\rightarrow \mathcal{C}\subseteq[w]^{l}$ for some incomparable codeword set $\mathcal{C}$ (see \cref{incomparable}). In case of \WOTSP, the encoding function $\mathsf{Enc}$ simply appends the checksum to the original message. Note that \WOTSP~ fixes the size of the message to $l_1$ (i.e., $\mathcal{M}=[w]^{l_1}$) and then constructs as small codewords as possible (minimizing $l-l_1$).
 
 
 

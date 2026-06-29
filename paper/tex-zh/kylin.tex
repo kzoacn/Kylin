@@ -586,8 +586,8 @@ Kylin 对 BPORS+FP 采用隐式验证。验证者根据 \sigbpors 与 \md 重新
     $$
     前 $n$ 个字节是 BPORS+FP 摘要，其余字节编码超树 tree index 与 leaf index。
 
-    \item $\wotslen$：\WOTSCS\ 私钥、公钥与签名中 $n$ 字节字符串元素的个数。选择 $\wotslen$ 时，需要保证下列偏序集的大小大于目标消息空间 $\bool^n$（参见 \cref{sec:balanced wotsp}）：
-    \[\left| D_{ \wotslen, \lfloor \frac{\wotslen \cdot (w-1)}{2} \rfloor } \right| \geq 2^n \enspace. \]
+    \item $\wotslen$：\WOTSCS\ 私钥、公钥与签名中 $n$ 字节字符串元素的个数。选择 $\wotslen$ 时，需要保证下列偏序集的大小大于目标消息空间 $\bool^{8n}$（参见 \cref{sec:balanced wotsp}）：
+    \[\left| D_{ \wotslen, \lfloor \frac{\wotslen \cdot (w-1)}{2} \rfloor } \right| \geq 2^{8n} \enspace. \]
 
 \end{itemize}
 下文假设所有算法都可访问这些参数。
@@ -700,7 +700,7 @@ Kylin 对 BPORS+FP 采用隐式验证。验证者根据 \sigbpors 与 \md 重新
     $$m=n+\lfloor(h-h_0+7)/8\rfloor+\lfloor(h_0+7)/8\rfloor.$$
     \item $\wotslen$：\WOTSCS\ 私钥、公钥与签名中 $n$ 字节字符串元素的个数。
     $$
-    \wotslen = \min \left\{ \ell : \left| D_{\ell, \lfloor \frac{\ell \cdot (w-1)}{2} \rfloor} \right| \geq 2^n \right\} \enspace,
+    \wotslen = \min \left\{ \ell : \left| D_{\ell, \lfloor \frac{\ell \cdot (w-1)}{2} \rfloor} \right| \geq 2^{8n} \right\} \enspace,
     $$
     其中 $D_{\ell, \lfloor \frac{\ell \cdot (w-1)}{2} \rfloor}$ 的大小通过 \cref{equ:recurrence} 中的递推关系来计算。
 \end{itemize}

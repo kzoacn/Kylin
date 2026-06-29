@@ -33,7 +33,7 @@ The adversary has advantages in the \WOTSP (as well as other Winternitz type one
 
 更形式化地说，一次性签名的构造问题可归约为构造一个高效编码函数
 $\mathsf{Enc}:\mathcal{M}\rightarrow \mathcal{C}\subseteq[w]^{l}$，
-其中 $\mathcal{C}$ 是某个互不可比较的码字集合（见 \cref{incomparable}）。在 \WOTSP\ 中，编码函数 $\mathsf{Enc}$ 只是将校验和附加到原消息之后。注意 \WOTSP\ 固定了消息大小为 $l_1$（即 $\mathcal{M}=[w]^{l_l}$），然后在此基础上尽量减小码字长度（最小化 $l-l_1$）。
+其中 $\mathcal{C}$ 是某个互不可比较的码字集合（见 \cref{incomparable}）。在 \WOTSP\ 中，编码函数 $\mathsf{Enc}$ 只是将校验和附加到原消息之后。注意 \WOTSP\ 固定了消息大小为 $l_1$（即 $\mathcal{M}=[w]^{l_1}$），然后在此基础上尽量减小码字长度（最小化 $l-l_1$）。
 
 \begin{definition}[(不)可比较性]\label{incomparable}
 对于 $a,b\in[w]^l$，若对每个 $i \in [l]$ 都有 $a_{i+1}\leq b_{i+1}$，则记 $a \leq b$。若 $a\leq b$ 或 $b\leq a$，则称 $a$ 与 $b$ 可比较；否则称二者不可比较。

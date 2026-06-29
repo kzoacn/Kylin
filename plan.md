@@ -914,3 +914,10 @@
 - 修正文稿中顺手发现的严谨性/表述问题：WOTSCS `wots_pkFromSig` 不再描述为使用 message checksum，而改为 constant-sum base-$w$ encoding values；修复 `stings`、`sum ... is equals`、HT 描述断句与 footnote 中的 `can assumed`；将 “draft/本草稿” wording 改为 specification/本规范。
 - 将未引入的 submission overview/checklist 草稿改为完成态外部材料引用，移除红色 `\todo{}` 内容，并同步为当前 CSV 中的主参数高度 `{62,65,64}`。
 - 验证：`make -C paper/build all`、`make -C paper/build zh` 均生成 PDF；英文 build 仍出现 WSL/Windows clock-skew 环境警告和既有 overfull/underfull 排版警告，中文 build 有既有字体替代与 overfull 警告，但均退出成功。`pdftotext` 扫描 `main.pdf` 与 `main_zh.pdf` 未再发现 `TBD`、`TODO`、`FIXME`、`待定`、`legacy-target`、`this draft`、`本草稿` 等正文占位符；源码扫描仅剩 `defs.tex` 中的宏定义名、`docs/API_PKC` 模板中的 `XXX_AlgorithmInstance` 与 `plan.md` 历史记录；`git diff --check` 通过。
+
+### 2026-06-29 - Paper Consistency Fixes for Algorithm Text PDF (Done)
+
+- 修正论文审查中标出的 1/2/3/6 项：将中文 \WOTSCS 目标消息空间与链长条件从 `2^n`/`\bool^n` 改为 `2^{8n}`/`\bool^{8n}`；将英文/中文 Table 1 的 sign/verify hashcall 更新为当前 sampler-cost model 下的 `2113169/2062`, `2912474/4312`, `11566745/16757`；将英文/中文 construction 中的 `\mathcal{M}=[w]^{l_l}` 修正为 `\mathcal{M}=[w]^{l_1}`。
+- 重新构建 `main.pdf` 与 `main_zh.pdf`。由于当前 shell 解析到的大写路径位于只读挂载，构建中间产物放在 `/tmp/kylin-texout`，随后同步回仓库根目录与 `paper/build/out`。
+- 用新 `main.pdf` 覆盖根目录 `算法文本.pdf` 与 `build/算法文本.pdf`；当前 `main.pdf`、`算法文本.pdf`、`build/算法文本.pdf`、`paper/build/out/main.pdf` 的 SHA-256 均为 `c5836a9e16925f59835e7fd3447fcaecb024f777b9ee5a29025ddfde8a9b1195`。
+- 验证：源码扫描不再发现上述旧公式/旧 hashcall/`l_l`；`pdftotext` 抽查确认 `算法文本.pdf` 中 Table 1 与 performance table 均为新 hashcall 且旧参数残留消失；最终 `main.log`/`main_zh.log` 无未解析 citation/reference 错误，仅保留既有中文字体替代与 overfull/underfull 排版警告。
