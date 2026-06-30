@@ -958,3 +958,11 @@
 - 将 WOTS 错误码向上接入 `merkle_sign`、`merkle_gen_root`、`kylin_seed_keypair`、`kylin_sign_signature` 和 `kylin_sign_verify`；`sig_keygen` 现在检查 `kylin_seed_keypair` 的返回值。q24 源码和 q24 KAT 按要求未改动。
 - 验证：主提交 Reference/Optimized 三档 `make clean all test` 均通过，包括 `Kylin-512`；源码扫描确认主提交目录不再有 WOTS `assert`、`static int done`、旧 `void chain_lengths`/`void wots_pk_from_sig`/`void merkle_sign`/`void merkle_gen_root` 入口；`git diff --check` 通过。
 - 重跑 `Reference_Implementation/Kylin-{128,256,512}` 的 KAT，并与重跑前 `Test_Vectors` 做字节级 `cmp`，三档均一致。主 KAT SHA-256 仍为 `db4b95738e79df45ab20e06a768eec576d70712ef4962a7936b1344dbfa57db7`、`141bb7daee612f22bdd18a1d9fe7868c78434308dc7ecc86ae107e3ea9a0f1bc`、`2c16f6190028eff55db3a7f2aff00c7b51098378759381fd2c43e1b7bafd38ed`；q24 KAT 文件未重跑且无 diff。
+
+### 2026-06-30 - Post-WOTS Electronic Package Refresh (Done)
+
+- 重新构建英文 `main.pdf`，并同步根目录 `算法文本.pdf` 与提交包内 `build/算法文本.pdf`；三者 SHA-256 均为 `32d2d5adc0fe748921a32c1fc257d74e4e13cd72c284b4c45518f82ca036472b`。
+- 重新生成 fresh `build/` 提交包目录：根目录包含 `算法基本信息.pdf`、`算法文本.pdf`、`知识产权声明.pdf`、`Implementations/` 和 `Test_Vectors/`；q24 companion 仍按要求扁平化为 `build/Implementations/Additional_Implementation/Kylin-{128,256,512}-q24`。
+- 验证：包内 9 个实例均通过 `make all`；主提交 Reference/Optimized 六个实例通过包内 `make test`；随后对 9 个实例执行 `make clean`，并确认包内无 `KAT_SIG`/`test_sig`/`bench_sig` 可执行文件、对象文件、`output/`、`.stack-usage/`、`Implementations/tools/` 或 `Implementations/benchmarks/`。
+- KAT 处理：直接复制既有六个 `Test_Vectors` 文件，未重跑 q24 KAT；主 KAT 保持与 WOTS 修复后确认的字节一致版本。
+- 生成最终提交包 `build/Kylin-0630.zip`，大小 `10557677` bytes，SHA-256 为 `f5bcf2dfa0b826655ab5a098735abf91e6327669f4faeb368f24a44fc092f921`。
