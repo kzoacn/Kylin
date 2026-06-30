@@ -19,7 +19,7 @@ BPORS+FP 进一步通过桶稀疏和固定全局认证节点预算减少底层�
 \end{itemize}
 等价地说，该配置尽可能平衡，任意两层高度之差最多为 1。
 
-\subsubsection{BPORS+FP 概述}
+\subsection{BPORS+FP 概述}
 
 BPORS+FP 是 Kylin 超树底部使用的少次签名组件。它替换
 \SPHINCSP\ 中的 FORS 层，但保持相同的高层角色：随机化消息哈希先选择一个底层超树叶子并产生摘要 \md，BPORS+FP 对该摘要签名，随后底层 XMSS 树签名恢复出的 BPORS+FP 公钥，而不是直接签名原始消息。

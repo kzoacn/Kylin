@@ -969,7 +969,7 @@
 
 ### 2026-06-30 - BPORS+FP Overview in Construction Section (Done)
 
-- 在英文 `paper/tex/construction.tex` 的 `Diverse Layer Heights in the Hypertree` 小节下新增 `BPORS+FP Overview` 子小节，简要说明 BPORS+FP 替换 FORS、bucket thinning、counter/forced-pruning 固定认证节点预算，以及与后文 `sec:bpors` 详细算法的关系。
+- 在英文 `paper/tex/construction.tex` 中新增独立 `BPORS+FP Overview` 小节，简要说明 BPORS+FP 替换 FORS、bucket thinning、counter/forced-pruning 固定认证节点预算，以及与后文 `sec:bpors` 详细算法的关系。
 - 同步中文镜像 `paper/tex-zh/construction.tex`，并更新 `docs/en-zh-glossary.md` 与 `docs/en-zh-sync-guide.md`，记录 BPORS+FP 概述段落中的术语和同步位置。
-- 验证：`make -C paper/build all` 与 `make -C paper/build zh` 均通过；日志无未解析 citation/reference、无 `Overfull`，中文仅保留既有字体替代提示。`pdftotext` 抽查确认英文 PDF 出现 `2.1.1 BPORS+FP Overview`，中文 PDF 出现 `BPORS+FP 概述`。
-- 已同步根目录 `算法文本.pdf` 和 `build/算法文本.pdf` 到新英文 `main.pdf`；三者 SHA-256 均为 `0b128e84ba6ab438464f16293665538ffbcb6b9bd2c0cbf6c2b64949a436914a`。
+- 验证：`make -C paper/build all` 与 `make -C paper/build zh` 均通过；日志无未解析 citation/reference、无 `Overfull`，中文仅保留既有字体替代提示。`pdftotext` 抽查确认英文 PDF 出现独立小节 `2.2 BPORS+FP Overview`，中文 PDF 出现 `BPORS+FP 概述`。
+- 已同步根目录 `算法文本.pdf` 和 `build/算法文本.pdf` 到新英文 `main.pdf`；三者 SHA-256 均为 `d121b4c6da40f2858ebe7b50215c6f481c14180de083f90527db41f6ba09d27f`。

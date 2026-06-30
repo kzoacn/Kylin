@@ -56,7 +56,7 @@ This guide defines the maintenance workflow for the bilingual submission documen
 
 ## Construction Section Notes
 
-- The BPORS+FP overview under `paper/tex/construction.tex` subsection 2.1 is a short bridge to the detailed `sec:bpors` construction.  Mirror it in `paper/tex-zh/construction.tex` without duplicating the later algorithms or parameter tables.
+- The standalone BPORS+FP overview subsection in `paper/tex/construction.tex` is a short bridge to the detailed `sec:bpors` construction.  Mirror it in `paper/tex-zh/construction.tex` without duplicating the later algorithms or parameter tables.
 
 ## Review Checklist
 
