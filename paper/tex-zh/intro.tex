@@ -19,7 +19,7 @@ Kylin 还采用了更灵活的超树配置：使用分层高度 $(h_0,\ldots,h_{
 
 因此，安全性分析沿用紧致 \SPHINCSP\ 证明结构，但将 WOTS 校验和论证替换为常和反链论证，并将 FORS cover 计算替换为 BPORS+FP cover 项。基于这一适配后的分析，我们估算具体通用安全指数，并为已打包参数族选择参数。
 
-为了便于从提交包层面直接查看，\cref{tab:comp tiny} 给出了 \texttt{Kylin-128}、\texttt{Kylin-256} 与 \texttt{Kylin-512} 的哈希调用代理指标以及密钥/签名大小。具体而言，该表包含冻结参数集下的密钥生成、签名和验证哈希调用指标。
+为了便于从提交包层面直接查看，\cref{tab:comp tiny} 将 128-bit 与 256-bit 的 Kylin 家族同 FIPS 205 中的 SLH-DSA-SHAKE small 参数集进行了比较。表中的在线指标包括签名与验证的哈希调用代理计数以及签名大小。相对对应的 SLH-DSA small 行，Kylin 在所有列中都严格更低；每一对的公钥与私钥大小则保持相同。
 
 更完整的参数选择比较见 \cref{sec:performance}。如 \cref{tab:kylin-package-bench} 所示，已打包的 Kylin 实例给出了当前仓库本地环境下的密钥生成、签名与验证性能概况。对于更重视验证时间的特定场景，还可以进一步将参数重新调整到更有利于快速验证的方向。
 

@@ -973,3 +973,10 @@
 - 同步中文镜像 `paper/tex-zh/construction.tex`，并更新 `docs/en-zh-glossary.md` 与 `docs/en-zh-sync-guide.md`，记录 BPORS+FP 概述段落中的术语和同步位置。
 - 验证：`make -C paper/build all` 与 `make -C paper/build zh` 均通过；日志无未解析 citation/reference、无 `Overfull`，中文仅保留既有字体替代提示。`pdftotext` 抽查确认英文 PDF 出现独立小节 `2.2 BPORS+FP Overview`，中文 PDF 出现 `BPORS+FP 概述`。
 - 已同步根目录 `算法文本.pdf` 和 `build/算法文本.pdf` 到新英文 `main.pdf`；三者 SHA-256 均为 `d121b4c6da40f2858ebe7b50215c6f481c14180de083f90527db41f6ba09d27f`。
+
+### 2026-06-30 - Intro Table 1 SLH-DSA vs Kylin Comparison (Done)
+
+- 将英文 Table 1 改造为 `SLH-DSA-SHAKE-128s/256s` small 参数集与 `Kylin-128/256` 的一一比较，表中保留签名 hashcall、验证 hashcall 与签名字节数三项在线/传输指标，并说明 Kylin 在每个报告列中均严格更低；每组公私钥大小相同，因此在 caption 中说明并从表中省略。
+- 同步中文 Table 1、引言说明、术语表和 EN->ZH 同步指南；修正 `NIST:FIPS205` 参考文献标题为 `Stateless Hash-Based Digital Signature Standard (FIPS 205)`。
+- 验证：用仓库脚本确认 SLH-DSA small 基准 hashcall 与签名大小，`make -C paper/build all`、`make -C paper/build zh` 均通过；`pdftotext` 抽查确认英文/中文 PDF 的 Table 1 已显示新对比。中文日志仅保留既有字体替代提示。
+- 已同步根目录 `算法文本.pdf` 和 `build/算法文本.pdf` 到新英文 `main.pdf`；三者 SHA-256 均为 `0cd3ffd519b8f0d18c293888288a7ecc7940d79088fad468f7d8c48e5d8278c2`。

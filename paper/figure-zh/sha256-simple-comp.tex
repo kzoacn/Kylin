@@ -3,30 +3,32 @@
 
 \begin{table*}[ht]
     \centering
-    \caption{三组已打包 Kylin 家族的哈希调用与尺寸指标。密钥生成、签名和验证以哈希调用代理计数表示；公钥、私钥和签名大小以字节计。}
+    \caption{SLH-DSA small 参数集与 Kylin 的比较。签名和验证以哈希调用代理计数表示，签名大小以字节计。表中每一项指标均越低越好；相对对应的 SLH-DSA 行，Kylin 在所有列中都严格更小。每一对的公钥和私钥大小相同，因此未在表中列出。}
     \label{tab:comp tiny}
-    \begin{tabular}{l r r r r r r}%
+    \begin{tabular}{l l r r r}%
     \toprule
-      实例 & 密钥生成 & 签名 & 验证 & 公钥 & 私钥 & 签名 \\ \midrule
-      Kylin-128 & 305151 & 2113169 & 2062 & 32 & 64 & 6616 \\
-      Kylin-256 & 575487 & 2912474 & 4312 & 64 & 128 & 26440 \\
-      Kylin-512 & 1081855 & 11566745 & 16757 & 128 & 256 & 84360 \\
-     \vspace{-1em} \\ \bottomrule
+      级别 & 方案 & 签名 & 验证 & 签名大小 \\ \midrule
+      128 & SLH-DSA-SHAKE-128s & 2,125,312 & 2,094 & 7,856 \\
+      128 & Kylin-128 & \textbf{2,113,169} & \textbf{2,062} & \textbf{6,616} \\
+      256 & SLH-DSA-SHAKE-256s & 2,918,400 & 4,427 & 29,792 \\
+      256 & Kylin-256 & \textbf{2,912,474} & \textbf{4,312} & \textbf{26,440} \\
+      \bottomrule
     \end{tabular}
 \end{table*}
 
 \else
 \begin{table}[th]
     \centering
-    \caption{三组已打包 Kylin 家族的哈希调用与尺寸指标。密钥生成、签名和验证以哈希调用代理计数表示；公钥、私钥和签名大小以字节计。}
+    \caption{SLH-DSA small 参数集与 Kylin 的比较。签名和验证以哈希调用代理计数表示，签名大小以字节计。表中每一项指标均越低越好；相对对应的 SLH-DSA 行，Kylin 在所有列中都严格更小。每一对的公钥和私钥大小相同，因此未在表中列出。}
     \label{tab:comp tiny}
-    \begin{tabular}{l r r r r r r}%
+    \begin{tabular}{l l r r r}%
     \toprule
-      实例 & 密钥生成 & 签名 & 验证 & 公钥 & 私钥 & 签名 \\ \midrule
-      Kylin-128 & 305151 & 2113169 & 2062 & 32 & 64 & 6616 \\
-      Kylin-256 & 575487 & 2912474 & 4312 & 64 & 128 & 26440 \\
-      Kylin-512 & 1081855 & 11566745 & 16757 & 128 & 256 & 84360 \\
-     \vspace{-1em} \\ \bottomrule
+      级别 & 方案 & 签名 & 验证 & 签名大小 \\ \midrule
+      128 & SLH-DSA-SHAKE-128s & 2,125,312 & 2,094 & 7,856 \\
+      128 & Kylin-128 & \textbf{2,113,169} & \textbf{2,062} & \textbf{6,616} \\
+      256 & SLH-DSA-SHAKE-256s & 2,918,400 & 4,427 & 29,792 \\
+      256 & Kylin-256 & \textbf{2,912,474} & \textbf{4,312} & \textbf{26,440} \\
+      \bottomrule
     \end{tabular}
 \end{table}
 
