@@ -14,7 +14,7 @@
 
 本构造结合了三项算法改动。第一，\WOTSCS 为 Winternitz 类一次性签名提供了尺寸最优的常和编码；就该组件而言，目前尚无已知的 DAG 构造能够给出更优的尺寸效率~\cite{optimalwots}。第二，BPORS+FP 替换底层少次签名层，并通过桶稀疏与固定认证节点预算来减少少次签名载荷~\cite{bucketthinning}。第三，Kylin 在参数选择中允许超树各层采用不同高度。
 
-\cref{tab:slh-kylin-small-comp} 给出了 Kylin 与 SLH-DSA-SHAKE small 参数集的紧凑比较。签名大小以字节计，签名和验证成本以设计层面的哈希调用代理计数表示。对于表中列出的主要指标，Kylin 在 128-bit 与 256-bit 级别均严格低于对应的 SLH-DSA 行。
+\cref{tab:slh-kylin-small-comp} 给出了 Kylin 与 SLH-DSA-SHAKE small 参数集的紧凑比较。签名大小以字节计，签名和验证成本以设计层面的哈希调用代理计数表示。对于表中列出的主要指标（签名时间、验证时间和签名大小），Kylin 在 128-bit 与 256-bit 级别均严格优于对应的 SLH-DSA 行。
 
 \begin{table}[t]
     \centering
