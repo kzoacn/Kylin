@@ -233,8 +233,9 @@ layers.
 Under the assumptions of \cref{thm:proof-cswots-single}, for $D$ addressed
 CS-WOTS-TW instances sharing the same public seed,
 \begin{align}
-\InSec{D\text{-}EU\text{-}naCMA}(\mathsf{CS\text{-}WOTS\text{-}TW};\tau,D)
-\le{}&
+&\InSec{D\text{-}EU\text{-}naCMA}
+    (\mathsf{CS\text{-}WOTS\text{-}TW};\tau,D) \notag\\
+&\le{}
     \InSec{prf}(\PRF;\tau,D\ell)
     +\InSec{sm\text{-}tcr}(\hashF\in\THFColl;\tau,D\ell w) \notag\\
 &   +\InSec{sm\text{-}pre}(\hashF\in\THFColl;\tau,D\ell)
@@ -328,6 +329,14 @@ and tweakable-hash games are unchanged in structure; the target counts change
 because the bottom few-time layer now contains $K2^B$ child PORS trees per
 bottom key and because \WOTSCS uses $\ell$ chains.
 
+For the $\hashH$ target count, a left-filled BPORS+FP child tree with $t$
+leaves contains fewer than $2t$ hash nodes, and each outer bucket tree for one
+coordinate contains fewer than $2^B$ hash nodes.  Thus one bottom BPORS+FP key
+contributes fewer than $K2^B(2t+2)$ relevant $\hashH$ targets, including a
+slack term that also covers the outer-tree nodes.  The remaining XMSS binary
+tree nodes are bounded by the same global factor $2^{h+1}$ and are absorbed by
+the conservative $q_4$ bound.
+
 \paragraph{Game $\mathsf{G}_0$: real EUF-CMA experiment.}
 The adversary receives a real Kylin public key and may ask for up to $q_s$
 signatures.  It wins by outputting a valid signature on a message that was not
@@ -345,10 +354,11 @@ The message randomizer \PRFmsg is replaced by a random function on the at most
 $q_s$ signing queries.  This gives the
 $\InSec{prf}(\PRFmsg;\tau,q_s)$ term.
 
-\paragraph{Game $\mathsf{G}_2\to\mathsf{G}_3$: ITSR of \hashmsg.}
+\paragraph{Game $\mathsf{G}_2\to\mathsf{G}_3$.}
+This is the ITSR step for \hashmsg.
 The game aborts if the forgery avoids introducing a fresh BPORS+FP child leaf
-while still corresponding to an unqueried message.  This is exactly the event controlled by
-interleaved target subset resilience of \hashmsg, giving
+while still corresponding to an unqueried message.  This is exactly the event
+controlled by interleaved target subset resilience of \hashmsg, giving
 $\InSec{itsr}(\hashmsg;\tau,q_s)$.
 
 \paragraph{Games $\mathsf{G}_{3.1}$--$\mathsf{G}_{3.4}$: excluding hash
@@ -358,8 +368,11 @@ verification computation diverges from the honestly generated virtual
 structure.
 \begin{itemize}
     \item A second preimage in a BPORS+FP child tree, BPORS+FP outer tree, or
-    XMSS binary tree reduces to SM-TCR of $\hashH$ with at most
-    $q_4<2^{h+1}K2^B(2t+2)$ targets.
+    XMSS binary tree reduces to SM-TCR of $\hashH$.  The child-tree contribution
+    is bounded by $K2^B\cdot 2t$ targets per bottom key, the outer BPORS+FP
+    trees are covered by the extra $K2^B\cdot 2$ slack term, and the XMSS nodes
+    are absorbed in the same conservative global bound
+    $q_4<2^{h+1}K2^B(2t+2)$.
     \item A second preimage in the compression of the $K$ BPORS+FP outer roots
     reduces to SM-TCR of $\Th_K$ with at most $q_5<2^h$ targets.
     \item A second preimage in the compression of a \WOTSCS public key reduces

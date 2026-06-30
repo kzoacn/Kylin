@@ -921,3 +921,11 @@
 - 重新构建 `main.pdf` 与 `main_zh.pdf`。由于当前 shell 解析到的大写路径位于只读挂载，构建中间产物放在 `/tmp/kylin-texout`，随后同步回仓库根目录与 `paper/build/out`。
 - 用新 `main.pdf` 覆盖根目录 `算法文本.pdf` 与 `build/算法文本.pdf`；当前 `main.pdf`、`算法文本.pdf`、`build/算法文本.pdf`、`paper/build/out/main.pdf` 的 SHA-256 均为 `c5836a9e16925f59835e7fd3447fcaecb024f777b9ee5a29025ddfde8a9b1195`。
 - 验证：源码扫描不再发现上述旧公式/旧 hashcall/`l_l`；`pdftotext` 抽查确认 `算法文本.pdf` 中 Table 1 与 performance table 均为新 hashcall 且旧参数残留消失；最终 `main.log`/`main_zh.log` 无未解析 citation/reference 错误，仅保留既有中文字体替代与 overfull/underfull 排版警告。
+
+### 2026-06-30 - Paper Intro, Proof, Grammar, and Layout Polish (Done)
+
+- 修正英文/中文引言中的旧叙述：当前主线明确为 \WOTSCS、BPORS+FP 和 diverse layer heights 三项改动；不再声称修改仅限于 WOTS 编码和超树层高。
+- 补强 Kylin reduction theorem 证明说明：解释左填充 BPORS+FP 子树的 `<2t` 哈希节点上界、外层桶树节点的 slack 覆盖，以及 XMSS 节点如何被吸收到保守的 `q_4 < 2^{h+1}K2^B(2t+2)` 目标计数中；同步更新中文镜像。
+- 修正 construction 中的英文语病和长行：`message-signature pair`、`reaches its maximum`、`element increases`，并将若干行内公式改为展示公式；缩短 `wots_pkFromSig` 小节标题和 q24 appendix 优化实现说明以清除 overfull。
+- 同步处理中文镜像中的对应排版问题：拆分长公式/长段落，修正 q24 appendix 的长行说明，并保持英文源为主、中文结构跟随。
+- 验证：`make -C paper/build all` 与 `make -C paper/build zh` 均通过；英文/中文日志无未解析 citation/reference、无 `Overfull`；英文仅剩 bibliography underfull，中文仅剩环境字体替代提示。已用新 `main.pdf` 覆盖根目录与 `build/` 中的 `算法文本.pdf`，当前 `main.pdf`、`算法文本.pdf`、`build/算法文本.pdf`、`paper/build/out/main.pdf` 的 SHA-256 均为 `bbca23b5488bac8cbb7317c1d4c98689b52cea27b5112757a8433ffc9c8d1e22`。

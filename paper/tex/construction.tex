@@ -1,20 +1,20 @@
 \section{Main Design Differences from \SPHINCSP} \label{sec:balanced wotsp}\label{sec:wots-optimization}
 
-In this section we highlight our main improvements upon the original \SPHINCSP\
-scheme: the \WOTSCS one-time signature component, BPORS+FP as the bottom
-few-time component, and the hypertree layer-height selection.  Our optimized
-\WOTSCS scheme allows a larger message space / signature size ratio as compared
-to the original \WOTSP\ scheme, allowing a smaller one-time signature size.
+We highlight three changes to the original \SPHINCSP scheme: the \WOTSCS
+one-time signature component, BPORS+FP as the bottom few-time component, and
+diverse hypertree layer heights.  Compared with the original \WOTSP scheme,
+\WOTSCS gives a larger message-space-to-signature-size ratio and therefore a
+smaller one-time signature.
 BPORS+FP further reduces the bottom few-time payload through bucket thinning and
 a fixed global authentication-node budget, in the same spirit as recent
-forced-pruning techniques for SPHINCS+-style few-time layers~\cite{EPRINT:AbrKat25}.
+forced-pruning techniques~\cite{EPRINT:AbrKat25}.
 As a result, the parameters of the hash-based signature scheme can be re-tuned
 to reduce the signature size without exacerbating the computation time.  In
 addition, Kylin uses a more flexible hypertree layout with diverse per-layer
 heights, which lets the packaged parameter sets remain well balanced even when
 $h$ is not divisible by $d$.
 
-We explain the details of our optimization as well as some technical proofs in this section.
+We explain these optimizations and their technical proofs in this section.
 
 \subsection{Diverse Layer Heights in the Hypertree}
 
@@ -29,7 +29,16 @@ Equivalently, the profile is as balanced as possible and differs by at most one 
 
 \subsection{The \WOTSP~Encoding}
 
-The reason that the \WOTSP (as well as other Winternitz-type OTS) scheme introduces the checksum is that in absence of the checksum the adversary can efficiently forge signatures given a single pair of valid message signature. That is, given $(\sigma,m)$ he forges any $m'$ satisfying $\forall i(m_i\leq m'_i)$ by computing $\hashF^{m'_i}(sk_i)$ $=\hashF^{m'_i-m_i}\big( \hashF^{m_i}(sk_i)\big)$.
+The reason that the \WOTSP (as well as other Winternitz-type OTS) scheme
+introduces the checksum is that, without the checksum, an adversary can
+efficiently forge signatures given a single valid message-signature pair.
+Given $(\sigma,m)$, it can forge any $m'$ satisfying
+$\forall i(m_i\leq m'_i)$ by computing
+\[
+    \hashF^{m'_i}(\sk_i)
+    =
+    \hashF^{m'_i-m_i}\big(\hashF^{m_i}(\sk_i)\big).
+\]
 
 \ignore{
 The adversary has advantages in the \WOTSP (as well as other Winternitz type one time signature scheme) if there is no checksum. It can easily obtain $\hashF^{m'_i}(sk_i)$ forall $m'_i$ such that $ m_i\leq m'_i$ from a valid pair of signature and message $(\sigma,m)$. That means the adversary can forge any $m'$ such that $\forall i,m_i\leq m'_i$.
@@ -49,7 +58,10 @@ More formally, the problem of constructing one-time signature reduces to that of
 
 
 
-\begin{definition}[(In)comparability]\label{incomparable} For  $a,b\in[w]^l$, we denote by $a \leq b$ if for every $ i \in [l]$ we have $a_{i+1}\leq b_{i+1}$.  If $a\leq b$ or $b\leq a$ we say that $a$ and $b$ comparable, or otherwise $a$ and $b$ are incomparable.
+\begin{definition}[(In)comparability]\label{incomparable}
+For $a,b\in[w]^l$, we denote by $a \leq b$ if for every $i \in [l]$ we have
+$a_{i+1}\leq b_{i+1}$.  If $a\leq b$ or $b\leq a$, we say that $a$ and $b$ are
+comparable; otherwise $a$ and $b$ are incomparable.
 A set $S\subseteq\{a:a\in[w]^l\}$ is said to be incomparable (or called an ``antichain'' in order theory terminology) if any two elements of $S$ are incomparable. 
 \end{definition}
 
@@ -70,7 +82,11 @@ Suppose towards contradiction that $\mathcal{C}_m$ (for some fixed $m\in[l(w-1)+
 \end{proof}
 
 Every $\mathcal{C}_m$ gives an encoding scheme but with different size. For $m=0$ or $m=l(w-1)$, $\mathcal{C}_m$
-consists of only a single codeword. We argue that the size of $\mathcal{C}_m$ reaches its maximal in the middle, i.e., when $m=\lfloor\frac{l(w-1)}{2}\rfloor$. One easily  verifies that this holds in the binary case (i.e., $w=2$) where $|\mathcal{C}_m|=\binom{l}{m}$. Perin et al.~\cite{perin2021improved} proved that $|\mathcal{C}_{m}|$ reaches its maximum 
+consists of only a single codeword. We argue that the size of $\mathcal{C}_m$
+reaches its maximum in the middle, i.e., when
+$m=\lfloor\frac{l(w-1)}{2}\rfloor$. One easily verifies that this holds in the
+binary case (i.e., $w=2$) where $|\mathcal{C}_m|=\binom{l}{m}$. Perin et
+al.~\cite{perin2021improved} proved that $|\mathcal{C}_{m}|$ reaches its maximum
 when $m=\lfloor\frac{l(w-1)}{2}\rfloor$. We prove a stronger optimality result in Theorem~\ref{sec:con} that the size of $\mathcal{C}_{m}$, when $m=\lfloor\frac{l(w-1)}{2}\rfloor$, is not only the largest in all $\mathcal{C}_m$ for $m\in[l(w-1)+1]$ but the largest among all valid sets of codewords.
 
 \begin{theorem}[Size-optimal encoding]\label{sec:con}
@@ -211,7 +227,17 @@ as shown in \cref{fig:induction} below:
        
        
       
-It is easy to verify that $|(c_{1}, j)| + |(c_{m - j}, w-1)| = |(c_{1}, 0)|+j + |(c_{m}, 0)|- j+(w-1) = n(w-1)$, and every subsequent element increase the sum value of its predecessor by one. Namely, the two properties are preserved for all the constructed chains of $S_{n}$. 
+It is easy to verify that
+\[
+    |(c_{1}, j)| + |(c_{m - j}, w-1)|
+    =
+    |(c_{1}, 0)|+j + |(c_{m}, 0)|- j+(w-1)
+    =
+    n(w-1),
+\]
+and every subsequent element increases the sum value of its predecessor by one.
+Namely, the two properties are preserved for all the constructed chains of
+$S_{n}$.
      
 It remains to argue that all the chains constructed (from the decomposed chains of  $S_{n-1}$) constitute a  partition of $[w]^n$. 
 That is, for every  $c_i \in S_{n-1}$, each of its augmented elements $(c_i,0),...,(c_i,w-1)$ appears in the constructed chains exactly once. Note that every $c_i$ belongs to (and can only belong to) one of the decomposed chains of  $S_{n-1}$, say $c=\{c_1,\ldots, c_m\}$. We discuss the following cases.

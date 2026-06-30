@@ -346,7 +346,7 @@ The data format for a signature is given in \cref{fig:spx9}.
 \end{figure}
 
 
-\subsection{\WOTSCS\ Compute Public Key from Signature (Function \texttt{wots\_pkFromSig})}
+\subsection{\WOTSCS\ Public-Key Recovery (Function \texttt{wots\_pkFromSig})}
 
 \SPHINCSA\ uses implicit signature verification for \WOTSCS. In order to verify a \WOTSCS\ signature \sig on a message $M$, the verifier computes a \WOTSCS\ public key value from the signature. This can be done by ``completing'' the chain computations starting from the signature values, using the constant-sum base-$w$ encoding values derived from the message hash. This step, called \texttt{wots\_pkFromSig}, is described below in Algorithm \ref{alg:wotspkfromsig}. The result of \texttt{wots\_pkFromSig} then has to be verified. In a standalone version, this would be done by simple comparison. When used in \SPHINCSA\ the output value is verified by using it to compute a \SPHINCSA\ public key.
 

@@ -8,8 +8,8 @@
 \providecommand{\THFColl}{\mathcal{T}_{\mathsf{H}}}
 
 本节给出 \cref{sec:spx-core} 中所规定 Kylin 签名方案的安全性声明与证明主线。该归约沿用
-H\"ulsing 与 Kudinov 的紧致 \SPHINCSP\ 证明框架~\cite{AC:HulKud22}，同时将 WOTS+
-中的校验和论证替换为 \WOTSCS~\cite{optimalwots} 的常和反链论证，并将 FORS 少次签名层替换为 BPORS+FP~\cite{bucketthinning,EPRINT:AbrKat25}。推荐的 NGCC 对齐参数族列于
+H\"ulsing 与 Kudinov 的紧致 \SPHINCSP\ 证明框架~\cite{AC:HulKud22}。
+同时，证明将 WOTS+ 中的校验和论证替换为 \WOTSCS~\cite{optimalwots} 的常和反链论证，并将 FORS 少次签名层替换为 BPORS+FP~\cite{bucketthinning,EPRINT:AbrKat25}。推荐的 NGCC 对齐参数族列于
 \cref{tab:ngcc-parameters}，打包代码中使用的 ICCS 哈希/XOF 接口说明见 \cref{sec:hashfunctions}。
 
 \subsection{安全模型与符号}
@@ -157,8 +157,9 @@ $\sigma_i=u_i$。随后公钥完全按照验证算法从这些签名位置继续
 \label{thm:proof-cswots-multi}
 在 \cref{thm:proof-cswots-single} 的假设下，对于共享同一公有种子的 $D$ 个带地址 CS-WOTS-TW 实例，有
 \begin{align}
-\InSec{D\text{-}EU\text{-}naCMA}(\mathsf{CS\text{-}WOTS\text{-}TW};\tau,D)
-\le{}&
+&\InSec{D\text{-}EU\text{-}naCMA}
+    (\mathsf{CS\text{-}WOTS\text{-}TW};\tau,D) \notag\\
+&\le{}
     \InSec{prf}(\PRF;\tau,D\ell)
     +\InSec{sm\text{-}tcr}(\hashF\in\THFColl;\tau,D\ell w) \notag\\
 &   +\InSec{sm\text{-}pre}(\hashF\in\THFColl;\tau,D\ell)
@@ -230,6 +231,8 @@ q_8 &< 2^hK2^B t.
 \begin{proof}
 该证明将~\cite{AC:HulKud22} 中紧致 \SPHINCSP game 序列适配到 \WOTSCS 与 BPORS+FP 层。超树、PRF、消息随机化以及可调哈希部分的 game 结构保持不变；目标数量因底层少次签名层每个 bottom key 含有 $K2^B$ 棵子 PORS 树以及 \WOTSCS 使用 $\ell$ 条链而改变。
 
+对于 $\hashH$ 的目标数量，一个包含 $t$ 个叶子的左填充 BPORS+FP 子树含有少于 $2t$ 个哈希节点；每个外层坐标的一棵桶树含有少于 $2^B$ 个哈希节点。因此，一个底层 BPORS+FP key 贡献的相关 $\hashH$ 目标少于 $K2^B(2t+2)$，其中额外松弛项同时覆盖外层树节点。剩余 XMSS 二叉树节点由同一个全局因子 $2^{h+1}$ 保守界定，并被吸收到 $q_4$ 上界中。
+
 \paragraph{游戏 $\mathsf{G}_0$：真实 EUF-CMA 实验。}
 敌手获得真实 Kylin 公钥，并可进行至多 $q_s$ 次签名询问。若其能对未询问过的消息输出有效签名，则获胜。
 
@@ -241,14 +244,17 @@ $q_1<2^{h+1}(K2^Bt+\ell)$ 界定，给出 \cref{eq:proof-kylin-bound} 中第一�
 消息随机化函数 \PRFmsg 在至多 $q_s$ 次签名询问上被替换为随机函数。这给出
 $\InSec{prf}(\PRFmsg;\tau,q_s)$ 项。
 
-\paragraph{游戏 $\mathsf{G}_2\to\mathsf{G}_3$：\hashmsg 的 ITSR。}
-若伪造在对应未询问消息的同时避免引入新的 BPORS+FP 子叶子，则游戏中止。该事件正是由 \hashmsg 的交错目标子集韧性控制的事件，因此得到
-$\InSec{itsr}(\hashmsg;\tau,q_s)$。
+\paragraph{游戏 $\mathsf{G}_2\to\mathsf{G}_3$。}
+这是针对 \hashmsg 的 ITSR 步骤。若伪造在对应未询问消息的同时避免引入新的 BPORS+FP 子叶子，则游戏中止。该事件由 \hashmsg 的交错目标子集韧性控制，因此得到
+\[
+    \InSec{itsr}(\hashmsg;\tau,q_s).
+\]
 
 \paragraph{游戏 $\mathsf{G}_{3.1}$--$\mathsf{G}_{3.4}$：排除 WOTS 外部的哈希碰撞。}
 剩余成功伪造可按验证计算第一次偏离诚实生成虚拟结构的位置进行分解。
 \begin{itemize}
-    \item BPORS+FP 子树、BPORS+FP 外层树或 XMSS 二叉树中的第二原像归约到 $\hashH$ 的 SM-TCR，目标数至多为 $q_4<2^{h+1}K2^B(2t+2)$。
+    \item BPORS+FP 子树、BPORS+FP 外层树或 XMSS 二叉树中的第二原像归约到 $\hashH$ 的 SM-TCR。每个底层 key 的子树贡献由 $K2^B\cdot 2t$ 个目标界定，外层 BPORS+FP 树由额外的 $K2^B\cdot 2$ 松弛项覆盖，而 XMSS 节点被吸收到同一个保守全局上界
+    $q_4<2^{h+1}K2^B(2t+2)$ 中。
     \item $K$ 个 BPORS+FP 外层根压缩中的第二原像归约到 $\Th_K$ 的 SM-TCR，目标数至多为 $q_5<2^h$。
     \item \WOTSCS 公钥压缩中的第二原像归约到 $\Th_\ell$ 的 SM-TCR，目标数至多为 $q_6<2^{h+1}$。
     \item WOTS 实例外部 BPORS+FP 子叶子计算中的第二原像归约到 $\hashF$ 的 SM-TCR，目标数至多为 $q_7<2^{h+1}K2^Bt$。

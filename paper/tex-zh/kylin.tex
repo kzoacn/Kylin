@@ -286,7 +286,9 @@ $x\in [\sum_{k<j}D_{i-1,m-k},\sum_{k\leq j}D_{i-1,m-k})$
 
 \subsection{\WOTSCS\ 签名生成（函数 \texttt{wots\_sign})}
 
-\WOTSCS\ 签名是一个长度为 $\wotslen$ 的 $n$ 字节串数组。生成过程首先将消息 $M$ 映射为 $\wotslen$ 个介于 $0$ 与 $w-1$ 之间的整数，并要求这些整数之和等于 $\lfloor {\wotslen}\cdot (w-1)/2 \rfloor$。调用方需要提供 \WOTSCS\ 哈希地址 \ADRS、公有种子 $\pk.\seed$ 和秘密种子 \sk.\seed。该地址会编码此 \WOTSCS\ 密钥对在更大结构中的位置，因此 \WOTSCS\ 算法 \textbf{不得} 修改 \ADRS 除最后三个 32 位字以外的任何部分。需要注意的是，这里使用的 $\pk.\seed$ 对验证者也是公开信息，而秘密种子 \sk.\seed\ 则是私有信息。生成 \WOTSCS\ 签名 \sig\ 的伪代码见下（算法 \ref{alg:wotssign}）。
+\WOTSCS\ 签名是一个长度为 $\wotslen$ 的 $n$ 字节串数组。生成过程首先将消息 $M$ 映射为 $\wotslen$ 个介于 $0$ 与 $w-1$ 之间的整数，并要求这些整数之和等于 $\lfloor {\wotslen}\cdot (w-1)/2 \rfloor$。
+
+调用方需要提供 \WOTSCS\ 哈希地址 \ADRS、公有种子 $\pk.\seed$ 和秘密种子 \sk.\seed。该地址会编码此 \WOTSCS\ 密钥对在更大结构中的位置，因此 \WOTSCS\ 算法 \textbf{不得} 修改 \ADRS 除最后三个 32 位字以外的任何部分。这里使用的 $\pk.\seed$ 对验证者也是公开信息，而秘密种子 \sk.\seed\ 则是私有信息。生成 \WOTSCS\ 签名 \sig\ 的伪代码见下（算法 \ref{alg:wotssign}）。
 
 \begin{algorithm}
 \inputminted[breaklines,linenos,tabsize=2,mathescape,escapeinside=||]{C}{paper/code/wots_sign.cs}
@@ -525,7 +527,9 @@ BPORS+FP 使用参数 $K,B,t,k,m_{\max}$ 以及 counter 字节长度 $c_{\mathrm
     x_{c,j,u}\gets \PRF(\sk.\seed,\ADRS_{c,j,u}),
 \]
 其中地址类型以及坐标、桶、子叶子字段将该值与所有 WOTS 和超树值分离。子叶子为
-$\hashF(\pk.\seed,\ADRS_{c,j,u},x_{c,j,u})$。
+\[
+    \hashF(\pk.\seed,\ADRS_{c,j,u},x_{c,j,u}).
+\]
 
 每个子 PORS 公钥是其 $t$ 个子叶子构成的左填充 Merkle 树根。对每个外层坐标 $c$，$2^B$ 个子公钥作为高度为 $B$ 的完整二叉 Merkle 树叶子。BPORS+FP 公钥为
 \[

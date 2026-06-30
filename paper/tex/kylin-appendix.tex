@@ -63,4 +63,9 @@ retuned BPORS+FP parameters.
     \end{tabular}
 \end{table}
 
-The optimized implementations apply macro-unrolled SM3 compression (64~explicit rounds, no branches), SSE2/AVX2 hardware dispatch for message-word loading, a malloc-free \texttt{pseudoXOF} fast path for byte-aligned input, and 4-way SSE2 WOTS chain acceleration (\texttt{thash\_wots\_chain\_4x}) adapted for $n=16/32/64$. Both the sign and verify paths batch 4~WOTS chains per SIMD operation. The q24 KAT files listed above cover the current BPORS+FP retune.
+The optimized implementations apply macro-unrolled SM3 compression, SSE2/AVX2
+hardware dispatch for message-word loading, a malloc-free \texttt{pseudoXOF}
+fast path for byte-aligned input, and 4-way SSE2 WOTS chain acceleration
+adapted for $n=16/32/64$.  Both the sign and verify paths batch 4~WOTS chains
+per SIMD operation.  The q24 KAT files listed above cover the current BPORS+FP
+retune.
