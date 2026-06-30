@@ -29,27 +29,28 @@ the few-time signature payload~\cite{bucketthinning}.  Third, Kylin allows
 diverse hypertree layer heights during parameter selection.
 
 \cref{tab:slh-kylin-small-comp} gives a compact comparison against the
-SLH-DSA-SHAKE small parameter sets.  For the principal metrics shown there,
-namely signature size and signing/verification hash-call proxies, Kylin is
-strictly lower than the corresponding SLH-DSA row at both the 128-bit and
-256-bit levels.
+SLH-DSA-SHAKE small parameter sets.  Signature sizes are in bytes, and signing
+and verification costs are reported as design-level hash-call proxies.  For
+the principal metrics shown there, Kylin is strictly lower than the
+corresponding SLH-DSA row at both the 128-bit and 256-bit levels.
 
 \begin{table}[t]
     \centering
-    \caption{SLH-DSA-SHAKE small parameter sets versus Kylin for the principal online and transmission metrics. Signature sizes are in bytes; signing and verification are reported as design-level hash-call proxies. Bold entries are strictly lower than the corresponding SLH-DSA row.}
+    \caption{Principal metrics for SLH-DSA-SHAKE-small and Kylin.}
     \label{tab:slh-kylin-small-comp}
-    \scriptsize
-    \resizebox{\linewidth}{!}{%
-    \begin{tabular}{l l r r r}%
+    \small
+    \setlength{\tabcolsep}{5pt}
+    \begin{tabular}{@{}c l r r r@{}}
     \toprule
-      Level & Scheme & Sig & Sign & Verify \\ \midrule
-      128 & SLH-DSA-SHAKE-128s & 7,856 & 2,125,312 & 2,094 \\
+      Level & Scheme & Sig. & Sign & Verify \\
+      \midrule
+      128 & SLH-DSA-128s & 7,856 & 2,125,312 & 2,094 \\
       128 & Kylin-128 & \textbf{6,616} & \textbf{2,113,169} & \textbf{2,062} \\
-      256 & SLH-DSA-SHAKE-256s & 29,792 & 2,918,400 & 4,427 \\
+      \addlinespace[1pt]
+      256 & SLH-DSA-256s & 29,792 & 2,918,400 & 4,427 \\
       256 & Kylin-256 & \textbf{26,440} & \textbf{2,912,474} & \textbf{4,312} \\
      \bottomrule
-    \end{tabular}%
-    }
+    \end{tabular}
 \end{table}
 
 \paragraph{Diverse Layer Heights in the Hypertree.}

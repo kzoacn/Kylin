@@ -53,7 +53,7 @@ This guide defines the maintenance workflow for the bilingual submission documen
 - Keep `game proof`, `SM-UD`, `SM-TCR`, `SM-PRE`, `SM-DSPR`, `ITSR`, and `bit-security` tokens stable unless the glossary is deliberately updated.
 - When the few-time signature layer changes, mirror the construction section, concrete cover formula, parameter tuple names, and implementation-facing pseudocode references together.
 - When BPORS+FP parameters are retuned, mirror the final CSV values into the English and Chinese parameter, concrete-security, q24 appendix, and performance hash-call tables together.
-- When the introductory SLH-DSA-versus-Kylin comparison table changes, mirror the baseline labels, signature sizes, signing/verification hash-call proxy values, bold emphasis, and explanatory caption in the Chinese table fragment.
+- When the introductory SLH-DSA-versus-Kylin comparison table changes, mirror the baseline labels, signature sizes, signing/verification hash-call proxy values, bold emphasis, and explanatory caption in the Chinese table fragment.  The prose/caption should identify the baseline as `SLH-DSA-SHAKE-small`; compact table rows may use `SLH-DSA-128s` and `SLH-DSA-256s`.
 - When the concrete-security prose defines `\mathsf{bitsec}_{\mathsf{q}}`, keep it in prose/formulas only unless the English table explicitly adds a quantum column.
 
 ## Construction Section Notes

@@ -1003,3 +1003,11 @@
 - 同步中文镜像、术语表和 EN->ZH 同步指南，明确 `bitsec_q` 只放在正文/公式中，除非英文表格显式增加量子列。
 - 验证：`make -C paper/build all` 与 `make -C paper/build zh` 均通过；源码与 `pdftotext` 抽查确认正文包含 `bitsec_q` 定义、表格只含 classical bit-security 列；日志无未解析引用或 overfull，中文仅保留既有字体替代提示。
 - 已同步根目录 `算法文本.pdf` 和 `build/算法文本.pdf` 到新英文 `main.pdf`；三者 SHA-256 均为 `cc0141a081fbebc0a4941a869cf733290e8cfdec3cb71ef66b2aa38873ad876d`。
+
+### 2026-06-30 - Compact Table 2 Layout Polish (Done)
+
+- 将英文/中文引言中的 Table 2 从强制 `\resizebox{\linewidth}` 改为自然宽度的居中 `booktabs` 小表，缩短 caption，并将单位/哈希调用代理说明移入正文句子。
+- 将表格内 SLH-DSA 行标签从完整 `SLH-DSA-SHAKE-128s/256s` 缩短为 `SLH-DSA-128s/256s`，正文和 caption 仍明确比较对象是 `SLH-DSA-SHAKE-small`；Kylin 的粗体优势数值不变。
+- 同步中文镜像、术语表和 EN->ZH 同步指南，记录 Table 2 可使用紧凑行标签的规则。
+- 验证：`make -C paper/build all` 与 `make -C paper/build zh` 均通过；日志无未解析引用或 overfull，中文仅保留既有字体替代提示。已用 `pdftotext` 和第 5 页渲染图抽查，确认 Table 2 是自然宽度紧凑表。
+- 已同步根目录 `算法文本.pdf` 和 `build/算法文本.pdf` 到新英文 `main.pdf`；三者 SHA-256 均为 `e54f53f6026e7ad07c8ae47d09376dac998a49f9303fa0a8a3a646b7456bef68`。
