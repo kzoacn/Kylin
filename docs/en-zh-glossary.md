@@ -22,7 +22,6 @@ This glossary fixes the preferred wording for the bilingual submission document 
 | BPORS+FP | BPORS+FP | Do not translate component acronym. |
 | SLH-DSA small parameter set | SLH-DSA small 参数集 | Keep `SLH-DSA` and `small` in English. |
 | SLH-DSA-small | SLH-DSA-small | Use in compact comparison captions. |
-| SLH-DSA-SHAKE-small | SLH-DSA-SHAKE-small | Use when the prose names the concrete SHAKE baseline; compact table rows may use `SLH-DSA-128s` and `SLH-DSA-256s`. |
 | outer bucketing layer | 外层桶结构 | BPORS+FP construction prose. |
 | child PORS layer | 子 PORS 层 | Keep `PORS` unchanged. |
 | forced pruning | forced pruning | Keep English technical term; explain as `强制剪枝` only if needed. |
