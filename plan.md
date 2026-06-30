@@ -929,3 +929,9 @@
 - 修正 construction 中的英文语病和长行：`message-signature pair`、`reaches its maximum`、`element increases`，并将若干行内公式改为展示公式；缩短 `wots_pkFromSig` 小节标题和 q24 appendix 优化实现说明以清除 overfull。
 - 同步处理中文镜像中的对应排版问题：拆分长公式/长段落，修正 q24 appendix 的长行说明，并保持英文源为主、中文结构跟随。
 - 验证：`make -C paper/build all` 与 `make -C paper/build zh` 均通过；英文/中文日志无未解析 citation/reference、无 `Overfull`；英文仅剩 bibliography underfull，中文仅剩环境字体替代提示。已用新 `main.pdf` 覆盖根目录与 `build/` 中的 `算法文本.pdf`，当前 `main.pdf`、`算法文本.pdf`、`build/算法文本.pdf`、`paper/build/out/main.pdf` 的 SHA-256 均为 `bbca23b5488bac8cbb7317c1d4c98689b52cea27b5112757a8433ffc9c8d1e22`。
+
+### 2026-06-30 - BPORS+FP Source Citation Update (Done)
+
+- 将 `bucketthinning` BibTeX 条目更新为 Cryptology ePrint Archive 2026/1328: Chongxu Ren, Kaiyi Zhang, and Hongbo Yu, "Shorter Hash-Based Signatures via Bucket Thinning"。
+- 在英文/中文 introduction、construction、design rationale 以及已有 BPORS+FP proof/definition 引用链中确认 BPORS+FP 的 bucket-thinning 来源指向 `bucketthinning`，forced-pruning 尺寸控制仍保留 `EPRINT:AbrKat25`。
+- 验证：`make -C paper/build all`、`make -C paper/build zh`、`git diff --check` 均通过；`main.bbl` 与 `main_zh.bbl` 均生成 `Cryptology ePrint Archive, Paper 2026/1328`。已用新 `main.pdf` 覆盖根目录与 `build/` 中的 `算法文本.pdf`，当前 `main.pdf`、`算法文本.pdf`、`build/算法文本.pdf`、`paper/build/out/main.pdf` 的 SHA-256 均为 `529d9c09bbd333d78c220f510f24a812e594972ead97d50bad37dab3aa585639`。

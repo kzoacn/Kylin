@@ -25,8 +25,8 @@ a size-optimal constant-sum encoding for Winternitz-type one-time signatures;
 no DAG-based construction is known to offer better size efficiency for this
 component~\cite{optimalwots}.  Second, BPORS+FP replaces the bottom few-time
 layer and uses bucket thinning with a fixed authentication-node budget to reduce
-the few-time signature payload.  Third, Kylin allows diverse hypertree layer
-heights during parameter selection.
+the few-time signature payload~\cite{bucketthinning}.  Third, Kylin allows
+diverse hypertree layer heights during parameter selection.
 
 \paragraph{Diverse Layer Heights in the Hypertree.}
 Kylin also uses a flexible hypertree profile with per-layer heights $(h_0,\ldots,h_{d-1})$ rather than requiring all $d$ layers to have the same height. This removes the unnecessary divisibility restriction $h \bmod d = 0$ and lets the parameter search choose balanced layer-height vectors whenever the total hypertree height $h$ is not divisible by the number of layers.

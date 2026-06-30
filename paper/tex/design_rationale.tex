@@ -9,7 +9,17 @@ The design rationale behind \SPHINCSA\ is to follow the original \SPHINCSP const
 \paragraph{Parameter selection criteria.}
 The primary parameter-selection rule is to improve on comparable \SPHINCSP-style profiles while keeping the implementation and analysis close to the original construction. Under the fixed NGCC security levels, the search gives priority to smaller signatures, then faster verification, and then faster signing, while keeping the one-key signing budget at $q=2^{64}$. The selected instances in \cref{tab:ngcc-parameters} therefore use three main design levers: the constant-sum \WOTSCS encoding, the BPORS+FP parameters $(K,B,t,k,m_{\max})$, and the per-layer hypertree profile $(h_0,\ldots,h_{d-1})$.
 
-Since one-time signatures are used extensively in the \SPHINCSP hypertree structure, optimizing the one-time signature size has a direct influence on the overall performance. With \WOTSCS, Kylin can retune the signature scheme to obtain smaller signatures while preserving comparable running time. BPORS+FP further reduces the bottom few-time payload by bucket-thinning child PORS keys and enforcing a fixed global authentication-node budget, following the forced-pruning size-control viewpoint of~\cite{EPRINT:AbrKat25}. Diverse Layer Heights removes the unnecessary restriction that $h$ be divisible by $d$: the layers may have different heights as long as their sum is $h$, which lets the search use profiles such as $(8,8,8,8,8,8,8,9)$ for \texttt{Kylin-256}.
+Since one-time signatures are used extensively in the \SPHINCSP hypertree
+structure, optimizing the one-time signature size has a direct influence on the
+overall performance. With \WOTSCS, Kylin can retune the signature scheme to
+obtain smaller signatures while preserving comparable running time. BPORS+FP
+further reduces the bottom few-time payload by bucket-thinning child PORS
+keys~\cite{bucketthinning} and enforcing a fixed global authentication-node
+budget, following the forced-pruning size-control viewpoint
+of~\cite{EPRINT:AbrKat25}. Diverse Layer Heights removes the unnecessary
+restriction that $h$ be divisible by $d$: the layers may have different heights
+as long as their sum is $h$, which lets the search use profiles such as
+$(8,8,8,8,8,8,8,9)$ for \texttt{Kylin-256}.
 
 \paragraph{Failure probability and security impact.}
 Kylin has no decryption- or decapsulation-style correctness failure event. For honestly generated keys and honestly generated signatures, verification is deterministic and accepts except for implementation faults or violation of the underlying cryptographic assumptions. The probability term used in the parameter search is therefore a forgery-success bound, not a correctness-failure probability.
