@@ -1028,3 +1028,11 @@
 - 验证：包内 9 个实例均通过 `make all`；主提交 Reference/Optimized 六个实例均通过 `make test`；q24 长测试未跑，只保留既有 KAT；随后对 9 个实例执行 `make clean`。
 - zip 内容检查确认三份 PDF、六个 KAT、9 个实例目录齐全，且压缩包内无 `KAT_SIG`/`test_sig`/`bench_sig` 可执行文件、对象文件、`output/`、`.stack-usage/`、`tools/`、`benchmarks/`、嵌套 Additional staging 目录或 `bench_sig_1iter.c`。
 - 生成最终提交包 `build/Kylin-0630.zip`，大小 `10635450` bytes，SHA-256 为 `aedf2314dc021d2822edacf25d01ee1a8dd18fdf77857a1e07d8c9b03663a75e`。
+
+### 2026-06-30 - Concrete Security Quantum Column Removal (Done)
+
+- 从英文/中文 10.4 concrete generic-security 表格中删除 `\mathsf{bitsec}_{\mathsf{q}}` 列，表格恢复为只列实例参数和 `\mathsf{bitsec}_{\mathsf{cl}}`。
+- 保留正文公式 `\mathsf{bitsec}_{\mathsf{q}}=\frac{1}{2}\mathsf{bitsec}_{\mathsf{cl}}` 以及保守平方根型量子代理说明；表前句改为 “The table below reports classical security” / “下表报告了经典安全性”。
+- 同步中文镜像和 EN->ZH 同步指南，记录 `bitsec_q` 应保留在公式/说明中，除非英文源显式增加表格列。
+- 验证：`make -C paper/build all` 与 `make -C paper/build zh` 均通过；日志无未解析引用或 overfull，中文仅保留既有字体替代提示；`pdftotext` 抽查确认英文/中文 PDF 中公式仍含 `bitsec_q`，表格不再出现 `bitsec_q` 列或 `63.527/127.578/255.596` 等量子代理表值。
+- 已同步根目录 `算法文本.pdf` 和 `build/算法文本.pdf` 到新英文 `main.pdf`；当前 `main.pdf`、`算法文本.pdf`、`build/算法文本.pdf`、`paper/build/out/main.pdf` 的 SHA-256 均为 `f52521e43892ded781b4c2cbdeb9d47e3001724c73ee1d5ea91b0c4d9e987b39`，`main_zh.pdf` 与 `paper/build/out/main_zh.pdf` 的 SHA-256 均为 `d0928b067b78f06ae5d2656b1ab175970bc45efbbb5d17f3bb9eae00f9c39c69`。
