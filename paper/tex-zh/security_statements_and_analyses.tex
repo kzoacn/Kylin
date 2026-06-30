@@ -303,13 +303,16 @@ p_{\mathsf{gen}}
 \end{equation}
 其中 $\gamma$ 表示先前签名中与伪造尝试命中同一超树叶子的次数。在该命中次数条件下，求和式中的第一个因子表示所有 $K$ 个被选中 BPORS+FP 坐标都已被先前签名公开的子秘密值覆盖，并且每个坐标都经历 $2^{-B}$ 的 bucket thinning。前导项 $2^{-N}=2^{-8n}$ 刻画对 $n$ 字节原语输出的通用搜索概率。该保守估计不把 forced-pruning 接受事件计作独立安全增益；$m_{\max}$ 仅用于固定签名大小和控制签名时间。
 
-下表中的经典通用 bit-security 代理为
+经典通用 bit-security 代理以及保守的量子代理定义为
 \begin{equation}
 \label{eq:proof-bitsec}
     \mathsf{bitsec}_{\mathsf{cl}}=-\log_2 p_{\mathsf{gen}},
+    \qquad
+    \mathsf{bitsec}_{\mathsf{q}}=\frac{1}{2}\mathsf{bitsec}_{\mathsf{cl}},
 \end{equation}
-其中忽略对数内部的小常数因子。实例名称是提交命名；下表报告
-\cref{eq:proof-generic-prob,eq:proof-bitsec} 下得到的经典安全指数。
+其中忽略对数内部的小常数因子。这里的量子代理只是保守的平方根型估计；
+它不应被理解为存在任何已知具体量子攻击能够达到该界。实例名称是提交命名；
+下表只报告 \cref{eq:proof-generic-prob,eq:proof-bitsec} 下得到的经典安全指数。
 
 \begin{center}
 \begin{tabular}{lcccccccc}

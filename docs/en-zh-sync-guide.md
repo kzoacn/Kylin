@@ -54,6 +54,7 @@ This guide defines the maintenance workflow for the bilingual submission documen
 - When the few-time signature layer changes, mirror the construction section, concrete cover formula, parameter tuple names, and implementation-facing pseudocode references together.
 - When BPORS+FP parameters are retuned, mirror the final CSV values into the English and Chinese parameter, concrete-security, q24 appendix, and performance hash-call tables together.
 - When the introductory SLH-DSA-versus-Kylin comparison table changes, mirror the baseline labels, signature sizes, signing/verification hash-call proxy values, bold emphasis, and explanatory caption in the Chinese table fragment.
+- When the concrete-security prose defines `\mathsf{bitsec}_{\mathsf{q}}`, keep it in prose/formulas only unless the English table explicitly adds a quantum column.
 
 ## Construction Section Notes
 

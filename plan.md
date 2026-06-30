@@ -995,3 +995,11 @@
 - 保持 `Theoretical Performance` 为 `\subsection`（PDF 中为 2.5），并将其中的引用改为指向 summary 中的新 Table 2。
 - 验证：`make -C paper/build all`、`make -C paper/build zh` 均通过；`pdftotext` 抽查确认英文/中文 PDF 中 Table 2 位置、列、level 与 claim 均正确，日志无未解析引用或 overfull，中文仅保留既有字体替代提示。
 - 已同步根目录 `算法文本.pdf` 和 `build/算法文本.pdf` 到新英文 `main.pdf`；三者 SHA-256 均为 `c3c7411efd435da28bd85b9b9bd71425682849beb9eabc8cb9d7dd28dd4098be`。
+
+### 2026-06-30 - Concrete Security Quantum Proxy Clarification (Done)
+
+- 在英文/中文 10.4 concrete generic-security 描述中，将保守量子代理与经典代理放在同一公式中：`\mathsf{bitsec}_{\mathsf{q}}=\frac{1}{2}\mathsf{bitsec}_{\mathsf{cl}}`。
+- 增加说明：该量子代理只是保守的平方根型估计，不表示存在任何已知具体量子攻击能够达到该界；Concrete Security 表格继续只报告 `\mathsf{bitsec}_{\mathsf{cl}}`，不新增 `bitsec_q` 列。
+- 同步中文镜像、术语表和 EN->ZH 同步指南，明确 `bitsec_q` 只放在正文/公式中，除非英文表格显式增加量子列。
+- 验证：`make -C paper/build all` 与 `make -C paper/build zh` 均通过；源码与 `pdftotext` 抽查确认正文包含 `bitsec_q` 定义、表格只含 classical bit-security 列；日志无未解析引用或 overfull，中文仅保留既有字体替代提示。
+- 已同步根目录 `算法文本.pdf` 和 `build/算法文本.pdf` 到新英文 `main.pdf`；三者 SHA-256 均为 `cc0141a081fbebc0a4941a869cf733290e8cfdec3cb71ef66b2aa38873ad876d`。

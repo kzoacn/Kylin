@@ -61,6 +61,7 @@ This glossary fixes the preferred wording for the bilingual submission document 
 | interleaved target subset resilience | 交错目标子集韧性 | Keep `ITSR` token unchanged. |
 | generic attack | 通用攻击 |  |
 | bit security | bit-security | Keep English technical phrase in formulas/tables. |
+| conservative quantum proxy | 保守的量子代理 | Keep formula tokens such as `\mathsf{bitsec}_{\mathsf{q}}` unchanged. |
 | design rationale | 设计依据 |  |
 | performance evaluation | 性能评估 |  |
 | feature statements | 特性说明 |  |

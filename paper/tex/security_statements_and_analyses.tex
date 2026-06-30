@@ -453,14 +453,18 @@ This conservative estimate does not count forced-pruning acceptance as an
 independent security gain; $m_{\max}$ is used for fixed-size signatures and
 signing-time control.
 
-The classical generic bit-security proxy reported below is
+The classical generic bit-security proxy and the conservative quantum proxy are
 \begin{equation}
 \label{eq:proof-bitsec}
     \mathsf{bitsec}_{\mathsf{cl}}=-\log_2 p_{\mathsf{gen}},
+    \qquad
+    \mathsf{bitsec}_{\mathsf{q}}=\frac{1}{2}\mathsf{bitsec}_{\mathsf{cl}},
 \end{equation}
-where small constant factors inside the logarithm are neglected.  The profile
-names are submission names; the table below reports the classical exponents
-obtained by \cref{eq:proof-generic-prob,eq:proof-bitsec}.
+where small constant factors inside the logarithm are neglected.  The quantum
+proxy is a conservative square-root estimate; it should not be read as a claim
+that any concrete quantum attack is known to attain this bound.  The profile
+names are submission names; the table below reports only the classical
+exponents obtained by \cref{eq:proof-generic-prob,eq:proof-bitsec}.
 
 \begin{center}
 \begin{tabular}{lcccccccc}
