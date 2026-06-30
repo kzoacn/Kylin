@@ -50,7 +50,10 @@ int sig_keygen(
         return SIG_RNG_ERROR;
     }
 
-    kylin_seed_keypair(pk, sk, seed);
+    if (kylin_seed_keypair(pk, sk, seed) != 0) {
+        memset(seed, 0, sizeof(seed));
+        return SIG_API_ERROR;
+    }
     memset(seed, 0, sizeof(seed));
 
     *pk_len_bytes = SPX_PK_BYTES;

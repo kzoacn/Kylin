@@ -951,3 +951,10 @@
 - 为提交包重写 `build/Implementations/README`，并将打包树内 Makefile 裁成 `all/test/kat/clean` 提交目标；修正扁平 q24 KAT 输出路径为 package-level `Test_Vectors/`。
 - 验证：打包树 9 个实例均通过 `make all`，随后执行 `make clean` 清理生成物；zip 内容检查确认必需三份 PDF、六个 KAT 和 9 个实例目录齐全，且压缩包内无 `KAT_SIG`/`test_sig`/`bench_sig` 可执行文件、`.o`、`output/`、`.stack-usage/`、`Implementations/tools/` 或 `Implementations/benchmarks/`。
 - 生成提交包 `build/Kylin-0630.zip`，大小 `10556149` bytes，SHA-256 为 `76d27ae3a89a8a1feaba115e073f6daaf758e1d4ec3d99660cff1568aff153ca`。
+
+### 2026-06-30 - Primary WOTS Error-Propagation Cleanup (Done)
+
+- 修正主提交 `Kylin-128/256/512` 的 Reference/Optimized WOTSCS 实现：将 constant-sum DP 表从无保护 lazy `static int done` 改为一次性状态保护初始化，移除 `assert(t != -1)`，并让 `encode`、`chain_lengths`、`wots_pk_from_sig` 返回错误码。
+- 将 WOTS 错误码向上接入 `merkle_sign`、`merkle_gen_root`、`kylin_seed_keypair`、`kylin_sign_signature` 和 `kylin_sign_verify`；`sig_keygen` 现在检查 `kylin_seed_keypair` 的返回值。q24 源码和 q24 KAT 按要求未改动。
+- 验证：主提交 Reference/Optimized 三档 `make clean all test` 均通过，包括 `Kylin-512`；源码扫描确认主提交目录不再有 WOTS `assert`、`static int done`、旧 `void chain_lengths`/`void wots_pk_from_sig`/`void merkle_sign`/`void merkle_gen_root` 入口；`git diff --check` 通过。
+- 重跑 `Reference_Implementation/Kylin-{128,256,512}` 的 KAT，并与重跑前 `Test_Vectors` 做字节级 `cmp`，三档均一致。主 KAT SHA-256 仍为 `db4b95738e79df45ab20e06a768eec576d70712ef4962a7936b1344dbfa57db7`、`141bb7daee612f22bdd18a1d9fe7868c78434308dc7ecc86ae107e3ea9a0f1bc`、`2c16f6190028eff55db3a7f2aff00c7b51098378759381fd2c43e1b7bafd38ed`；q24 KAT 文件未重跑且无 diff。

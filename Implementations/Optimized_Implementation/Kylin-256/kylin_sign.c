@@ -42,7 +42,9 @@ int kylin_seed_keypair(unsigned char *pk, unsigned char *sk,
     memcpy(ctx.sk_seed, sk, SPX_N);
 
     initialize_hash_function(&ctx);
-    merkle_gen_root(sk + 3 * SPX_N, &ctx);
+    if (merkle_gen_root(sk + 3 * SPX_N, &ctx) != 0) {
+        return -1;
+    }
 
     memcpy(pk + SPX_N, sk + 3 * SPX_N, SPX_N);
     return 0;
@@ -91,7 +93,10 @@ int kylin_sign_signature(uint8_t *sig, unsigned long long *siglen,
         copy_subtree_addr(wots_addr, tree_addr);
         set_keypair_addr(wots_addr, idx_leaf);
 
-        merkle_sign(sig, root, &ctx, wots_addr, tree_addr, idx_leaf, tree_height);
+        if (merkle_sign(sig, root, &ctx, wots_addr, tree_addr,
+                        idx_leaf, tree_height) != 0) {
+            return -1;
+        }
         sig += SPX_WOTS_BYTES + tree_height * SPX_N;
 
         if (i + 1 < SPX_D) {
@@ -155,7 +160,9 @@ int kylin_sign_verify(const uint8_t *sig, unsigned long long siglen,
 
         copy_keypair_addr(wots_pk_addr, wots_addr);
 
-        wots_pk_from_sig(wots_pk, sig, root, &ctx, wots_addr);
+        if (wots_pk_from_sig(wots_pk, sig, root, &ctx, wots_addr) != 0) {
+            return -1;
+        }
         sig += SPX_WOTS_BYTES;
 
         thash(leaf, wots_pk, SPX_WOTS_LEN, &ctx, wots_pk_addr);

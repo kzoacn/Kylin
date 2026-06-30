@@ -1,4 +1,3 @@
-#include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
@@ -19,6 +18,9 @@
 typedef struct {
     uint64_t limb[SPX_BIGINT_LIMBS];
 } spx_bigint;
+
+static spx_bigint wots_dp[SPX_WOTS_LEN + 1][SPX_WOTS_SUM + 1];
+static int wots_dp_state = 0;
 
 static void gen_chain(unsigned char *out, const unsigned char *in,
                       unsigned int start, unsigned int steps,
@@ -116,63 +118,105 @@ static void big_from_bytes(spx_bigint *z, const unsigned char *msg)
     }
 }
 
-static void encode(unsigned int *out, spx_bigint *x)
+static void build_wots_dp(void)
 {
-    static int done = 0;
-    static spx_bigint dp[SPX_WOTS_LEN + 1][SPX_WOTS_SUM + 1];
+    int i;
+
+    big_set_one(&wots_dp[0][0]);
+    for (i = 1; i <= SPX_WOTS_LEN; i++) {
+        int j;
+        for (j = 0; j <= SPX_WOTS_SUM; j++) {
+            int k;
+            big_set_zero(&wots_dp[i][j]);
+            for (k = 0; k < SPX_WOTS_W && k <= j; k++) {
+                spx_bigint tmp;
+                big_add_saturated(&tmp, &wots_dp[i][j],
+                                  &wots_dp[i - 1][j - k]);
+                wots_dp[i][j] = tmp;
+            }
+        }
+    }
+}
+
+static int ensure_wots_dp(void)
+{
+#if defined(__GNUC__)
+    if (__atomic_load_n(&wots_dp_state, __ATOMIC_ACQUIRE) == 2) {
+        return 0;
+    }
+    if (__sync_bool_compare_and_swap(&wots_dp_state, 0, 1)) {
+        build_wots_dp();
+        __atomic_store_n(&wots_dp_state, 2, __ATOMIC_RELEASE);
+        return 0;
+    }
+
+    while (__atomic_load_n(&wots_dp_state, __ATOMIC_ACQUIRE) == 1) {
+    }
+    return __atomic_load_n(&wots_dp_state, __ATOMIC_ACQUIRE) == 2 ? 0 : -1;
+#else
+    if (wots_dp_state == 2) {
+        return 0;
+    }
+    if (wots_dp_state == 0) {
+        wots_dp_state = 1;
+        build_wots_dp();
+        wots_dp_state = 2;
+    }
+    return wots_dp_state == 2 ? 0 : -1;
+#endif
+}
+
+static int encode(unsigned int *out, spx_bigint *x)
+{
     int s = SPX_WOTS_SUM;
     int i;
 
-    if (!done) {
-        big_set_one(&dp[0][0]);
-        for (i = 1; i <= SPX_WOTS_LEN; i++) {
-            int j;
-            for (j = 0; j <= SPX_WOTS_SUM; j++) {
-                int k;
-                big_set_zero(&dp[i][j]);
-                for (k = 0; k < SPX_WOTS_W && k <= j; k++) {
-                    spx_bigint tmp;
-                    big_add_saturated(&tmp, &dp[i][j], &dp[i - 1][j - k]);
-                    dp[i][j] = tmp;
-                }
-            }
-        }
-        done = 1;
+    if (ensure_wots_dp() != 0) {
+        return -1;
     }
 
     for (i = SPX_WOTS_LEN - 1; i >= 0; i--) {
         int j;
         int t = -1;
         for (j = 0; j < SPX_WOTS_W && j <= s; j++) {
-            if (!big_less(x, &dp[i][s - j])) {
-                big_sub(x, x, &dp[i][s - j]);
+            if (!big_less(x, &wots_dp[i][s - j])) {
+                big_sub(x, x, &wots_dp[i][s - j]);
             } else {
                 t = j;
                 break;
             }
         }
-        assert(t != -1);
+        if (t < 0) {
+            return -1;
+        }
         out[SPX_WOTS_LEN - 1 - i] = (unsigned int)t;
         s -= t;
     }
+
+    if (s != 0) {
+        return -1;
+    }
+    return 0;
 }
 
-void chain_lengths(unsigned int *lengths, const unsigned char *msg)
+int chain_lengths(unsigned int *lengths, const unsigned char *msg)
 {
     spx_bigint m;
 
     big_from_bytes(&m, msg);
-    encode(lengths, &m);
+    return encode(lengths, &m);
 }
 
-void wots_pk_from_sig(unsigned char *pk,
-                      const unsigned char *sig, const unsigned char *msg,
-                      const spx_ctx *ctx, uint32_t addr[8])
+int wots_pk_from_sig(unsigned char *pk,
+                     const unsigned char *sig, const unsigned char *msg,
+                     const spx_ctx *ctx, uint32_t addr[8])
 {
     unsigned int lengths[SPX_WOTS_LEN];
     uint32_t i, k;
 
-    chain_lengths(lengths, msg);
+    if (chain_lengths(lengths, msg) != 0) {
+        return -1;
+    }
 
     if (have_sse2()) {
         const unsigned int CHAIN_GROUP = 4;
@@ -243,4 +287,5 @@ void wots_pk_from_sig(unsigned char *pk,
                       lengths[i], SPX_WOTS_W - 1 - lengths[i], ctx, addr);
         }
     }
+    return 0;
 }
