@@ -19,6 +19,14 @@ BPORS+FP 进一步通过桶稀疏和固定全局认证节点预算减少底层�
 \end{itemize}
 等价地说，该配置尽可能平衡，任意两层高度之差最多为 1。
 
+\subsubsection{BPORS+FP 概述}
+
+BPORS+FP 是 Kylin 超树底部使用的少次签名组件。它替换
+\SPHINCSP\ 中的 FORS 层，但保持相同的高层角色：随机化消息哈希先选择一个底层超树叶子并产生摘要 \md，BPORS+FP 对该摘要签名，随后底层 XMSS 树签名恢复出的 BPORS+FP 公钥，而不是直接签名原始消息。
+
+该组件结合了两点思想。第一，bucket thinning（桶稀疏）~\cite{bucketthinning}
+将 $K$ 个 BPORS 坐标中的每一个划分为 $2^B$ 个桶。对于选中的坐标与桶，签名者在一棵具有 $t$ 个叶子的子 PORS 树中打开 $k$ 个叶子。当同一个底层超树密钥被重复选中时，桶索引会将这些使用分散到许多子 PORS 密钥上，从而降低伪造被先前公开的子秘密值覆盖的概率。第二，Kylin 采用与 forced-pruning 方法~\cite{EPRINT:AbrKat25} 思路一致的固定认证节点预算：签名者显式尝试 counter，直到子 Octopus 节点与外层桶树节点的总数满足全局上界 $m_{\max}$。因此，BPORS+FP 签名具有固定大小的载荷，由 counter、$Kk$ 个公开子秘密值以及 $m_{\max}$ 个认证节点槽组成。具体参数和算法见 \cref{sec:bpors}。
+
 \subsection{\WOTSP~编码}
 
 \WOTSP（以及其他 Winternitz 类 OTS）之所以引入校验和，是因为如果没有校验和，攻击者只需得到一组合法的消息-签名对，就能够高效伪造新签名。具体来说，给定 $(\sigma,m)$，他可以对任意满足 $\forall i(m_i\leq m'_i)$ 的消息 $m'$ 进行伪造，因为可以计算

@@ -27,6 +27,28 @@ Let $r = h \bmod d$. Our default balancing rule is:
 \end{itemize}
 Equivalently, the profile is as balanced as possible and differs by at most one between any two layer heights.
 
+\subsubsection{BPORS+FP Overview}
+
+BPORS+FP is the few-time signature component used at the bottom of Kylin's
+hypertree.  It replaces the FORS layer of \SPHINCSP\ while keeping the same
+high-level role: the randomized message hash selects a bottom hypertree leaf
+and produces a digest \md, BPORS+FP signs this digest, and the bottom XMSS tree
+signs the recovered BPORS+FP public key rather than the original message.
+
+The component combines two ideas.  First, bucket thinning~\cite{bucketthinning}
+splits each of the $K$ BPORS coordinates into $2^B$ buckets.  For a chosen
+coordinate and bucket, the signer opens $k$ leaves in a child PORS tree with
+$t$ leaves.  When the same bottom hypertree key is selected repeatedly, the
+bucket index spreads these uses across many child PORS keys, reducing the
+probability that a forgery is covered by previously opened child secrets.
+Second, Kylin uses a fixed authentication-node budget in the style of
+forced-pruning methods~\cite{EPRINT:AbrKat25}: an explicit counter is tried
+until the total number of child Octopus nodes and outer bucket-tree nodes fits
+the global bound $m_{\max}$.  Thus a BPORS+FP signature has a fixed-size
+payload consisting of the counter, $Kk$ revealed child secrets, and
+$m_{\max}$ authentication-node slots.  Detailed parameters and algorithms are
+given in \cref{sec:bpors}.
+
 \subsection{The \WOTSP~Encoding}
 
 The reason that the \WOTSP (as well as other Winternitz-type OTS) scheme

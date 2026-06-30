@@ -20,10 +20,13 @@ This glossary fixes the preferred wording for the bilingual submission document 
 | few-time signature | 少次签名 |  |
 | bucket thinning | bucket thinning（桶稀疏） | Keep English term on first use when naming the technique. |
 | BPORS+FP | BPORS+FP | Do not translate component acronym. |
+| outer bucketing layer | 外层桶结构 | BPORS+FP construction prose. |
+| child PORS layer | 子 PORS 层 | Keep `PORS` unchanged. |
 | forced pruning | forced pruning | Keep English technical term; explain as `强制剪枝` only if needed. |
 | forced-pruning acceptance probability | forced-pruning 接受概率 | Table/checker prose can use `tau` unchanged. |
 | counter | counter | Keep English in BPORS+FP algorithm prose and code-facing descriptions. |
 | Octopus authentication set | Octopus 认证集合 | Keep `Octopus` unchanged. |
+| fixed authentication-node budget | 固定认证节点预算 | BPORS+FP overview and design rationale. |
 | hypertree | 超树 | Keep `HT` token unchanged when used as an algorithm/component name. |
 | layer height | 层高 | `layer heights` -> `分层高度`. |
 | Diverse Layer Heights | Diverse Layer Heights（分层高度多样化） | First use can keep English plus Chinese. |

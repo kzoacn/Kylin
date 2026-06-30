@@ -54,6 +54,10 @@ This guide defines the maintenance workflow for the bilingual submission documen
 - When the few-time signature layer changes, mirror the construction section, concrete cover formula, parameter tuple names, and implementation-facing pseudocode references together.
 - When BPORS+FP parameters are retuned, mirror the final CSV values into the English and Chinese parameter, concrete-security, q24 appendix, and performance hash-call tables together.
 
+## Construction Section Notes
+
+- The BPORS+FP overview under `paper/tex/construction.tex` subsection 2.1 is a short bridge to the detailed `sec:bpors` construction.  Mirror it in `paper/tex-zh/construction.tex` without duplicating the later algorithms or parameter tables.
+
 ## Review Checklist
 
 - Section and subsection ordering still matches the English document.

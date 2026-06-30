@@ -966,3 +966,10 @@
 - 验证：包内 9 个实例均通过 `make all`；主提交 Reference/Optimized 六个实例通过包内 `make test`；随后对 9 个实例执行 `make clean`，并确认包内无 `KAT_SIG`/`test_sig`/`bench_sig` 可执行文件、对象文件、`output/`、`.stack-usage/`、`Implementations/tools/` 或 `Implementations/benchmarks/`。
 - KAT 处理：直接复制既有六个 `Test_Vectors` 文件，未重跑 q24 KAT；主 KAT 保持与 WOTS 修复后确认的字节一致版本。
 - 生成最终提交包 `build/Kylin-0630.zip`，大小 `10557677` bytes，SHA-256 为 `f5bcf2dfa0b826655ab5a098735abf91e6327669f4faeb368f24a44fc092f921`。
+
+### 2026-06-30 - BPORS+FP Overview in Construction Section (Done)
+
+- 在英文 `paper/tex/construction.tex` 的 `Diverse Layer Heights in the Hypertree` 小节下新增 `BPORS+FP Overview` 子小节，简要说明 BPORS+FP 替换 FORS、bucket thinning、counter/forced-pruning 固定认证节点预算，以及与后文 `sec:bpors` 详细算法的关系。
+- 同步中文镜像 `paper/tex-zh/construction.tex`，并更新 `docs/en-zh-glossary.md` 与 `docs/en-zh-sync-guide.md`，记录 BPORS+FP 概述段落中的术语和同步位置。
+- 验证：`make -C paper/build all` 与 `make -C paper/build zh` 均通过；日志无未解析 citation/reference、无 `Overfull`，中文仅保留既有字体替代提示。`pdftotext` 抽查确认英文 PDF 出现 `2.1.1 BPORS+FP Overview`，中文 PDF 出现 `BPORS+FP 概述`。
+- 已同步根目录 `算法文本.pdf` 和 `build/算法文本.pdf` 到新英文 `main.pdf`；三者 SHA-256 均为 `0b128e84ba6ab438464f16293665538ffbcb6b9bd2c0cbf6c2b64949a436914a`。
