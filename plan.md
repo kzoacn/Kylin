@@ -1011,3 +1011,11 @@
 - 同步中文镜像、术语表和 EN->ZH 同步指南，记录 Table 2 可使用紧凑行标签的规则。
 - 验证：`make -C paper/build all` 与 `make -C paper/build zh` 均通过；日志无未解析引用或 overfull，中文仅保留既有字体替代提示。已用 `pdftotext` 和第 5 页渲染图抽查，确认 Table 2 是自然宽度紧凑表。
 - 已同步根目录 `算法文本.pdf` 和 `build/算法文本.pdf` 到新英文 `main.pdf`；三者 SHA-256 均为 `e54f53f6026e7ad07c8ae47d09376dac998a49f9303fa0a8a3a646b7456bef68`。
+
+### 2026-06-30 - Concrete Security Quantum Column Restore (Done)
+
+- 在英文/中文 10.4 concrete generic-security 表格中恢复 `\mathsf{bitsec}_{\mathsf{q}}` 列，并按 CSV 中 `bitsec` 精确值的一半四舍五入到三位小数；参数和经典安全指数不变。
+- 调整对应正文：表格现在同时报告经典指数与保守量子代理指数；继续说明 `\mathsf{bitsec}_{\mathsf{q}}=\frac{1}{2}\mathsf{bitsec}_{\mathsf{cl}}` 只是平方根型保守代理，不表示存在已知具体量子攻击达到该界。
+- 同步中文镜像和 EN->ZH 同步指南，明确 concrete-security 表格中出现 `bitsec_q` 时中文需同步该列。
+- 验证：`make -C paper/build all` 与 `make -C paper/build zh` 均通过；日志无未解析引用或 overfull，中文仅保留既有字体替代提示；`pdftotext` 抽查确认英文/中文 PDF 均出现 `bitsec_q` 列以及 `63.527`、`255.596` 等端点值。
+- 已同步根目录 `算法文本.pdf` 和 `build/算法文本.pdf` 到新英文 `main.pdf`；当前 `main.pdf`、`算法文本.pdf`、`build/算法文本.pdf`、`paper/build/out/main.pdf` 的 SHA-256 均为 `530d85b894ed47a4e7777ebf856547b980fae285c707f148d15fc24d510eaebe`，`main_zh.pdf` 与 `paper/build/out/main_zh.pdf` 的 SHA-256 均为 `5c0fd9e326153778a71abde5f0a3077e44bd338d65ddf0bc1f68366cf2b83c4e`。

@@ -463,21 +463,24 @@ The classical generic bit-security proxy and the conservative quantum proxy are
 where small constant factors inside the logarithm are neglected.  The quantum
 proxy is a conservative square-root estimate; it should not be read as a claim
 that any concrete quantum attack is known to attain this bound.  The profile
-names are submission names; the table below reports only the classical
-exponents obtained by \cref{eq:proof-generic-prob,eq:proof-bitsec}.
+names are submission names; the table below reports both the classical
+exponents and the corresponding conservative quantum-proxy exponents obtained
+from \cref{eq:proof-generic-prob,eq:proof-bitsec}.
 
 \begin{center}
-\begin{tabular}{lcccccccc}
+\small
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lccccccccc}
 \toprule
 Instance & $q_s$ & $n$ & $h$ & $d$ & $(K,B,t,k,m_{\max})$ & $w$ & $\ell$ &
-$\mathsf{bitsec}_{\mathsf{cl}}$ \\
+$\mathsf{bitsec}_{\mathsf{cl}}$ & $\mathsf{bitsec}_{\mathsf{q}}$ \\
 \midrule
-Kylin-128     & $2^{64}$ & 16 & 62 & 7  & $(4,7,128,6,95)$     & 17  & 33  & 127.055 \\
-Kylin-256     & $2^{64}$ & 32 & 65 & 8  & $(9,8,66,5,187)$     & 16  & 66  & 255.156 \\
-Kylin-512     & $2^{64}$ & 64 & 64 & 8  & $(14,8,256,5,415)$   & 43  & 96  & 511.663 \\
-Kylin-128-q24 & $2^{24}$ & 16 & 22 & 1  & $(2,12,864,7,90)$    & 6   & 52  & 127.150 \\
-Kylin-256-q24 & $2^{24}$ & 32 & 21 & 1  & $(3,14,3072,8,202)$  & 6   & 102 & 255.588 \\
-Kylin-512-q24 & $2^{24}$ & 64 & 41 & 2  & $(7,15,224,10,336)$  & 12  & 145 & 511.192 \\
+Kylin-128     & $2^{64}$ & 16 & 62 & 7  & $(4,7,128,6,95)$     & 17  & 33  & 127.055 & 63.527 \\
+Kylin-256     & $2^{64}$ & 32 & 65 & 8  & $(9,8,66,5,187)$     & 16  & 66  & 255.156 & 127.578 \\
+Kylin-512     & $2^{64}$ & 64 & 64 & 8  & $(14,8,256,5,415)$   & 43  & 96  & 511.663 & 255.832 \\
+Kylin-128-q24 & $2^{24}$ & 16 & 22 & 1  & $(2,12,864,7,90)$    & 6   & 52  & 127.150 & 63.575 \\
+Kylin-256-q24 & $2^{24}$ & 32 & 21 & 1  & $(3,14,3072,8,202)$  & 6   & 102 & 255.588 & 127.794 \\
+Kylin-512-q24 & $2^{24}$ & 64 & 41 & 2  & $(7,15,224,10,336)$  & 12  & 145 & 511.192 & 255.596 \\
 \bottomrule
 \end{tabular}
 \end{center}
