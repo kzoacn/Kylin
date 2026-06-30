@@ -1036,3 +1036,12 @@
 - 同步中文镜像和 EN->ZH 同步指南，记录 `bitsec_q` 应保留在公式/说明中，除非英文源显式增加表格列。
 - 验证：`make -C paper/build all` 与 `make -C paper/build zh` 均通过；日志无未解析引用或 overfull，中文仅保留既有字体替代提示；`pdftotext` 抽查确认英文/中文 PDF 中公式仍含 `bitsec_q`，表格不再出现 `bitsec_q` 列或 `63.527/127.578/255.596` 等量子代理表值。
 - 已同步根目录 `算法文本.pdf` 和 `build/算法文本.pdf` 到新英文 `main.pdf`；当前 `main.pdf`、`算法文本.pdf`、`build/算法文本.pdf`、`paper/build/out/main.pdf` 的 SHA-256 均为 `f52521e43892ded781b4c2cbdeb9d47e3001724c73ee1d5ea91b0c4d9e987b39`，`main_zh.pdf` 与 `paper/build/out/main_zh.pdf` 的 SHA-256 均为 `d0928b067b78f06ae5d2656b1ab175970bc45efbbb5d17f3bb9eae00f9c39c69`。
+
+### 2026-06-30 - Final Electronic Package After Quantum Column Removal (Done)
+
+- 重新构建英文 `main.pdf`，并同步根目录 `算法文本.pdf` 与提交包内 `build/算法文本.pdf`；三者 SHA-256 均为 `41e2b0323aa0f0c68dea0c1950dc305e79cb786322f272e5ed135f3a0ab69c74`。
+- 重新生成 fresh `build/` 电子版材料目录：根目录包含 `算法基本信息.pdf`、`算法文本.pdf`、`知识产权声明.pdf`、`Implementations/` 和 `Test_Vectors/`；q24 companion 继续扁平化为 `build/Implementations/Additional_Implementation/Kylin-{128,256,512}-q24`。
+- 打包树 Makefile 已裁剪为 `all/test/kat/clean` 提交目标，未包含 `tools/`、benchmark、`stack_usage` helper 或 `bench_sig_1iter.c`。
+- 验证：包内 9 个实例均通过 `make all`；主提交 Reference/Optimized 六个实例均通过 `make test`；q24 长测试未跑，只保留既有 KAT；随后对 9 个实例执行 `make clean`。
+- zip 内容检查确认三份 PDF、六个 KAT、9 个实例目录齐全，且压缩包内无 `KAT_SIG`/`test_sig`/`bench_sig` 可执行文件、对象文件、`output/`、`.stack-usage/`、`tools/`、`benchmarks/`、嵌套 Additional staging 目录或 `bench_sig_1iter.c`。
+- 生成最终提交包 `build/Kylin-0630.zip`，大小 `10598289` bytes，SHA-256 为 `5b4787dd61a8afc7b8cfffc493b2fd1f1a318ec01ef355be44e4e7d73b9a07b4`。
