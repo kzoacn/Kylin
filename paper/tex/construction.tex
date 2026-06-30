@@ -293,25 +293,26 @@ The two properties guarantee  that every chain contains exactly one element $c_{
 Constant Sum \WOTSP~has two advantages over \WOTSP.
 \begin{itemize}
     \item Stable computing time.  The number of hash function calls is fixed in our construction, in contrast to possibly variable numbers for the signing and verification algorithm of \WOTSP. While no timing attacks are identified against the implementations of our construction and \WOTSP, stable computing time is always preferable (especially for signing algorithms whose computation involves a private key). 
-    \item Reduced signature size and number of hash calls. For instance, a baseline 256-bit-classical parameter choice suggests $w=16$ and $l=67$. In our construction, for $w=16$ we require $l=66$, which reduces 1.5\% in both running time (in terms of the expected number of hash function calls) and size. We refer to \cref{tab:ots} for more details.
+    \item Reduced signature size and number of hash calls. For instance, a baseline 256-bit-classical parameter choice suggests $w=16$ and $l=67$. In our construction, for $w=16$ we require $l=66$, which reduces 1.5\% in both running time (in terms of the expected number of hash function calls) and size. This local saving contributes to the end-to-end comparison in \cref{tab:slh-kylin-small-comp}.
 \end{itemize}
 
 \begin{table}[t]
     \centering
-    \caption{Comparison of length $l$ between \WOTSP\ and \WOTSCS\ for different values of Winternitz parameters $w$ and security parameter $\secpara$.}
-    \label{tab:ots}
-    \begin{tabular}{c cc cc cc}%
+    \caption{SLH-DSA-SHAKE small parameter sets versus Kylin at the 128s and 256s levels. Key and signature sizes are in bytes; key generation, signing, and verification are reported as design-level hash-call proxies.}
+    \label{tab:slh-kylin-small-comp}
+    \scriptsize
+    \resizebox{\linewidth}{!}{%
+    \begin{tabular}{l l r r r r r r}%
     \toprule
-      & \multicolumn{2}{c}{128bit} & \multicolumn{2}{c}{192bit}  &\multicolumn{2}{c}{256bit} \\ 
-     $w$  & \WOTSP & Ours & \WOTSP & Ours & \WOTSP & Ours \\ \midrule % specify
-     8  & 46 & 45 & 67 & 66 & 90 & 88 \\  
-     16  & 35& 34 & 51 & 50 & 67 & 66 \\  
-     24  & 31& 30 & 45& 44 & 59& 58\\  
-     32  & 28& 27 & 42& 40 & 55&  53\\  
-     40  & 27& 26 & 39& 38 & 52& 50\\  
-     48  & 25& 25 & 37& 36 & 48&  48\\  
+      & & \multicolumn{3}{c}{Size (bytes)} & \multicolumn{3}{c}{Hash calls} \\
+      Level & Scheme & pk & sk & sig & KeyGen & Sign & Verify \\ \midrule
+      128s & SLH-DSA-SHAKE-128s & 32 & 64 & 7,856 & 305,663 & 2,125,312 & 2,094 \\
+      128s & Kylin-128 & 32 & 64 & 6,616 & 305,151 & 2,113,169 & 2,062 \\
+      256s & SLH-DSA-SHAKE-256s & 64 & 128 & 29,792 & 292,095 & 2,918,400 & 4,427 \\
+      256s & Kylin-256 & 64 & 128 & 26,440 & 575,487 & 2,912,474 & 4,312 \\
      \bottomrule
-    \end{tabular}
+    \end{tabular}%
+    }
 \end{table}
 
 

@@ -980,3 +980,10 @@
 - 同步中文 Table 1、引言说明、术语表和 EN->ZH 同步指南；修正 `NIST:FIPS205` 参考文献标题为 `Stateless Hash-Based Digital Signature Standard (FIPS 205)`。
 - 验证：用仓库脚本确认 SLH-DSA small 基准 hashcall 与签名大小，`make -C paper/build all`、`make -C paper/build zh` 均通过；`pdftotext` 抽查确认英文/中文 PDF 的 Table 1 已显示新对比。中文日志仅保留既有字体替代提示。
 - 已同步根目录 `算法文本.pdf` 和 `build/算法文本.pdf` 到新英文 `main.pdf`；三者 SHA-256 均为 `0cd3ffd519b8f0d18c293888288a7ecc7940d79088fad468f7d8c48e5d8278c2`。
+
+### 2026-06-30 - Table 1 Restore and Table 2 SLH-DSA Comparison (Done)
+
+- 将英文/中文 Table 1 恢复为三组 packaged Kylin families 的 KeyGen/Sign/Verify hashcall 与 pk/sk/sig size 概览，并同步恢复引言中对 Table 1 的说明。
+- 将原 construction 中的 Table 2 改为 `128s`/`256s` 级别的 `SLH-DSA-SHAKE-small` 与 `Kylin` 对比，列出 pk/sk/sig 字节数以及 KeyGen/Sign/Verify 设计层面 hashcall；删除旧 `tab:ots` 引用并改为新的 `tab:slh-kylin-small-comp`。
+- 验证：用仓库脚本确认 SLH-DSA small 与 Kylin 指标，`make -C paper/build all`、`make -C paper/build zh` 均通过；`pdftotext` 抽查确认英文/中文 PDF 中 Table 1 与 Table 2 内容正确。中文日志仅保留既有字体替代提示。
+- 已同步根目录 `算法文本.pdf` 和 `build/算法文本.pdf` 到新英文 `main.pdf`；三者 SHA-256 均为 `b7e4638d90e1acff56292c0b53386975b48762ec5cada98038b003de24e4a5e6`。

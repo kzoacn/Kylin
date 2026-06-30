@@ -37,7 +37,7 @@ argument and replacing the FORS cover calculation by the BPORS+FP cover term.
 Based on this adapted analysis, we estimate the concrete generic-security
 exponents and choose parameters for the packaged profiles.
 
-To facilitate a direct package-level view, \cref{tab:comp tiny} compares the 128-bit and 256-bit Kylin families with the SLH-DSA-SHAKE small parameter sets from FIPS 205. The reported online metrics are signing and verification hash-call proxies together with signature size. Kylin is strictly lower than the corresponding SLH-DSA small row in every reported column, while the public and secret key sizes are identical in each pair.
+To facilitate a direct package-level view, \cref{tab:comp tiny} reports the hash-call proxies and key/signature sizes for \texttt{Kylin-128}, \texttt{Kylin-256}, and \texttt{Kylin-512}. In particular, the table includes key-generation, signing, and verification hash-call metrics under the frozen packaged parameter sets.
 
 We refer to more detailed comparisons for the full spectrum of parameter choices in \cref{sec:performance}.
 As summarized in \cref{tab:kylin-package-bench}, the packaged Kylin instances provide the current repository-local performance profile for key generation, signing, and verification. For specific scenarios where verification time is critical, the parameters can be re-tuned towards faster verification.
