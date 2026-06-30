@@ -942,3 +942,12 @@
 - 在 10.4 的 concrete generic-security 表中删除 `bitsec_q` 列，同时去掉 “for the frozen parameter file ...” 表述；正文中的 bit-security proxy 也改为只报告 classical exponent。
 - 将附录 SageMath/minted 代码字号从 `\tiny` 调整为 `\scriptsize`；删除原 Table 7 的 q24 KAT digest 表和相关描述，保留 q24 companion 参数表。
 - 验证：`make -C paper/build all`、`make -C paper/build zh`、`git diff --check` 均通过；英文/中文日志无未解析 citation/reference、无 `Overfull`；英文仅剩 bibliography underfull，中文仅剩环境字体替代提示。`pdftotext` 抽查确认英文 PDF 中 Table 3 标题为 `Kylin parameter families.`，且不再出现 Table 7、legacy 参数脚本句、`bitsec_q` 或 q24 KAT digest 描述。已用新 `main.pdf` 覆盖根目录与 `build/` 中的 `算法文本.pdf`，当前 `main.pdf`、`算法文本.pdf`、`build/算法文本.pdf`、`paper/build/out/main.pdf` 的 SHA-256 均为 `e6dfa1ce9504610bcb3f11016ad0df80d4ae765ad73150bbac7a6edcb1a9c3ad`。
+
+### 2026-06-30 - Final Electronic Package Refresh (Done)
+
+- 重新构建英文 `main.pdf`，并用该产物覆盖根目录 `算法文本.pdf` 和提交包内 `build/算法文本.pdf`；当前 `main.pdf`、`算法文本.pdf`、`build/算法文本.pdf` 的 SHA-256 均为 `fc4b9e7ddf1348f351bbb4a0b1357823ba53bed30fa4abbed310c372464c8e98`。
+- 按 NGCC 电子版材料布局重建 fresh `build/`：包含 `算法基本信息.pdf`、`算法文本.pdf`、`知识产权声明.pdf`、`Test_Vectors/` 六个 KAT 文件，以及裁剪后的 `Implementations/` 提交树。
+- `build/Implementations/` 保留主提交 `Reference_Implementation/Kylin-{128,256,512}`、`Optimized_Implementation/Kylin-{128,256,512}`，并将 q24 companion 优化实现扁平化为 `Additional_Implementation/Kylin-{128,256,512}-q24`；移除了编译产物、`output/`、`.stack-usage/`、benchmark helper 与仓库本地 `tools/`/`benchmarks/` 目录。
+- 为提交包重写 `build/Implementations/README`，并将打包树内 Makefile 裁成 `all/test/kat/clean` 提交目标；修正扁平 q24 KAT 输出路径为 package-level `Test_Vectors/`。
+- 验证：打包树 9 个实例均通过 `make all`，随后执行 `make clean` 清理生成物；zip 内容检查确认必需三份 PDF、六个 KAT 和 9 个实例目录齐全，且压缩包内无 `KAT_SIG`/`test_sig`/`bench_sig` 可执行文件、`.o`、`output/`、`.stack-usage/`、`Implementations/tools/` 或 `Implementations/benchmarks/`。
+- 生成提交包 `build/Kylin-0630.zip`，大小 `10556149` bytes，SHA-256 为 `76d27ae3a89a8a1feaba115e073f6daaf758e1d4ec3d99660cff1568aff153ca`。
