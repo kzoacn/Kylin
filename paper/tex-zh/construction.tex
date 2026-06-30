@@ -240,26 +240,7 @@ $|\mathcal{C}| = D_{l, \lfloor{l(w-1)/2}\rfloor}$。这就完成了 $\mathcal{C}
 常和 \WOTSP\ 相比 \WOTSP\ 有两个优点。
 \begin{itemize}
     \item 计算时间稳定。我们的构造中哈希函数调用次数是固定的，而 \WOTSP\ 的签名与验证算法则可能具有可变调用次数。尽管当前并未发现针对本构造或 \WOTSP\ 实现的计时攻击，但稳定的计算时间始终更可取，尤其是对于涉及私钥的签名算法。
-    \item 更小的签名尺寸与更少的哈希调用。例如，在一个典型的 256-bit classical 参数选择中，通常会取 $w=16$ 且 $l=67$。而在我们的构造中，当 $w=16$ 时只需 $l=66$，这会在运行时间（以预期哈希调用次数计）和尺寸上都带来约 1.5\% 的降低。这一局部节省会贡献到 \cref{tab:slh-kylin-small-comp} 中的端到端比较。
+    \item 更小的签名尺寸与更少的哈希调用。例如，在一个典型的 256-bit classical 参数选择中，通常会取 $w=16$ 且 $l=67$。而在我们的构造中，当 $w=16$ 时只需 $l=66$，这会在运行时间（以预期哈希调用次数计）和尺寸上都带来约 1.5\% 的降低。结合 BPORS+FP 与分层高度多样化，这一局部节省会贡献到 \cref{tab:slh-kylin-small-comp} 所汇总的主要指标改进中。
 \end{itemize}
-
-\begin{table}[t]
-    \centering
-    \caption{128s 与 256s 级别下 SLH-DSA-SHAKE small 参数集与 Kylin 的比较。公钥、私钥和签名大小以字节计；密钥生成、签名和验证以设计层面的哈希调用代理计数表示。}
-    \label{tab:slh-kylin-small-comp}
-    \scriptsize
-    \resizebox{\linewidth}{!}{%
-    \begin{tabular}{l l r r r r r r}%
-    \toprule
-      & & \multicolumn{3}{c}{尺寸（字节）} & \multicolumn{3}{c}{哈希调用} \\
-      级别 & 方案 & pk & sk & sig & 密钥生成 & 签名 & 验证 \\ \midrule
-      128s & SLH-DSA-SHAKE-128s & 32 & 64 & 7,856 & 305,663 & 2,125,312 & 2,094 \\
-      128s & Kylin-128 & 32 & 64 & 6,616 & 305,151 & 2,113,169 & 2,062 \\
-      256s & SLH-DSA-SHAKE-256s & 64 & 128 & 29,792 & 292,095 & 2,918,400 & 4,427 \\
-      256s & Kylin-256 & 64 & 128 & 26,440 & 575,487 & 2,912,474 & 4,312 \\
-     \bottomrule
-    \end{tabular}%
-    }
-\end{table}
 
 尽管我们的编码算法相较校验和方法会带来略高的额外开销，但相对于整个签名方案中的哈希函数调用次数而言，这部分开销并不占主导地位；这一点会在后续与 \SPHINCSP\ 的性能比较中得到印证。

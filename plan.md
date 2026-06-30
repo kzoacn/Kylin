@@ -987,3 +987,11 @@
 - 将原 construction 中的 Table 2 改为 `128s`/`256s` 级别的 `SLH-DSA-SHAKE-small` 与 `Kylin` 对比，列出 pk/sk/sig 字节数以及 KeyGen/Sign/Verify 设计层面 hashcall；删除旧 `tab:ots` 引用并改为新的 `tab:slh-kylin-small-comp`。
 - 验证：用仓库脚本确认 SLH-DSA small 与 Kylin 指标，`make -C paper/build all`、`make -C paper/build zh` 均通过；`pdftotext` 抽查确认英文/中文 PDF 中 Table 1 与 Table 2 内容正确。中文日志仅保留既有字体替代提示。
 - 已同步根目录 `算法文本.pdf` 和 `build/算法文本.pdf` 到新英文 `main.pdf`；三者 SHA-256 均为 `b7e4638d90e1acff56292c0b53386975b48762ec5cada98038b003de24e4a5e6`。
+
+### 2026-06-30 - Table 2 Summary Placement and Principal-Metric Claim (Done)
+
+- 将 SLH-DSA-versus-Kylin Table 2 从 construction 的 `Theoretical Performance` 附近移到 `Algorithm Description` 的 `Summary of our Work` 段落之后，并在 summary prose 中直接引用。
+- 将 Table 2 精简为主要在线/传输指标：signature size、sign hashcall、verify hashcall；level 列改为 `128`/`256`，并对 Kylin 在三项指标上的严格更优数值加粗。英文/中文 caption 均说明粗体项严格低于对应 SLH-DSA 行。
+- 保持 `Theoretical Performance` 为 `\subsection`（PDF 中为 2.5），并将其中的引用改为指向 summary 中的新 Table 2。
+- 验证：`make -C paper/build all`、`make -C paper/build zh` 均通过；`pdftotext` 抽查确认英文/中文 PDF 中 Table 2 位置、列、level 与 claim 均正确，日志无未解析引用或 overfull，中文仅保留既有字体替代提示。
+- 已同步根目录 `算法文本.pdf` 和 `build/算法文本.pdf` 到新英文 `main.pdf`；三者 SHA-256 均为 `c3c7411efd435da28bd85b9b9bd71425682849beb9eabc8cb9d7dd28dd4098be`。
