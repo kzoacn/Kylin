@@ -7,7 +7,7 @@ the message-digest index split and uses $\sum_{i=0}^{d-1} 2^{h_i}$ in the HT
 hash-call proxy. The currently frozen rows include the packaged
 $q=2^{64}$ tuples \texttt{Kylin-128/256/512} and the companion $q=2^{24}$
 tuples \texttt{Kylin-128-q24/256-q24/512-q24}.
-\inputminted[breaklines,tabsize=4,fontsize=\tiny]{python}{paper/code/para.sage}
+\inputminted[breaklines,tabsize=4,fontsize=\scriptsize]{python}{paper/code/para.sage}
 
 \section{\texorpdfstring{$q=2^{24}$}{q=2 to the 24} Companion Parameter Profiles}
 \label{apx:q24-profiles}
@@ -42,30 +42,8 @@ NGCC $q=2^{64}$ families.
     }
 \end{table}
 
-The companion KAT rows in \cref{tab:q24-kat-digests} were regenerated after the
-current $q=2^{24}$ BPORS+FP retune.  Full wall-clock benchmark refreshes for
-these companion rows are intentionally separated from the primary package
-benchmark table because the q24 benchmark runs are long-running jobs under the
-retuned BPORS+FP parameters.
-
-\begin{table}[htbp]
-    \centering
-    \caption{Generated KAT digests for companion $q=2^{24}$ Kylin implementations.}
-    \label{tab:q24-kat-digests}
-    \scriptsize
-    \begin{tabular}{l r l}
-    \toprule
-    Family & lines & SHA-256 \\ \midrule
-    Kylin-128-q24 & 120 & \texttt{c284b49d8cf9075a513878a2c68535ae08a9236fe2f713b90d086268e6ddd46c} \\
-    Kylin-256-q24 & 120 & \texttt{5cc6cf82cc4399d990eba8577de32dede7620fd1daa4c4b5defd869c73de748d} \\
-    Kylin-512-q24 & 120 & \texttt{d5529d69487b37eb237d6f936e5db62dace4c7e4b94a8afada547146e6a52e50} \\
-    \bottomrule
-    \end{tabular}
-\end{table}
-
 The optimized implementations apply macro-unrolled SM3 compression, SSE2/AVX2
 hardware dispatch for message-word loading, a malloc-free \texttt{pseudoXOF}
 fast path for byte-aligned input, and 4-way SSE2 WOTS chain acceleration
 adapted for $n=16/32/64$.  Both the sign and verify paths batch 4~WOTS chains
-per SIMD operation.  The q24 KAT files listed above cover the current BPORS+FP
-retune.
+per SIMD operation.

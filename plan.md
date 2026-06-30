@@ -935,3 +935,10 @@
 - 将 `bucketthinning` BibTeX 条目更新为 Cryptology ePrint Archive 2026/1328: Chongxu Ren, Kaiyi Zhang, and Hongbo Yu, "Shorter Hash-Based Signatures via Bucket Thinning"。
 - 在英文/中文 introduction、construction、design rationale 以及已有 BPORS+FP proof/definition 引用链中确认 BPORS+FP 的 bucket-thinning 来源指向 `bucketthinning`，forced-pruning 尺寸控制仍保留 `EPRINT:AbrKat25`。
 - 验证：`make -C paper/build all`、`make -C paper/build zh`、`git diff --check` 均通过；`main.bbl` 与 `main_zh.bbl` 均生成 `Cryptology ePrint Archive, Paper 2026/1328`。已用新 `main.pdf` 覆盖根目录与 `build/` 中的 `算法文本.pdf`，当前 `main.pdf`、`算法文本.pdf`、`build/算法文本.pdf`、`paper/build/out/main.pdf` 的 SHA-256 均为 `529d9c09bbd333d78c220f510f24a812e594972ead97d50bad37dab3aa585639`。
+
+### 2026-06-30 - Parameter Table and Appendix Cleanup (Done)
+
+- 删除 8.1.2 中关于 repository-local parameter script、legacy `127/255/511` 阈值和 quantum-security proxies 的说明句；将 Table 3 caption 改为 `Kylin parameter families.`，并同步中文镜像。
+- 在 10.4 的 concrete generic-security 表中删除 `bitsec_q` 列，同时去掉 “for the frozen parameter file ...” 表述；正文中的 bit-security proxy 也改为只报告 classical exponent。
+- 将附录 SageMath/minted 代码字号从 `\tiny` 调整为 `\scriptsize`；删除原 Table 7 的 q24 KAT digest 表和相关描述，保留 q24 companion 参数表。
+- 验证：`make -C paper/build all`、`make -C paper/build zh`、`git diff --check` 均通过；英文/中文日志无未解析 citation/reference、无 `Overfull`；英文仅剩 bibliography underfull，中文仅剩环境字体替代提示。`pdftotext` 抽查确认英文 PDF 中 Table 3 标题为 `Kylin parameter families.`，且不再出现 Table 7、legacy 参数脚本句、`bitsec_q` 或 q24 KAT digest 描述。已用新 `main.pdf` 覆盖根目录与 `build/` 中的 `算法文本.pdf`，当前 `main.pdf`、`算法文本.pdf`、`build/算法文本.pdf`、`paper/build/out/main.pdf` 的 SHA-256 均为 `e6dfa1ce9504610bcb3f11016ad0df80d4ae765ad73150bbac7a6edcb1a9c3ad`。

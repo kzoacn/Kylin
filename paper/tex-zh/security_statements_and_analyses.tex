@@ -303,29 +303,26 @@ p_{\mathsf{gen}}
 \end{equation}
 其中 $\gamma$ 表示先前签名中与伪造尝试命中同一超树叶子的次数。在该命中次数条件下，求和式中的第一个因子表示所有 $K$ 个被选中 BPORS+FP 坐标都已被先前签名公开的子秘密值覆盖，并且每个坐标都经历 $2^{-B}$ 的 bucket thinning。前导项 $2^{-N}=2^{-8n}$ 刻画对 $n$ 字节原语输出的通用搜索概率。该保守估计不把 forced-pruning 接受事件计作独立安全增益；$m_{\max}$ 仅用于固定签名大小和控制签名时间。
 
-对应的经典与量子通用 bit-security 代理为
+下表中的经典通用 bit-security 代理为
 \begin{equation}
 \label{eq:proof-bitsec}
     \mathsf{bitsec}_{\mathsf{cl}}=-\log_2 p_{\mathsf{gen}},
-    \qquad
-    \mathsf{bitsec}_{\mathsf{q}}=-\frac{1}{2}\log_2 p_{\mathsf{gen}},
 \end{equation}
-其中忽略对数内部的小常数因子。实例名称是提交命名；下表报告冻结参数文件
-\texttt{paper/data/}\allowbreak\texttt{para\_kylin\_final\_6profiles.csv} 在
-\cref{eq:proof-generic-prob,eq:proof-bitsec} 下得到的指数。
+其中忽略对数内部的小常数因子。实例名称是提交命名；下表报告
+\cref{eq:proof-generic-prob,eq:proof-bitsec} 下得到的经典安全指数。
 
 \begin{center}
-\begin{tabular}{lccccccccc}
+\begin{tabular}{lcccccccc}
 \toprule
 Instance & $q_s$ & $n$ & $h$ & $d$ & $(K,B,t,k,m_{\max})$ & $w$ & $\ell$ &
-$\mathsf{bitsec}_{\mathsf{cl}}$ & $\mathsf{bitsec}_{\mathsf{q}}$ \\
+$\mathsf{bitsec}_{\mathsf{cl}}$ \\
 \midrule
-Kylin-128     & $2^{64}$ & 16 & 62 & 7  & $(4,7,128,6,95)$     & 17  & 33  & 127.055 & 63.527 \\
-Kylin-256     & $2^{64}$ & 32 & 65 & 8  & $(9,8,66,5,187)$     & 16  & 66  & 255.156 & 127.578 \\
-Kylin-512     & $2^{64}$ & 64 & 64 & 8  & $(14,8,256,5,415)$   & 43  & 96  & 511.663 & 255.832 \\
-Kylin-128-q24 & $2^{24}$ & 16 & 22 & 1  & $(2,12,864,7,90)$    & 6   & 52  & 127.150 & 63.575 \\
-Kylin-256-q24 & $2^{24}$ & 32 & 21 & 1  & $(3,14,3072,8,202)$  & 6   & 102 & 255.588 & 127.794 \\
-Kylin-512-q24 & $2^{24}$ & 64 & 41 & 2  & $(7,15,224,10,336)$  & 12  & 145 & 511.192 & 255.596 \\
+Kylin-128     & $2^{64}$ & 16 & 62 & 7  & $(4,7,128,6,95)$     & 17  & 33  & 127.055 \\
+Kylin-256     & $2^{64}$ & 32 & 65 & 8  & $(9,8,66,5,187)$     & 16  & 66  & 255.156 \\
+Kylin-512     & $2^{64}$ & 64 & 64 & 8  & $(14,8,256,5,415)$   & 43  & 96  & 511.663 \\
+Kylin-128-q24 & $2^{24}$ & 16 & 22 & 1  & $(2,12,864,7,90)$    & 6   & 52  & 127.150 \\
+Kylin-256-q24 & $2^{24}$ & 32 & 21 & 1  & $(3,14,3072,8,202)$  & 6   & 102 & 255.588 \\
+Kylin-512-q24 & $2^{24}$ & 64 & 41 & 2  & $(7,15,224,10,336)$  & 12  & 145 & 511.192 \\
 \bottomrule
 \end{tabular}
 \end{center}

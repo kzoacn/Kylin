@@ -743,15 +743,15 @@ Winternitz 参数 $w$ 决定了每个 \WOTSCS\ 实例中哈希链的条数与长
     n+c_{\mathrm{ctr}}+(Kk+m_{\max})n+(h+d\cdot\wotslen)n .
 \]
 
-经典与量子通用安全代理由 \cref{sec:proof-concrete} 中的 BPORS+FP cover 项给出；这里同样忽略对数内部的小常数因子。
+经典通用安全代理由 \cref{sec:proof-concrete} 中的 BPORS+FP cover 项给出；这里同样忽略对数内部的小常数因子。
 
 \subsubsection{建议参数集与安全级别}
 
-正如上一小节所述，即便在固定安全级别下，\SPHINCSA\ 的设计也支持在签名尺寸与速度之间作出不同折中。对于本提交包，我们采用 \cref{tab:ngcc-parameters} 中列出的三组 NGCC 对齐 Kylin 实例。这些实例由仓库中的参数脚本生成，并调优为满足 legacy $127/255/511$ 经典通用安全阈值以及相应的量子安全代理。
+正如上一小节所述，即便在固定安全级别下，\SPHINCSA\ 的设计也支持在签名尺寸与速度之间作出不同折中。对于本提交包，我们采用 \cref{tab:ngcc-parameters} 中列出的三组 NGCC 对齐 Kylin 实例。
 
 \begin{table}[H]
     \centering
-    \caption{用于已打包主实现的冻结 NGCC 对齐 Kylin 参数族。}
+    \caption{Kylin 参数族。}
     \label{tab:ngcc-parameters}
     \scriptsize
     \resizebox{\linewidth}{!}{%

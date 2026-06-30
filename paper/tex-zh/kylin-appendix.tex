@@ -2,7 +2,7 @@
 \section{参数评估 Sage 脚本}
 \label{apx:script}
 下面的脚本用于评估满足 $\sum_{i=0}^{d-1} h_i = h$ 的分层超树高度参数候选 $(h_0,\ldots,h_{d-1})$。其中，消息摘要索引拆分使用 $h_0$，HT 哈希调用代理计数使用 $\sum_{i=0}^{d-1} 2^{h_i}$。当前冻结行既包括已打包的 $q=2^{64}$ 参数组 \texttt{Kylin-128/256/512}，也包括 $q=2^{24}$ 的附加参考参数组 \texttt{Kylin-128-q24/256-q24/512-q24}。
-\inputminted[breaklines,tabsize=4,fontsize=\tiny]{python}{paper/code/para.sage}
+\inputminted[breaklines,tabsize=4,fontsize=\scriptsize]{python}{paper/code/para.sage}
 
 \section{\texorpdfstring{$q=2^{24}$}{q equals 2 to the 24} 附加参数配置}
 \label{apx:q24-profiles}
@@ -28,23 +28,4 @@
     }
 \end{table}
 
-\cref{tab:q24-kat-digests} 中的 companion KAT 行已在当前 $q=2^{24}$
-BPORS+FP 重新调参后重新生成。由于重新调参后的 BPORS+FP q24 benchmark
-属于长时间任务，完整墙钟 benchmark 刷新与主 package benchmark 表分开维护。
-
-\begin{table}[htbp]
-    \centering
-    \caption{$q=2^{24}$ Kylin 附加实现生成的 KAT 摘要。}
-    \label{tab:q24-kat-digests}
-    \scriptsize
-    \begin{tabular}{l r l}
-    \toprule
-    参数族 & 行数 & SHA-256 \\ \midrule
-    Kylin-128-q24 & 120 & \texttt{c284b49d8cf9075a513878a2c68535ae08a9236fe2f713b90d086268e6ddd46c} \\
-    Kylin-256-q24 & 120 & \texttt{5cc6cf82cc4399d990eba8577de32dede7620fd1daa4c4b5defd869c73de748d} \\
-    Kylin-512-q24 & 120 & \texttt{d5529d69487b37eb237d6f936e5db62dace4c7e4b94a8afada547146e6a52e50} \\
-    \bottomrule
-    \end{tabular}
-\end{table}
-
-优化实现采用宏展开的 SM3 压缩函数、面向消息字加载的 SSE2/AVX2 硬件分派、针对字节对齐输入的无 \texttt{malloc} \texttt{pseudoXOF} 快速路径，以及适配 $n=16/32/64$ 的 4 路 SSE2 WOTS 链加速。签名与验证路径均以每次 SIMD 操作处理 4 条 WOTS 链。上表中的 q24 KAT 文件覆盖当前 BPORS+FP 重新调参结果。
+优化实现采用宏展开的 SM3 压缩函数、面向消息字加载的 SSE2/AVX2 硬件分派、针对字节对齐输入的无 \texttt{malloc} \texttt{pseudoXOF} 快速路径，以及适配 $n=16/32/64$ 的 4 路 SSE2 WOTS 链加速。签名与验证路径均以每次 SIMD 操作处理 4 条 WOTS 链。
